@@ -140,12 +140,20 @@ targets:
         CFBundleVersion: "1"
         NSHealthShareUsageDescription: "HRV・睡眠・心拍データを使ってトレーニング負荷を最適化します"
         NSHealthUpdateUsageDescription: "ワークアウト記録をヘルスケアに保存します"
+    entitlements:
+      path: App/Mac/OikomiMac.entitlements
+      properties:
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.shuhirouchi.oikomi
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shuhirouchi.oikomi.mac
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_HARDENED_RUNTIME: YES
-        CODE_SIGN_ENTITLEMENTS: ""
 
 schemes:
   Oikomi:

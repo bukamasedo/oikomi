@@ -6,26 +6,63 @@ import SwiftData
 /// SwiftUI 外（App Intents / Widget / Background Task）からも SwiftData にアクセスする必要があるため、
 /// 起動時に `OikomiApp` が `bootstrap()` で初期化する。
 ///
-/// CloudKit との互換性確保のため、`OikomiKit.schemaModels` を使う。
+/// CloudKit 有効時はマルチデバイス（iPhone / Apple Watch / Mac / iPad）で自動同期する。
+/// Container 不在などで初期化に失敗した場合は、安全側として `.none` でリトライしてアプリは起動可能にする。
 @MainActor
 public enum SharedModelContainer {
 
     public static private(set) var container: ModelContainer?
 
+    /// CloudKit 有効化のユーザー設定キー。
+    /// 仕様書 §7.1: 設定 → iCloud 同期トグル（Pro 機能想定）。
+    /// デフォルトは true（ユーザーが既に Apple Developer Program に加入し iCloud 容器を作成済みの想定）。
+    public static let cloudKitEnabledKey = "OikomiCloudKitEnabled"
+
+    /// 初期化を試みた最終モード。UI 側でユーザーに現状を表示するため。
+    public static private(set) var activeCloudKitMode: CloudKitMode = .disabled
+
+    public enum CloudKitMode: String, Sendable {
+        case enabled       // .automatic で起動成功
+        case disabled      // ユーザー設定 or フォールバックで .none で起動
+        case fallback      // CloudKit 起動失敗 → .none にフォールバック
+    }
+
     /// アプリ起動時に呼び出して初期化する。複数回呼ばれても初回のみ作成。
     @discardableResult
     public static func bootstrap(
-        isStoredInMemoryOnly: Bool = false,
-        cloudKitDatabase: ModelConfiguration.CloudKitDatabase = .none
+        isStoredInMemoryOnly: Bool = false
     ) throws -> ModelContainer {
         if let existing = container {
             return existing
         }
         let schema = Schema(OikomiKit.schemaModels)
+        let wantCloudKit = UserDefaults.standard.object(forKey: cloudKitEnabledKey) as? Bool ?? true
+
+        if wantCloudKit && !isStoredInMemoryOnly {
+            // まず CloudKit 有効で試す
+            do {
+                let configuration = ModelConfiguration(
+                    schema: schema,
+                    isStoredInMemoryOnly: false,
+                    cloudKitDatabase: .automatic
+                )
+                let new = try ModelContainer(for: schema, configurations: [configuration])
+                container = new
+                activeCloudKitMode = .enabled
+                return new
+            } catch {
+                // 失敗ログを記録、ユーザー設定を維持しつつ .none にフォールバック
+                print("CloudKit ModelContainer 起動失敗 → ローカル動作で続行: \(error)")
+                activeCloudKitMode = .fallback
+            }
+        } else {
+            activeCloudKitMode = .disabled
+        }
+
         let configuration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: isStoredInMemoryOnly,
-            cloudKitDatabase: cloudKitDatabase
+            cloudKitDatabase: .none
         )
         let new = try ModelContainer(for: schema, configurations: [configuration])
         container = new

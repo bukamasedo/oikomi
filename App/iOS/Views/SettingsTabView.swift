@@ -11,16 +11,19 @@ struct SettingsTabView: View {
     @Environment(\.modelContext) private var modelContext
 
     @AppStorage("OikomiPreferredLocation") private var preferredLocationRaw: String = Location.gym.rawValue
+    @AppStorage(SharedModelContainer.cloudKitEnabledKey) private var cloudKitEnabled: Bool = true
     @State private var showResetConfirm = false
     @State private var showProSheet = false
     @State private var showOnboarding = false
     @State private var errorMessage: String?
+    @State private var showCloudKitChangeAlert = false
 
     var body: some View {
         NavigationStack {
             List {
                 proSection
                 preferenceSection
+                iCloudSection
                 healthKitSection
                 dataSection
                 aboutSection
@@ -100,6 +103,51 @@ struct SettingsTabView: View {
             } label: {
                 Label("HealthKit 連携", systemImage: "heart.text.square")
             }
+        }
+    }
+
+    @ViewBuilder
+    private var iCloudSection: some View {
+        Section {
+            Toggle(isOn: $cloudKitEnabled) {
+                Label("iCloud 同期", systemImage: "icloud")
+            }
+            .onChange(of: cloudKitEnabled) { _, _ in
+                showCloudKitChangeAlert = true
+            }
+
+            HStack {
+                Text("現在の状態")
+                Spacer()
+                statusBadge
+            }
+        } header: {
+            Text("マルチデバイス同期")
+        } footer: {
+            Text("iPhone・Apple Watch・iPad・Mac 間で記録を自動同期します。すべての計算はオンデバイス、データは Apple の iCloud（ユーザーのプライベートデータベース）に保存されます。設定変更後はアプリの再起動が必要です。")
+        }
+        .alert("再起動が必要です", isPresented: $showCloudKitChangeAlert) {
+            Button("OK") {}
+        } message: {
+            Text("iCloud 同期の設定変更を反映するには、アプリを完全に終了して再度開いてください。")
+        }
+    }
+
+    @ViewBuilder
+    private var statusBadge: some View {
+        switch SharedModelContainer.activeCloudKitMode {
+        case .enabled:
+            Label("同期中", systemImage: "checkmark.icloud.fill")
+                .foregroundStyle(.green)
+                .font(.callout)
+        case .fallback:
+            Label("失敗・ローカル動作", systemImage: "exclamationmark.icloud")
+                .foregroundStyle(.orange)
+                .font(.callout)
+        case .disabled:
+            Label("無効", systemImage: "icloud.slash")
+                .foregroundStyle(.secondary)
+                .font(.callout)
         }
     }
 
