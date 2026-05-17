@@ -141,16 +141,6 @@ struct WorkoutTabView: View {
                 }
             }
 
-            if let endAt = restEndAt {
-                Section {
-                    RestTimerBanner(endAt: endAt) {
-                        restEndAt = nil
-                    }
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                }
-            }
-
             // ルーティンの種目をクイック選択肢として表示（進捗バー付き）
             if let routine = session.routine {
                 Section("ルーティン: \(routine.name)") {
@@ -172,23 +162,46 @@ struct WorkoutTabView: View {
                 }
             }
 
-            Section {
+            // アクションは List 末尾に「行スタイル」で配置（左寄せ + ハイライト）
+            Section("操作") {
                 Button {
                     preselectedExercise = nil
                     showingAddSet = true
                 } label: {
-                    Label("セットを記録", systemImage: "plus.circle.fill")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(.tint)
+                            .font(.title3)
+                        Text("セットを記録")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Spacer()
+                    }
                 }
                 Button(role: .destructive) {
                     finishSession(session)
                 } label: {
-                    Label("ワークアウトを終了", systemImage: "stop.fill")
-                        .frame(maxWidth: .infinity)
+                    HStack {
+                        Image(systemName: "stop.circle.fill")
+                            .font(.title3)
+                        Text("ワークアウトを終了")
+                            .font(.body)
+                        Spacer()
+                    }
                 }
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if let endAt = restEndAt {
+                RestTimerBanner(endAt: endAt) {
+                    restEndAt = nil
+                }
+                .padding(.bottom, 4)
+                .background(.bar)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: restEndAt)
         .sheet(isPresented: $showingAddSet) {
             AddSetSheet(
                 session: session,
