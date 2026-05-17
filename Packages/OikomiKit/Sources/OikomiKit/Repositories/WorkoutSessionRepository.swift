@@ -17,14 +17,28 @@ public final class WorkoutSessionRepository {
     /// 新規セッションを開始して保存する。
     ///
     /// - Parameter routine: 紐付けたいルーティン。`markUsed` も同時に呼ばれる。
+    /// - Parameter startLiveActivity: true なら ActivityKit の Live Activity も同時起動（iOSのみ）。
     @discardableResult
-    public func startSession(at date: Date = Date(), routine: Routine? = nil) throws -> WorkoutSession {
+    public func startSession(
+        at date: Date = Date(),
+        routine: Routine? = nil,
+        startLiveActivity: Bool = true
+    ) throws -> WorkoutSession {
         let session = WorkoutSession(startedAt: date, routine: routine)
         context.insert(session)
         if let routine {
             routine.lastUsedAt = date
         }
         try context.save()
+
+        if startLiveActivity {
+            WorkoutActivityController.shared.start(
+                sessionId: session.id,
+                routineName: routine?.name,
+                startedAt: date,
+                setCount: 0
+            )
+        }
         return session
     }
 
@@ -66,6 +80,17 @@ public final class WorkoutSessionRepository {
         if !isWarmup {
             let prRepo = PersonalRecordRepository(context: context)
             _ = try? prRepo.updateIfNewBest(from: set)
+        }
+
+        // Live Activity の更新
+        Task { @MainActor in
+            await WorkoutActivityController.shared.update(
+                currentExerciseName: exercise.name,
+                setCount: session.sets?.count ?? 0,
+                restEndAt: exercise.defaultRestSeconds > 0
+                    ? completedAt.addingTimeInterval(TimeInterval(exercise.defaultRestSeconds))
+                    : nil
+            )
         }
 
         return set
@@ -118,6 +143,8 @@ public final class WorkoutSessionRepository {
                 // HealthKit 書き込み失敗はセッション保存自体には影響させない
             }
         }
+
+        await WorkoutActivityController.shared.end()
     }
 
     /// セッションを削除する（途中で破棄したい場合）。
