@@ -12,6 +12,10 @@ public final class Routine {
     @Relationship(deleteRule: .cascade, inverse: \RoutineExercise.routine)
     public var exercises: [RoutineExercise]? = []
 
+    /// このルーティンから開始されたセッション（逆参照）。CloudKit 互換のため双方向。
+    @Relationship(inverse: \WorkoutSession.routine)
+    public var sessions: [WorkoutSession]? = []
+
     public init(
         id: UUID = UUID(),
         name: String,

@@ -111,6 +111,25 @@ struct RoutineRepositoryTests {
         #expect(routine.lastUsedAt != nil)
     }
 
+    @Test("startSession with routine: lastUsedAtが更新されsession.routineが設定される")
+    func startSessionWithRoutine() throws {
+        let context = try Self.makeContext()
+        let exercises = try Self.seededExercises(in: context)
+        let routineRepo = RoutineRepository(context: context)
+        let sessionRepo = WorkoutSessionRepository(context: context)
+
+        let routine = try routineRepo.createRoutine(
+            name: "プッシュデー",
+            exercises: [exercises[0]]
+        )
+        #expect(routine.lastUsedAt == nil)
+
+        let session = try sessionRepo.startSession(routine: routine)
+        #expect(session.routine?.id == routine.id)
+        #expect(routine.lastUsedAt != nil)
+        #expect(routine.sessions?.count == 1)
+    }
+
     @Test("deleteRoutine: cascade で RoutineExercise も削除")
     func deleteRoutineCascades() throws {
         let context = try Self.makeContext()

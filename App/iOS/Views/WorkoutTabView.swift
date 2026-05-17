@@ -240,12 +240,8 @@ struct WorkoutTabView: View {
 
     private func startSession(from routine: Routine?) {
         let sessionRepo = WorkoutSessionRepository(context: modelContext)
-        let routineRepo = RoutineRepository(context: modelContext)
         do {
-            try sessionRepo.startSession()
-            if let routine {
-                try routineRepo.markUsed(routine)
-            }
+            try sessionRepo.startSession(routine: routine)
         } catch {
             errorMessage = "開始に失敗: \(error.localizedDescription)"
         }
@@ -269,18 +265,9 @@ struct WorkoutTabView: View {
         }
     }
 
-    /// 進行中セッションで使うルーティンの種目を推定する。
-    ///
-    /// 現状はシンプルに「直近で markUsed されたルーティン」（先頭）の種目を返す。
-    /// より厳密にはセッションにルーティン参照を持たせるべきだが、v0.1 ではこれで十分。
+    /// 進行中セッションに紐付けられたルーティンの種目を返す。
     private func currentRoutineExercises(for session: WorkoutSession) -> [Exercise] {
-        guard let lastUsedRoutine = routines.first(where: { $0.lastUsedAt != nil }),
-            let lastUsedAt = lastUsedRoutine.lastUsedAt,
-            // セッション開始の±10秒以内 = このセッション用のルーティン
-            abs(lastUsedAt.timeIntervalSince(session.startedAt)) < 10
-        else {
-            return []
-        }
-        return lastUsedRoutine.orderedExercises.compactMap(\.exercise)
+        guard let routine = session.routine else { return [] }
+        return routine.orderedExercises.compactMap(\.exercise)
     }
 }

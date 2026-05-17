@@ -13,6 +13,9 @@ public final class WorkoutSession {
 
     public var notes: String?
 
+    /// セッションを開始したルーティン（任意）。クイック追加や履歴分析で使う。
+    public var routine: Routine?
+
     @Relationship(deleteRule: .cascade, inverse: \SetRecord.session)
     public var sets: [SetRecord]? = []
 
@@ -25,6 +28,7 @@ public final class WorkoutSession {
         endedAt: Date? = nil,
         healthKitWorkoutUUID: UUID? = nil,
         notes: String? = nil,
+        routine: Routine? = nil,
         healthSnapshot: HealthSnapshot? = nil
     ) {
         self.id = id
@@ -32,6 +36,7 @@ public final class WorkoutSession {
         self.endedAt = endedAt
         self.healthKitWorkoutUUID = healthKitWorkoutUUID
         self.notes = notes
+        self.routine = routine
         self.healthSnapshot = healthSnapshot
     }
 }

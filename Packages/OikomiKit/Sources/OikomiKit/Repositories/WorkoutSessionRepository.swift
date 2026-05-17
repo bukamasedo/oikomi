@@ -15,10 +15,15 @@ public final class WorkoutSessionRepository {
     }
 
     /// 新規セッションを開始して保存する。
+    ///
+    /// - Parameter routine: 紐付けたいルーティン。`markUsed` も同時に呼ばれる。
     @discardableResult
-    public func startSession(at date: Date = Date()) throws -> WorkoutSession {
-        let session = WorkoutSession(startedAt: date)
+    public func startSession(at date: Date = Date(), routine: Routine? = nil) throws -> WorkoutSession {
+        let session = WorkoutSession(startedAt: date, routine: routine)
         context.insert(session)
+        if let routine {
+            routine.lastUsedAt = date
+        }
         try context.save()
         return session
     }
