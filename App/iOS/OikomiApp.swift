@@ -13,7 +13,8 @@ struct OikomiApp: App {
             self.sharedModelContainer = container
 
             // WatchConnectivity を起動（iPhone ↔ Watch リアルタイム同期）
-            WCSyncBridge.shared.activate()
+            // 受信時の upsert に使う ModelContext を毎回 mainContext から取得
+            WCSyncBridge.shared.activate { container.mainContext }
 
             // 初回起動時にシード種目を投入 + HealthKit 権限を要求
             Task { @MainActor in

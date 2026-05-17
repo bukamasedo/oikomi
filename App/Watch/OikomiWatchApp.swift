@@ -9,8 +9,9 @@ struct OikomiWatchApp: App {
 
     init() {
         do {
-            sharedModelContainer = try SharedModelContainer.bootstrap()
-            WCSyncBridge.shared.activate()
+            let container = try SharedModelContainer.bootstrap()
+            sharedModelContainer = container
+            WCSyncBridge.shared.activate { container.mainContext }
         } catch {
             fatalError("ModelContainer 初期化失敗: \(error)")
         }

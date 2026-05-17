@@ -19,8 +19,9 @@ struct WatchContentView: View {
                 }
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: WCSyncBridge.dataDidChangeNotification)) { _ in
-            modelContext.processPendingChanges()
+        .task {
+            // Watch 起動時に iPhone へ「進行中セッション + 全ルーティンを送って」を依頼
+            WCSyncBridge.shared.requestFullSync()
         }
     }
 }

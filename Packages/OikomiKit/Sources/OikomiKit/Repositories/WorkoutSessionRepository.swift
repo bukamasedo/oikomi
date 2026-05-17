@@ -42,7 +42,7 @@ public final class WorkoutSessionRepository {
             )
         }
 
-        WCSyncBridge.shared.notifyChange(kind: .sessionStarted)
+        WCSyncBridge.shared.sendSessionUpsert(session)
 
         if fetchHealthSnapshot {
             let sessionId = session.id
@@ -107,7 +107,7 @@ public final class WorkoutSessionRepository {
             _ = try? prRepo.updateIfNewBest(from: set)
         }
 
-        WCSyncBridge.shared.notifyChange(kind: .setRecorded)
+        WCSyncBridge.shared.sendSetUpsert(set)
 
         // Live Activity の更新（Live Activity が立ち上がっている時のみ）
         if WorkoutActivityController.shared.isActive {
@@ -177,7 +177,7 @@ public final class WorkoutSessionRepository {
         }
 
         await WorkoutActivityController.shared.end()
-        WCSyncBridge.shared.notifyChange(kind: .sessionFinished)
+        WCSyncBridge.shared.sendSessionUpsert(session)
     }
 
     /// セッションを削除する（途中で破棄したい場合）。

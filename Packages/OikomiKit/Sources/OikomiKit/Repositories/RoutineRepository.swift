@@ -33,7 +33,7 @@ public final class RoutineRepository {
             context.insert(entry)
         }
         try context.save()
-        WCSyncBridge.shared.notifyChange(kind: .routineChanged)
+        WCSyncBridge.shared.sendRoutineUpsert(routine)
         return routine
     }
 
@@ -57,6 +57,7 @@ public final class RoutineRepository {
         )
         context.insert(entry)
         try context.save()
+        WCSyncBridge.shared.sendRoutineUpsert(routine)
         return entry
     }
 
@@ -74,6 +75,7 @@ public final class RoutineRepository {
             entry.order -= 1
         }
         try context.save()
+        WCSyncBridge.shared.sendRoutineUpsert(routine)
     }
 
     /// ルーティン内の種目を任意順に並べ替える。
@@ -86,23 +88,28 @@ public final class RoutineRepository {
             byId[id]?.order = newIndex
         }
         try context.save()
+        WCSyncBridge.shared.sendRoutineUpsert(routine)
     }
 
     /// ルーティンの名前を変更する。
     public func renameRoutine(_ routine: Routine, to newName: String) throws {
         routine.name = newName
         try context.save()
+        WCSyncBridge.shared.sendRoutineUpsert(routine)
     }
 
     /// ルーティンを削除する。関連する `RoutineExercise` は cascade で削除される。
     public func deleteRoutine(_ routine: Routine) throws {
+        let id = routine.id
         context.delete(routine)
         try context.save()
+        WCSyncBridge.shared.sendRoutineDeleted(id)
     }
 
     /// セッション開始時に呼び出して、ルーティンの最終利用日時を更新する。
     public func markUsed(_ routine: Routine, at date: Date = Date()) throws {
         routine.lastUsedAt = date
         try context.save()
+        WCSyncBridge.shared.sendRoutineUpsert(routine)
     }
 }
