@@ -36,7 +36,10 @@ struct HomeView: View {
 
     private var coachingAdvice: [CoachingAdvice] {
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
-        return Array(Analytics.volumeAdvice(from: allSets).prefix(3))
+        let volume = Analytics.volumeAdvice(from: allSets)
+        let prPredictions = Analytics.prPredictions(sets: allSets, records: personalRecords)
+        // PR 予測（info）を先頭、ボリューム警告（warning）を続けて、合計 3 件まで
+        return Array((prPredictions + volume).prefix(3))
     }
 
     var body: some View {

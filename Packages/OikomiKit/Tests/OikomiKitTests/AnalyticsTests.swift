@@ -191,6 +191,57 @@ struct AnalyticsTests {
         #expect(advices.isEmpty)
     }
 
+    // MARK: - prPredictions
+
+    @Test("prPredictions: 直近セッションが PR の 95% 以上なら予測アドバイス")
+    func prPredictionFires() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let session = try repo.startSession()
+
+        // 過去 PR: 80kg × 8 = est 1RM 101.33
+        try repo.addSet(to: session, exercise: bench, weight: 80, reps: 8)
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        #expect(records.count == 1)
+
+        // 直近セッション: 79kg × 8 = est 1RM 100.07（PR の 98.7%）
+        let session2 = try repo.startSession()
+        try repo.addSet(to: session2, exercise: bench, weight: 79, reps: 8)
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let predictions = Analytics.prPredictions(sets: allSets, records: records)
+
+        #expect(!predictions.isEmpty)
+        #expect(predictions.first?.title.contains("PR") == true)
+    }
+
+    @Test("prPredictions: 直近セッションが PR から大きく落ちていれば出さない")
+    func prPredictionSkipsWhenFar() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+
+        // PR: 100kg × 5 = est 1RM 116.67
+        let s1 = try repo.startSession()
+        try repo.addSet(to: s1, exercise: bench, weight: 100, reps: 5)
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+
+        // 直近: 60kg × 5 = est 1RM 70（PR の 60%）
+        let s2 = try repo.startSession()
+        try repo.addSet(to: s2, exercise: bench, weight: 60, reps: 5)
+
+        // s1 のセットは除外して直近 only にしたいが、両方持ったまま prPredictions に渡しても
+        // 「最高値が PR の 95% 以上」の条件で評価される。PR は s1 由来 100kg-5rep、
+        // 直近セッションの max は 70 → ratio 60% で出さない（threshold 95%）
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+            .filter { $0.session?.id == s2.id }
+        let predictions = Analytics.prPredictions(sets: allSets, records: records)
+        #expect(predictions.isEmpty)
+    }
+
     @Test("currentWeekRange: 月曜開始の7日間 range")
     func weekRangeIsSevenDays() {
         let range = Analytics.currentWeekRange(calendar: Self.calendar)

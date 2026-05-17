@@ -122,6 +122,60 @@ public enum Analytics {
         return points
     }
 
+    /// 自己ベスト更新の可能性が高い種目について、コーチングアドバイスを生成する。
+    ///
+    /// 仕様書 §4.2.2 「PR 予測 — 直近5回の伸び率から推定」のシンプル実装。
+    /// 線形回帰の代わりに「直近 N セッションの最高 1RM が現 PR の 95% 以上」を閾値とする。
+    /// より高度な予測モデルは v1.1 以降で検討。
+    public static func prPredictions(
+        sets: [SetRecord],
+        records: [PersonalRecord],
+        sessionCount: Int = 3,
+        threshold: Double = 0.95,
+        calendar: Calendar = .current
+    ) -> [CoachingAdvice] {
+        var advices: [CoachingAdvice] = []
+
+        for pr in records {
+            guard let exercise = pr.exercise, pr.estimated1RM > 0 else { continue }
+            let exerciseId = exercise.id
+
+            // 種目別のセットを「セッション単位」にまとめて、各セッションの最高 1RM を取る
+            let exerciseSets = sets.filter { !$0.isWarmup && $0.exercise?.id == exerciseId }
+            let bySession = Dictionary(grouping: exerciseSets) { $0.session?.id ?? UUID() }
+            let sessionMaxes = bySession.values
+                .compactMap { setsInSession -> (date: Date, max: Double)? in
+                    let validRMs = setsInSession.compactMap(\.estimated1RM)
+                    guard let maxRM = validRMs.max(),
+                        let latest = setsInSession.map(\.completedAt).max()
+                    else {
+                        return nil
+                    }
+                    return (date: latest, max: maxRM)
+                }
+                .sorted { $0.date > $1.date }
+                .prefix(sessionCount)
+
+            guard let bestRecent = sessionMaxes.map(\.max).max(), bestRecent > 0 else { continue }
+            let ratio = bestRecent / pr.estimated1RM
+
+            // 既に PR を超えていれば（次回更新もう間近で予測価値あり）または閾値を超えていれば予測
+            if ratio >= threshold {
+                let predicted = max(pr.estimated1RM, bestRecent) * 1.025  // +2.5% を狙う
+                advices.append(
+                    CoachingAdvice(
+                        title: "PR 更新の可能性",
+                        message: "次回\(exercise.name)で推定 \(predicted.formatted(.number.precision(.fractionLength(1))))kg の PR を狙えます。",
+                        severity: .info,
+                        impact: predicted
+                    )
+                )
+            }
+        }
+
+        return advices.sorted { $0.impact > $1.impact }
+    }
+
     /// 指定種目の「最大挙上重量の日次推移」を返す。古い順。
     ///
     /// 種目別チャート用。同一日に複数セットあれば最大値を取る。ウォームアップは除外。
