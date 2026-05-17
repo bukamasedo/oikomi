@@ -8,6 +8,8 @@ struct AddSetSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     let session: WorkoutSession
+    /// 開く前に選択しておきたい種目（クイック追加から渡す）
+    var preselectedExercise: Exercise? = nil
 
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
 
@@ -69,7 +71,13 @@ struct AddSetSheet: View {
             }
         }
         .onAppear {
-            // 直前に記録した種目を自動選択
+            // 1. クイック追加から渡された種目を最優先
+            if selectedExercise == nil, let preselected = preselectedExercise {
+                selectedExercise = preselected
+                prefillFromLastUse(of: preselected)
+                return
+            }
+            // 2. 直前に記録した種目を自動選択
             if selectedExercise == nil,
                 let lastSetExercise = session.orderedSets.last?.exercise
             {
@@ -81,6 +89,18 @@ struct AddSetSheet: View {
                     reps = lastReps
                 }
             }
+        }
+    }
+
+    /// 同セッション内で同じ種目の直近セット値を埋める
+    private func prefillFromLastUse(of exercise: Exercise) {
+        let lastForExercise = session.orderedSets
+            .last { $0.exercise?.id == exercise.id }
+        if let lastWeight = lastForExercise?.weight {
+            weight = lastWeight
+        }
+        if let lastReps = lastForExercise?.reps {
+            reps = lastReps
         }
     }
 
