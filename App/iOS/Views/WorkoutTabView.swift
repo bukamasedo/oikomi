@@ -17,6 +17,7 @@ struct WorkoutTabView: View {
     @State private var showingNewRoutine = false
     @State private var editingRoutine: Routine?
     @State private var errorMessage: String?
+    @State private var restEndAt: Date?
 
     private var activeSession: WorkoutSession? { activeSessions.first }
 
@@ -176,6 +177,12 @@ struct WorkoutTabView: View {
             }
 
             VStack(spacing: 12) {
+                if let endAt = restEndAt {
+                    RestTimerBanner(endAt: endAt) {
+                        restEndAt = nil
+                    }
+                }
+
                 Button {
                     preselectedExercise = nil
                     showingAddSet = true
@@ -200,8 +207,21 @@ struct WorkoutTabView: View {
             .padding(.bottom, 8)
         }
         .sheet(isPresented: $showingAddSet) {
-            AddSetSheet(session: session, preselectedExercise: preselectedExercise)
+            AddSetSheet(
+                session: session,
+                preselectedExercise: preselectedExercise,
+                onSaved: handleSetSaved
+            )
         }
+    }
+
+    /// セット保存後にレストタイマーを起動する。
+    private func handleSetSaved(_ set: SetRecord) {
+        guard let rest = set.exercise?.defaultRestSeconds, rest > 0 else {
+            restEndAt = nil
+            return
+        }
+        restEndAt = Date().addingTimeInterval(TimeInterval(rest))
     }
 
     @ViewBuilder

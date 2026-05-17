@@ -10,6 +10,8 @@ struct AddSetSheet: View {
     let session: WorkoutSession
     /// 開く前に選択しておきたい種目（クイック追加から渡す）
     var preselectedExercise: Exercise? = nil
+    /// 保存成功時に呼ばれる。レストタイマー起動などに使う。
+    var onSaved: ((SetRecord) -> Void)? = nil
 
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
 
@@ -109,12 +111,13 @@ struct AddSetSheet: View {
         let repo = WorkoutSessionRepository(context: modelContext)
         do {
             let useBodyweight = exercise.measurementType == .bodyweightReps
-            try repo.addSet(
+            let saved = try repo.addSet(
                 to: session,
                 exercise: exercise,
                 weight: useBodyweight ? nil : weight,
                 reps: reps
             )
+            onSaved?(saved)
             dismiss()
         } catch {
             errorMessage = "保存に失敗: \(error.localizedDescription)"
