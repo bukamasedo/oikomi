@@ -61,6 +61,13 @@ public final class WorkoutSessionRepository {
         )
         context.insert(set)
         try context.save()
+
+        // ウォームアップでない限り、自己ベスト更新を試みる
+        if !isWarmup {
+            let prRepo = PersonalRecordRepository(context: context)
+            _ = try? prRepo.updateIfNewBest(from: set)
+        }
+
         return set
     }
 
