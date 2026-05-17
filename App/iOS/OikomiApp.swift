@@ -18,13 +18,19 @@ struct OikomiApp: App {
             let container = try ModelContainer(for: schema, configurations: [configuration])
             self.sharedModelContainer = container
 
-            // 初回起動時にシード種目を投入
+            // 初回起動時にシード種目を投入 + HealthKit 権限を要求
             Task { @MainActor in
                 let repo = ExerciseRepository(context: container.mainContext)
                 do {
                     try repo.seedIfNeeded()
                 } catch {
                     print("シード投入失敗: \(error)")
+                }
+                do {
+                    try await HealthStore.shared.requestWorkoutWriteAuthorization()
+                } catch {
+                    // 拒否されても基本機能は動く設計
+                    print("HealthKit 権限取得スキップ: \(error)")
                 }
             }
         } catch {

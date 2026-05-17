@@ -47,7 +47,7 @@ struct RepositoryTests {
     }
 
     @Test("startSession + addSet + finishSession の一連")
-    func workoutFlow() throws {
+    func workoutFlow() async throws {
         let context = try Self.makeContext()
         let exerciseRepo = ExerciseRepository(context: context)
         let sessionRepo = WorkoutSessionRepository(context: context)
@@ -63,7 +63,7 @@ struct RepositoryTests {
         _ = try sessionRepo.addSet(to: session, exercise: bench, weight: 80, reps: 7)
         _ = try sessionRepo.addSet(to: session, exercise: bench, weight: 80, reps: 6)
 
-        try sessionRepo.finishSession(session)
+        try await sessionRepo.finishSession(session, writeToHealthKit: false)
 
         let stored = try context.fetch(FetchDescriptor<WorkoutSession>())
         #expect(stored.count == 1)
@@ -106,7 +106,7 @@ struct RepositoryTests {
     }
 
     @Test("startSessionByCopying: ルーティンと全セットを複製")
-    func copySession() throws {
+    func copySession() async throws {
         let context = try Self.makeContext()
         let exerciseRepo = ExerciseRepository(context: context)
         let routineRepo = RoutineRepository(context: context)
@@ -122,7 +122,7 @@ struct RepositoryTests {
         try sessionRepo.addSet(to: source, exercise: bench, weight: 80, reps: 8)
         try sessionRepo.addSet(to: source, exercise: bench, weight: 80, reps: 7)
         try sessionRepo.addSet(to: source, exercise: squat, weight: 100, reps: 5)
-        try sessionRepo.finishSession(source)
+        try await sessionRepo.finishSession(source, writeToHealthKit: false)
 
         let copied = try sessionRepo.startSessionByCopying(source)
 

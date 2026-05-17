@@ -269,10 +269,13 @@ struct WorkoutTabView: View {
 
     private func finishSession(_ session: WorkoutSession) {
         let repo = WorkoutSessionRepository(context: modelContext)
-        do {
-            try repo.finishSession(session)
-        } catch {
-            errorMessage = "終了に失敗: \(error.localizedDescription)"
+        Task { @MainActor in
+            do {
+                try await repo.finishSession(session)
+                restEndAt = nil
+            } catch {
+                errorMessage = "終了に失敗: \(error.localizedDescription)"
+            }
         }
     }
 

@@ -52,6 +52,15 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         UIRequiredDeviceCapabilities:
           - arm64
+    entitlements:
+      path: App/iOS/Oikomi.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.shuhirouchi.oikomi
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shuhirouchi.oikomi

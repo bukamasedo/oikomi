@@ -98,9 +98,26 @@ public final class WorkoutSessionRepository {
     }
 
     /// セッションを終了し、終了時刻を記録する。
-    public func finishSession(_ session: WorkoutSession, at date: Date = Date()) throws {
+    ///
+    /// `writeToHealthKit` が true なら HKWorkout として書き込みも試みる（権限拒否時は無視）。
+    public func finishSession(
+        _ session: WorkoutSession,
+        at date: Date = Date(),
+        writeToHealthKit: Bool = true
+    ) async throws {
         session.endedAt = date
         try context.save()
+
+        if writeToHealthKit {
+            do {
+                if let uuid = try await HealthStore.shared.saveWorkout(session) {
+                    session.healthKitWorkoutUUID = uuid
+                    try context.save()
+                }
+            } catch {
+                // HealthKit 書き込み失敗はセッション保存自体には影響させない
+            }
+        }
     }
 
     /// セッションを削除する（途中で破棄したい場合）。
