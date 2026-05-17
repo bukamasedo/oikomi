@@ -11,6 +11,20 @@ struct HistoryView: View {
     )
     private var sessions: [WorkoutSession]
 
+    @State private var selectedDate: Date?
+
+    private let calendar = Calendar.current
+
+    private var activeDates: Set<Date> {
+        Set(sessions.map { calendar.startOfDay(for: $0.startedAt) })
+    }
+
+    private var filteredSessions: [WorkoutSession] {
+        guard let selectedDate else { return sessions }
+        let day = calendar.startOfDay(for: selectedDate)
+        return sessions.filter { calendar.isDate($0.startedAt, inSameDayAs: day) }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -22,19 +36,48 @@ struct HistoryView: View {
                     )
                 } else {
                     List {
-                        ForEach(sessions) { session in
-                            NavigationLink(value: session) {
-                                sessionRow(session)
+                        Section {
+                            HistoryCalendarView(activeDates: activeDates, selectedDate: $selectedDate)
+                                .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+                        }
+
+                        Section(sessionsSectionTitle) {
+                            if filteredSessions.isEmpty {
+                                Text("この日の記録はありません")
+                                    .foregroundStyle(.secondary)
+                                    .font(.callout)
+                            } else {
+                                ForEach(filteredSessions) { session in
+                                    NavigationLink(value: session) {
+                                        sessionRow(session)
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
             .navigationTitle("履歴")
+            .toolbar {
+                if selectedDate != nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("すべて表示") {
+                            selectedDate = nil
+                        }
+                    }
+                }
+            }
             .navigationDestination(for: WorkoutSession.self) { session in
                 SessionDetailView(session: session)
             }
         }
+    }
+
+    private var sessionsSectionTitle: String {
+        if let selectedDate {
+            return selectedDate.formatted(date: .long, time: .omitted) + " のセッション"
+        }
+        return "全セッション (\(sessions.count))"
     }
 
     @ViewBuilder
@@ -58,6 +101,13 @@ struct HistoryView: View {
                     Label(formatDuration(duration), systemImage: "clock")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                if let routine = session.routine {
+                    Label(routine.name, systemImage: "list.bullet.clipboard")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
         }
