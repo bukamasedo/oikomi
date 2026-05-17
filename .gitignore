@@ -1,0 +1,56 @@
+# Xcode
+*.xcodeproj
+xcuserdata/
+DerivedData/
+*.xcuserstate
+*.xcworkspace
+build/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+Packages/*/.build/
+Packages/*/Package.resolved
+Package.resolved
+.swiftpm/
+
+# CocoaPods (使わない方針だが念のため)
+Pods/
+
+# Carthage (使わない方針だが念のため)
+Carthage/Build/
+
+# fastlane (使わない方針だが念のため)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Claude Code（ローカル個別設定のみ無視。共有設定は追跡）
+.claude/settings.local.json
+
+# 仕様書のドラフト・スクラッチ
+docs/drafts/
+scratch/
+
+# 環境変数 / シークレット
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+
+# IDE
+.idea/
+.vscode/
+*.swp
