@@ -11,6 +11,12 @@ struct ContentView: View {
 
             HistoryView()
                 .tabItem { Label("履歴", systemImage: "calendar") }
+
+            AnalysisTabView()
+                .tabItem { Label("分析", systemImage: "chart.xyaxis.line") }
+
+            SettingsTabView()
+                .tabItem { Label("設定", systemImage: "gearshape") }
         }
     }
 }

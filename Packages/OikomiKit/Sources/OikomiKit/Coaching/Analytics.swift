@@ -94,6 +94,56 @@ public enum Analytics {
         return start...end
     }
 
+    /// 直近 N 週分の週次ボリューム時系列を返す。古い順。
+    ///
+    /// グラフ表示用。各週は月曜開始でグループ化される。
+    public static func weeklyVolumeSeries(
+        sets: [SetRecord],
+        weeks: Int = 8,
+        referenceDate: Date = Date(),
+        calendar: Calendar = .current
+    ) -> [WeeklyVolumePoint] {
+        let thisWeek = currentWeekRange(referenceDate: referenceDate, calendar: calendar)
+        var points: [WeeklyVolumePoint] = []
+        for offset in (0..<weeks).reversed() {
+            let start = calendar.date(byAdding: .day, value: -7 * offset, to: thisWeek.lowerBound)!
+            let end = calendar.date(byAdding: .day, value: -7 * offset, to: thisWeek.upperBound)!
+            let range = start...end
+            let byGroup = volumeByMuscleGroup(sets: sets, in: range)
+            let total = byGroup.values.reduce(0, +)
+            points.append(
+                WeeklyVolumePoint(
+                    weekStart: start,
+                    total: total,
+                    byMuscleGroup: byGroup
+                )
+            )
+        }
+        return points
+    }
+
+    /// 指定種目の「最大挙上重量の日次推移」を返す。古い順。
+    ///
+    /// 種目別チャート用。同一日に複数セットあれば最大値を取る。ウォームアップは除外。
+    public static func maxWeightSeries(
+        sets: [SetRecord],
+        forExerciseId exerciseId: UUID,
+        calendar: Calendar = .current
+    ) -> [DateWeightPoint] {
+        let filtered = sets.filter { set in
+            !set.isWarmup
+                && set.exercise?.id == exerciseId
+                && (set.weight ?? 0) > 0
+        }
+        let grouped = Dictionary(grouping: filtered) { calendar.startOfDay(for: $0.completedAt) }
+        return grouped
+            .compactMap { (date, sets) -> DateWeightPoint? in
+                let maxWeight = sets.compactMap(\.weight).max() ?? 0
+                return DateWeightPoint(date: date, weight: maxWeight)
+            }
+            .sorted { $0.date < $1.date }
+    }
+
     /// 先週比ボリューム変動から警告/称賛アドバイスを生成する。
     ///
     /// 仕様書 §4.2.2 のボリューム警告ロジック：
@@ -173,6 +223,32 @@ public enum Analytics {
         }
 
         return advices.sorted { $0.impact > $1.impact }
+    }
+}
+
+/// 1週間分の集計データポイント。
+public struct WeeklyVolumePoint: Sendable, Identifiable, Hashable {
+    public var id: Date { weekStart }
+    public let weekStart: Date
+    public let total: Double
+    public let byMuscleGroup: [MuscleGroup: Double]
+
+    public init(weekStart: Date, total: Double, byMuscleGroup: [MuscleGroup: Double]) {
+        self.weekStart = weekStart
+        self.total = total
+        self.byMuscleGroup = byMuscleGroup
+    }
+}
+
+/// 日次重量データポイント。
+public struct DateWeightPoint: Sendable, Identifiable, Hashable {
+    public var id: Date { date }
+    public let date: Date
+    public let weight: Double
+
+    public init(date: Date, weight: Double) {
+        self.date = date
+        self.weight = weight
     }
 }
 
