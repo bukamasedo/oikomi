@@ -28,7 +28,7 @@ struct RepositoryTests {
 
         let exercises = try context.fetch(FetchDescriptor<Exercise>())
         #expect(exercises.count == SeedData.starterExercises.count)
-        #expect(exercises.count >= 30)  // v0.1 で 30 種目以上
+        #expect(exercises.count >= 80)  // 100 種目への道のりで 80 確保
         #expect(exercises.contains { $0.name == "ベンチプレス" })
         #expect(exercises.contains { $0.name == "スクワット" })
         #expect(exercises.contains { $0.name == "プランク" })  // 時間計測種目
