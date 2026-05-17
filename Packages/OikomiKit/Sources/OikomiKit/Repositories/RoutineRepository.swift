@@ -33,6 +33,7 @@ public final class RoutineRepository {
             context.insert(entry)
         }
         try context.save()
+        WCSyncBridge.shared.notifyChange(kind: .routineChanged)
         return routine
     }
 

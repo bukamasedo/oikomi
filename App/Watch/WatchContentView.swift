@@ -4,6 +4,8 @@ import OikomiKit
 
 struct WatchContentView: View {
 
+    @Environment(\.modelContext) private var modelContext
+
     @Query(filter: #Predicate<WorkoutSession> { $0.endedAt == nil })
     private var activeSessions: [WorkoutSession]
 
@@ -16,6 +18,9 @@ struct WatchContentView: View {
                     WatchHomeView()
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: WCSyncBridge.dataDidChangeNotification)) { _ in
+            modelContext.processPendingChanges()
         }
     }
 }

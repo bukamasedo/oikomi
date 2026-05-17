@@ -12,6 +12,9 @@ struct OikomiApp: App {
             let container = try SharedModelContainer.bootstrap()
             self.sharedModelContainer = container
 
+            // WatchConnectivity を起動（iPhone ↔ Watch リアルタイム同期）
+            WCSyncBridge.shared.activate()
+
             // 初回起動時にシード種目を投入 + HealthKit 権限を要求
             Task { @MainActor in
                 let repo = ExerciseRepository(context: container.mainContext)

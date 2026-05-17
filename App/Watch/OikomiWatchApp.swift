@@ -10,6 +10,7 @@ struct OikomiWatchApp: App {
     init() {
         do {
             sharedModelContainer = try SharedModelContainer.bootstrap()
+            WCSyncBridge.shared.activate()
         } catch {
             fatalError("ModelContainer 初期化失敗: \(error)")
         }
