@@ -1,34 +1,301 @@
+import SwiftData
 import SwiftUI
+import OikomiKit
 
+/// アプリ設定タブ。
+///
+/// 仕様書§7.1: HealthKit / 通知 / 課金 / ジム自宅モード切替 / アカウント
+/// v0.1 では HealthKit 状態 / 場所モード / オンボーディング再表示 / データリセット / Pro 導線 を提供。
 struct SettingsTabView: View {
+
+    @Environment(\.modelContext) private var modelContext
+
+    @AppStorage("OikomiPreferredLocation") private var preferredLocationRaw: String = Location.gym.rawValue
+    @State private var showResetConfirm = false
+    @State private var showProSheet = false
+    @State private var showOnboarding = false
+    @State private var errorMessage: String?
+
     var body: some View {
         NavigationStack {
             List {
-                Section("アプリ") {
-                    LabeledContent("バージョン") {
-                        Text("0.1.0")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Section("今後実装予定") {
-                    Label("HealthKit 連携", systemImage: "heart.text.square")
-                        .foregroundStyle(.secondary)
-                    Label("通知設定", systemImage: "bell")
-                        .foregroundStyle(.secondary)
-                    Label("iCloud 同期", systemImage: "icloud")
-                        .foregroundStyle(.secondary)
-                    Label("Pro へアップグレード", systemImage: "star")
-                        .foregroundStyle(.secondary)
-                }
-
-                Section {
-                    Text("Oikomi は開発中です。仕様書は docs/SPEC.md を参照してください。")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
+                proSection
+                preferenceSection
+                healthKitSection
+                dataSection
+                aboutSection
             }
             .navigationTitle("設定")
+            .alert("エラー", isPresented: .constant(errorMessage != nil)) {
+                Button("OK") { errorMessage = nil }
+            } message: {
+                Text(errorMessage ?? "")
+            }
+            .confirmationDialog(
+                "全データを削除しますか？",
+                isPresented: $showResetConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("全て削除", role: .destructive) { resetAllData() }
+                Button("キャンセル", role: .cancel) {}
+            } message: {
+                Text("セッション・PR・ルーティン・カスタム種目をすべて削除します。シード種目は再投入されます。")
+            }
+            .sheet(isPresented: $showProSheet) {
+                ProUpgradeSheet()
+            }
+            .fullScreenCover(isPresented: $showOnboarding) {
+                OnboardingView(isPresented: $showOnboarding)
+            }
+        }
+    }
+
+    // MARK: - Sections
+
+    @ViewBuilder
+    private var proSection: some View {
+        Section {
+            Button {
+                showProSheet = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "star.circle.fill")
+                        .font(.title)
+                        .foregroundStyle(.yellow)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Pro にアップグレード")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        Text("AIコーチング / Live Activity / マルチデバイス同期")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder
+    private var preferenceSection: some View {
+        Section("環境") {
+            Picker(selection: $preferredLocationRaw) {
+                Text("ジム").tag(Location.gym.rawValue)
+                Text("自宅").tag(Location.home.rawValue)
+            } label: {
+                Label("トレーニング場所", systemImage: "location")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var healthKitSection: some View {
+        Section("ヘルスケア") {
+            NavigationLink {
+                HealthKitDetailView()
+            } label: {
+                Label("HealthKit 連携", systemImage: "heart.text.square")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var dataSection: some View {
+        Section("データ") {
+            Button {
+                showOnboarding = true
+            } label: {
+                Label("オンボーディングを再表示", systemImage: "play.circle")
+            }
+            Button(role: .destructive) {
+                showResetConfirm = true
+            } label: {
+                Label("すべてのデータを削除", systemImage: "trash")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var aboutSection: some View {
+        Section("情報") {
+            LabeledContent("バージョン") {
+                Text("0.1.0")
+                    .foregroundStyle(.secondary)
+            }
+            LabeledContent("OikomiKit") {
+                Text(OikomiKit.version)
+                    .foregroundStyle(.secondary)
+                    .font(.callout.monospaced())
+            }
+        }
+    }
+
+    // MARK: - Actions
+
+    private func resetAllData() {
+        do {
+            // SwiftData の Cascade に任せて全消し
+            try modelContext.delete(model: WorkoutSession.self)
+            try modelContext.delete(model: SetRecord.self)
+            try modelContext.delete(model: Routine.self)
+            try modelContext.delete(model: RoutineExercise.self)
+            try modelContext.delete(model: PersonalRecord.self)
+            try modelContext.delete(model: HealthSnapshot.self)
+            try modelContext.delete(model: Exercise.self)
+            try modelContext.save()
+            // シード再投入
+            try ExerciseRepository(context: modelContext).seedIfNeeded()
+        } catch {
+            errorMessage = "リセット失敗: \(error.localizedDescription)"
+        }
+    }
+}
+
+// MARK: - HealthKit Detail
+
+private struct HealthKitDetailView: View {
+
+    @State private var isAvailable = false
+    @State private var didRequest = false
+
+    var body: some View {
+        List {
+            Section {
+                LabeledContent("デバイス対応") {
+                    Text(isAvailable ? "利用可能" : "未対応")
+                        .foregroundStyle(isAvailable ? .green : .secondary)
+                }
+            } footer: {
+                Text("HealthKit のデータ読み取りは Pro 機能で、HRV や睡眠スコアからトレーニング負荷を最適化します。書き込みは Free でも有効です。")
+            }
+
+            Section {
+                Button {
+                    Task { @MainActor in
+                        try? await HealthStore.shared.requestWorkoutWriteAuthorization()
+                        didRequest = true
+                    }
+                } label: {
+                    Label("権限を再リクエスト", systemImage: "arrow.clockwise")
+                }
+            } footer: {
+                if didRequest {
+                    Text("リクエストを送信しました。詳細はヘルスケアアプリ→プロフィール→Apple Health 接続中のApp→Oikomi で確認できます。")
+                }
+            }
+        }
+        .navigationTitle("HealthKit 連携")
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            isAvailable = await HealthStore.shared.isAvailable
+        }
+    }
+}
+
+// MARK: - Pro Sheet
+
+private struct ProUpgradeSheet: View {
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 28) {
+                    VStack(spacing: 8) {
+                        Image(systemName: "star.circle.fill")
+                            .font(.system(size: 56))
+                            .foregroundStyle(.yellow)
+                        Text("Oikomi Pro")
+                            .font(.largeTitle.weight(.bold))
+                        Text("14 日間無料でお試し")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.top, 24)
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        ProBullet(title: "AIコーチング", detail: "ディロード推奨・PR予測・ボリューム警告")
+                        ProBullet(title: "Live Activity / Dynamic Island", detail: "ロック画面とアイランドに常時表示")
+                        ProBullet(title: "HealthKit 詳細読み取り", detail: "HRV・睡眠で負荷を自動調整")
+                        ProBullet(title: "iCloud 同期", detail: "iPhone・Watch・Mac でデータ共有")
+                        ProBullet(title: "Family Sharing", detail: "最大 6 名で利用可能")
+                        ProBullet(title: "ルーティン・カスタム種目 無制限", detail: "Free は 3 / 5 まで")
+                    }
+                    .padding(.horizontal, 24)
+
+                    VStack(spacing: 12) {
+                        priceRow(label: "年額プラン", price: "¥5,800 / 年", note: "実質 ¥483/月（月額比 38% オフ）", isHighlighted: true)
+                        priceRow(label: "月額プラン", price: "¥780 / 月", note: nil, isHighlighted: false)
+                    }
+                    .padding(.horizontal, 24)
+
+                    Text("StoreKit 2 統合は v1.0 ローンチ前に実装予定です。")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+
+                    Spacer()
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func priceRow(label: String, price: String, note: String?, isHighlighted: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .font(.headline)
+                Spacer()
+                Text(price)
+                    .font(.headline.monospacedDigit())
+            }
+            if let note {
+                Text(note)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isHighlighted ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(isHighlighted ? Color.accentColor : .clear, lineWidth: 1)
+        )
+    }
+}
+
+private struct ProBullet: View {
+    let title: String
+    let detail: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "checkmark.seal.fill")
+                .foregroundStyle(.green)
+                .font(.title3)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.headline)
+                Text(detail)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }
