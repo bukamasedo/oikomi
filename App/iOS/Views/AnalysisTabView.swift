@@ -60,6 +60,9 @@ struct AnalysisTabView: View {
                     selectedExercise = picked
                 }
             }
+            .navigationDestination(for: Exercise.self) { exercise in
+                ExerciseDetailView(exercise: exercise)
+            }
         }
     }
 
@@ -151,24 +154,35 @@ struct AnalysisTabView: View {
                     .font(.callout)
             } else {
                 ForEach(personalRecords) { pr in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(pr.exercise?.name ?? "（種目不明）")
-                                .font(.body)
-                            Text(pr.achievedAt, style: .date)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                    if let exercise = pr.exercise {
+                        NavigationLink(value: exercise) {
+                            prRow(pr)
                         }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("\(pr.weight.formatted())kg × \(pr.reps)")
-                                .font(.body.monospacedDigit())
-                            Text("推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1))))kg")
-                                .font(.caption2.monospacedDigit())
-                                .foregroundStyle(.tertiary)
-                        }
+                    } else {
+                        prRow(pr)
                     }
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func prRow(_ pr: PersonalRecord) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(pr.exercise?.name ?? "（種目不明）")
+                    .font(.body)
+                Text(pr.achievedAt, style: .date)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(pr.weight.formatted())kg × \(pr.reps)")
+                    .font(.body.monospacedDigit())
+                Text("推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1))))kg")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.tertiary)
             }
         }
     }
