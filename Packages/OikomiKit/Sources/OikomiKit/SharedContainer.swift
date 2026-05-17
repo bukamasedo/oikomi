@@ -36,7 +36,17 @@ public enum SharedModelContainer {
             return existing
         }
         let schema = Schema(OikomiKit.schemaModels)
-        let wantCloudKit = UserDefaults.standard.object(forKey: cloudKitEnabledKey) as? Bool ?? true
+
+        // watchOS は CloudKit のサイレントプッシュ用 background mode を扱えず、
+        // 起動時に "BUG IN CLIENT OF CLOUDKIT" assertion で停止する。
+        // Watch は WCSession 経由で iPhone と即時同期し、iPhone が CloudKit へ
+        // 書き込むことで他デバイスへ伝播する分業構成にする。
+        #if os(watchOS)
+        let defaultEnabled = false
+        #else
+        let defaultEnabled = true
+        #endif
+        let wantCloudKit = UserDefaults.standard.object(forKey: cloudKitEnabledKey) as? Bool ?? defaultEnabled
 
         if wantCloudKit && !isStoredInMemoryOnly {
             // まず CloudKit 有効で試す

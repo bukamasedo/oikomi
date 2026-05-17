@@ -115,8 +115,6 @@ targets:
         WKRunsIndependentlyOfCompanionApp: true
         WKCompanionAppBundleIdentifier: com.shuhirouchi.oikomi
         WKSupportsLiveActivities: true
-        WKBackgroundModes:
-          - remote-notification
         NSHealthShareUsageDescription: "HRV・睡眠・心拍データを使ってトレーニング負荷を最適化します"
         NSHealthUpdateUsageDescription: "ワークアウト記録をヘルスケアに保存します"
     entitlements:
@@ -124,10 +122,6 @@ targets:
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
-        com.apple.developer.icloud-services:
-          - CloudKit
-        com.apple.developer.icloud-container-identifiers:
-          - iCloud.com.shuhirouchi.oikomi
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shuhirouchi.oikomi.watchkitapp
