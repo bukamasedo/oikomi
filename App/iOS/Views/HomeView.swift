@@ -36,10 +36,11 @@ struct HomeView: View {
 
     private var coachingAdvice: [CoachingAdvice] {
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
+        let deload = Analytics.deloadAdvice(sessions: completedSessions, sets: allSets)
         let volume = Analytics.volumeAdvice(from: allSets)
         let prPredictions = Analytics.prPredictions(sets: allSets, records: personalRecords)
-        // PR 予測（info）を先頭、ボリューム警告（warning）を続けて、合計 3 件まで
-        return Array((prPredictions + volume).prefix(3))
+        // 緊急度: ディロード警告 → PR 予測（info）→ ボリューム警告。合計 3 件まで
+        return Array((deload + prPredictions + volume).prefix(3))
     }
 
     var body: some View {

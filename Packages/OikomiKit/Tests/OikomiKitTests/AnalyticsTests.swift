@@ -191,6 +191,51 @@ struct AnalyticsTests {
         #expect(advices.isEmpty)
     }
 
+    // MARK: - deloadAdvice
+
+    @Test("deloadAdvice: 連続5日トレで警告")
+    func deloadConsecutive5Days() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+
+        let cal = Self.calendar
+        let now = Date()
+
+        // 直近 5 日（今日含む）に各 1 セッション、すべて完了済み
+        for offset in 0..<5 {
+            let date = cal.date(byAdding: .day, value: -offset, to: now)!
+            let s = try repo.startSession(at: date)
+            try repo.addSet(to: s, exercise: bench, weight: 60, reps: 5, completedAt: date)
+            s.endedAt = date
+        }
+
+        let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+        let sets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.deloadAdvice(sessions: sessions, sets: sets, referenceDate: now, calendar: cal)
+
+        #expect(advices.contains { $0.title.contains("休息") })
+    }
+
+    @Test("deloadAdvice: 1日トレだけなら警告出さない")
+    func deloadSingleDay() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+
+        let s = try repo.startSession()
+        try repo.addSet(to: s, exercise: bench, weight: 60, reps: 5)
+        s.endedAt = Date()
+
+        let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+        let sets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.deloadAdvice(sessions: sessions, sets: sets, calendar: Self.calendar)
+
+        #expect(!advices.contains { $0.title.contains("休息") })
+    }
+
     // MARK: - prPredictions
 
     @Test("prPredictions: 直近セッションが PR の 95% 以上なら予測アドバイス")

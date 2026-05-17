@@ -122,6 +122,77 @@ public enum Analytics {
         return points
     }
 
+    /// ディロード（休息）推奨アドバイスを生成する。
+    ///
+    /// 仕様書 §4.2.2 のディロード推奨の v0.1 簡易版。HRV ベースの本格判定は v1.1 で追加予定。
+    /// 現状は「連続トレ日数」と「直近4週の週ボリュームの増加率」をシグナルにする：
+    /// - 連続 5 日以上トレーニング → 休息提案
+    /// - 直近1週のボリュームが過去3週平均の 130% 以上 → ディロード提案
+    public static func deloadAdvice(
+        sessions: [WorkoutSession],
+        sets: [SetRecord],
+        referenceDate: Date = Date(),
+        calendar: Calendar = .current
+    ) -> [CoachingAdvice] {
+        var advices: [CoachingAdvice] = []
+
+        // 1) 連続トレ日数
+        let activeDates = Set(
+            sessions
+                .filter { $0.endedAt != nil }
+                .map { calendar.startOfDay(for: $0.startedAt) }
+        )
+        var consecutive = 0
+        var cursor = calendar.startOfDay(for: referenceDate)
+        while activeDates.contains(cursor) {
+            consecutive += 1
+            guard let prev = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = prev
+        }
+        if consecutive >= 5 {
+            advices.append(
+                CoachingAdvice(
+                    title: "休息日を入れましょう",
+                    message: "\(consecutive) 日連続でトレーニングしています。回復のために 1 日空けることも検討してください。",
+                    severity: .warning,
+                    impact: Double(consecutive) * 1000
+                )
+            )
+        }
+
+        // 2) 直近1週 vs 過去3週平均の総ボリューム比較
+        let thisWeek = currentWeekRange(referenceDate: referenceDate, calendar: calendar)
+        let thisVolume = volumeByMuscleGroup(sets: sets, in: thisWeek).values.reduce(0, +)
+
+        var priorAvg = 0.0
+        var validWeeks = 0
+        for weekOffset in 1...3 {
+            let start = calendar.date(byAdding: .day, value: -7 * weekOffset, to: thisWeek.lowerBound)!
+            let end = calendar.date(byAdding: .day, value: -7 * weekOffset, to: thisWeek.upperBound)!
+            let v = volumeByMuscleGroup(sets: sets, in: start...end).values.reduce(0, +)
+            if v > 0 {
+                priorAvg += v
+                validWeeks += 1
+            }
+        }
+        if validWeeks >= 2 {
+            priorAvg /= Double(validWeeks)
+            if thisVolume > priorAvg * 1.3 && priorAvg > 1000 {
+                let percent = Int((thisVolume / priorAvg * 100).rounded())
+                advices.append(
+                    CoachingAdvice(
+                        title: "ディロード推奨",
+                        message: "今週の総ボリュームが過去3週平均の \(percent)% です。来週は強度を 80% 程度に落とすことを検討してください。",
+                        severity: .warning,
+                        impact: thisVolume - priorAvg
+                    )
+                )
+            }
+        }
+
+        return advices.sorted { $0.impact > $1.impact }
+    }
+
     /// 自己ベスト更新の可能性が高い種目について、コーチングアドバイスを生成する。
     ///
     /// 仕様書 §4.2.2 「PR 予測 — 直近5回の伸び率から推定」のシンプル実装。
