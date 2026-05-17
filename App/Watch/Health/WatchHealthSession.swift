@@ -16,17 +16,27 @@ final class WatchHealthSession {
     func start() async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
 
+        // 権限取得を先に試行。実機での署名済みビルドのみ通る。シミュレータの
+        // CODE_SIGNING_ALLOWED=NO ビルドではエンタイトルメント不在で失敗する。
+        do {
+            try await store.requestAuthorization(
+                toShare: [HKObjectType.workoutType()],
+                read: []
+            )
+        } catch {
+            // 権限取得失敗（エンタイトルメント不在等）→ HKWorkoutSession も作れないので早期 return
+            return
+        }
+
+        // workoutType の書き込み権限が実際に得られているか確認
+        let status = store.authorizationStatus(for: .workoutType())
+        guard status == .sharingAuthorized else { return }
+
         let config = HKWorkoutConfiguration()
         config.activityType = .traditionalStrengthTraining
         config.locationType = .indoor
 
         do {
-            // 権限がまだなら取得
-            try await store.requestAuthorization(
-                toShare: [HKObjectType.workoutType()],
-                read: []
-            )
-
             let session = try HKWorkoutSession(healthStore: store, configuration: config)
             let builder = session.associatedWorkoutBuilder()
             builder.dataSource = HKLiveWorkoutDataSource(
@@ -40,7 +50,7 @@ final class WatchHealthSession {
             self.session = session
             self.builder = builder
         } catch {
-            // 権限拒否 or セッション開始失敗：黙って受け流す
+            // セッション開始失敗：黙って受け流す
         }
     }
 

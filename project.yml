@@ -45,6 +45,9 @@ targets:
         NSHealthUpdateUsageDescription: "ワークアウト記録をヘルスケアに保存します"
         NSMotionUsageDescription: "Apple Watch のセンサーでレップ自動カウントに使用します"
         NSSupportsLiveActivities: true
+        UIBackgroundModes:
+          - remote-notification
+          - processing
         UILaunchScreen:
           UIColorName: ""
         UIApplicationSceneManifest:
@@ -112,6 +115,8 @@ targets:
         WKRunsIndependentlyOfCompanionApp: true
         WKCompanionAppBundleIdentifier: com.shuhirouchi.oikomi
         WKSupportsLiveActivities: true
+        WKBackgroundModes:
+          - remote-notification
         NSHealthShareUsageDescription: "HRV・睡眠・心拍データを使ってトレーニング負荷を最適化します"
         NSHealthUpdateUsageDescription: "ワークアウト記録をヘルスケアに保存します"
     entitlements:
