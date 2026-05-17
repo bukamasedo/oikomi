@@ -109,8 +109,9 @@ targets:
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "1"
         WKApplication: true
-        WKWatchOnly: false
+        WKRunsIndependentlyOfCompanionApp: true
         WKCompanionAppBundleIdentifier: com.shuhirouchi.oikomi
+        WKSupportsLiveActivities: true
         NSHealthShareUsageDescription: "HRV・睡眠・心拍データを使ってトレーニング負荷を最適化します"
         NSHealthUpdateUsageDescription: "ワークアウト記録をヘルスケアに保存します"
     entitlements:
