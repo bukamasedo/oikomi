@@ -105,6 +105,38 @@ struct RepositoryTests {
         #expect(abs(set.estimated1RM! - 116.667) < 0.01)
     }
 
+    @Test("startSessionByCopying: ルーティンと全セットを複製")
+    func copySession() throws {
+        let context = try Self.makeContext()
+        let exerciseRepo = ExerciseRepository(context: context)
+        let routineRepo = RoutineRepository(context: context)
+        let sessionRepo = WorkoutSessionRepository(context: context)
+        try exerciseRepo.seedIfNeeded()
+
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let squat = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "スクワット" }!
+
+        let routine = try routineRepo.createRoutine(name: "プッシュ", exercises: [bench])
+
+        let source = try sessionRepo.startSession(routine: routine)
+        try sessionRepo.addSet(to: source, exercise: bench, weight: 80, reps: 8)
+        try sessionRepo.addSet(to: source, exercise: bench, weight: 80, reps: 7)
+        try sessionRepo.addSet(to: source, exercise: squat, weight: 100, reps: 5)
+        try sessionRepo.finishSession(source)
+
+        let copied = try sessionRepo.startSessionByCopying(source)
+
+        #expect(copied.id != source.id)
+        #expect(copied.routine?.id == routine.id)
+        #expect(copied.endedAt == nil)
+        #expect(copied.sets?.count == 3)
+        let ordered = copied.orderedSets
+        #expect(ordered[0].exercise?.id == bench.id)
+        #expect(ordered[0].weight == 80)
+        #expect(ordered[0].reps == 8)
+        #expect(ordered[2].exercise?.id == squat.id)
+    }
+
     @Test("addCustomExercise: isCustom=true で保存される")
     func addCustomExercise() throws {
         let context = try Self.makeContext()

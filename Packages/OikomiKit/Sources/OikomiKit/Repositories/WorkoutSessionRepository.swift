@@ -71,6 +71,32 @@ public final class WorkoutSessionRepository {
         return set
     }
 
+    /// 既存セッションを複製して新しいセッションを開始する。
+    ///
+    /// 仕様書 §4.1.4「履歴コピー」の実装。`source` の routine 紐付けと全セット内容（種目・重量・
+    /// レップ・durationSeconds・isWarmup）を引き継いで新セッションに格納する。完了時刻は現時刻。
+    /// 推定 1RM の再計算と PR 自動更新は addSet 経由で行われる。
+    @discardableResult
+    public func startSessionByCopying(
+        _ source: WorkoutSession,
+        at date: Date = Date()
+    ) throws -> WorkoutSession {
+        let newSession = try startSession(at: date, routine: source.routine)
+        for sourceSet in source.orderedSets {
+            guard let exercise = sourceSet.exercise else { continue }
+            try addSet(
+                to: newSession,
+                exercise: exercise,
+                weight: sourceSet.weight,
+                reps: sourceSet.reps,
+                durationSeconds: sourceSet.durationSeconds,
+                isWarmup: sourceSet.isWarmup,
+                completedAt: date
+            )
+        }
+        return newSession
+    }
+
     /// セッションを終了し、終了時刻を記録する。
     public func finishSession(_ session: WorkoutSession, at date: Date = Date()) throws {
         session.endedAt = date

@@ -4,7 +4,16 @@ import OikomiKit
 
 struct SessionDetailView: View {
 
+    @Environment(\.modelContext) private var modelContext
+
     let session: WorkoutSession
+
+    @Query(filter: #Predicate<WorkoutSession> { $0.endedAt == nil })
+    private var activeSessions: [WorkoutSession]
+
+    @State private var showingCopyConfirmation = false
+    @State private var showingActiveBlockedAlert = false
+    @State private var errorMessage: String?
 
     private var setsByExercise: [(exerciseName: String, sets: [SetRecord])] {
         let grouped = Dictionary(grouping: session.orderedSets) { set in
@@ -37,6 +46,11 @@ struct SessionDetailView: View {
                 LabeledContent("総セット数") {
                     Text("\(session.sets?.count ?? 0)")
                 }
+                if let routine = session.routine {
+                    LabeledContent("ルーティン") {
+                        Text(routine.name)
+                    }
+                }
             }
 
             ForEach(setsByExercise, id: \.exerciseName) { group in
@@ -66,6 +80,50 @@ struct SessionDetailView: View {
         }
         .navigationTitle(session.startedAt.formatted(date: .abbreviated, time: .omitted))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    if activeSessions.isEmpty {
+                        showingCopyConfirmation = true
+                    } else {
+                        showingActiveBlockedAlert = true
+                    }
+                } label: {
+                    Label("コピーして開始", systemImage: "doc.on.doc")
+                }
+                .disabled(session.endedAt == nil)
+            }
+        }
+        .confirmationDialog(
+            "このセッションをコピーして開始しますか？",
+            isPresented: $showingCopyConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("コピーして開始") { copySession() }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("\(session.sets?.count ?? 0) セットを複製して新しいワークアウトを開始します。")
+        }
+        .alert("進行中のセッションがあります", isPresented: $showingActiveBlockedAlert) {
+            Button("OK") {}
+        } message: {
+            Text("先に進行中のワークアウトを終了してください。")
+        }
+        .alert("エラー", isPresented: .constant(errorMessage != nil)) {
+            Button("OK") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
+    }
+
+    private func copySession() {
+        let repo = WorkoutSessionRepository(context: modelContext)
+        do {
+            try repo.startSessionByCopying(session)
+            // トレーニングタブで続けてもらう（タブ遷移は呼び出し側が把握）
+        } catch {
+            errorMessage = "コピーに失敗: \(error.localizedDescription)"
+        }
     }
 
     private func formatDuration(_ seconds: TimeInterval) -> String {

@@ -139,9 +139,14 @@ struct AnalyticsTests {
         let allSets = try context.fetch(FetchDescriptor<SetRecord>())
         let advices = Analytics.volumeAdvice(from: allSets, referenceDate: now, calendar: cal)
 
-        let warning = advices.first { $0.severity == .warning && $0.title.contains("オーバーワーク") }
-        #expect(warning != nil)
-        #expect(warning?.message.contains("胸") == true || warning?.message.contains("上腕三頭筋") == true)
+        let warnings = advices.filter { $0.severity == .warning && $0.title.contains("オーバーワーク") }
+        #expect(!warnings.isEmpty)
+        // ベンチプレスは chest / triceps / shoulders に該当。順序は dict 由来で非決定的だが、いずれかは出る。
+        let bodyParts = ["胸", "上腕三頭筋", "肩"]
+        let hit = warnings.contains { advice in
+            bodyParts.contains { advice.message.contains($0) }
+        }
+        #expect(hit)
     }
 
     @Test("volumeAdvice: 先週多くて今週少ないと不足警告")
