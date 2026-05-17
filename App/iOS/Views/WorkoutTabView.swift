@@ -161,45 +161,40 @@ struct WorkoutTabView: View {
                     }
                 }
             }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 12) {
+                if let endAt = restEndAt {
+                    RestTimerBanner(endAt: endAt) {
+                        restEndAt = nil
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
 
-            // アクションは List 末尾に「行スタイル」で配置（左寄せ + ハイライト）
-            Section("操作") {
                 Button {
                     preselectedExercise = nil
                     showingAddSet = true
                 } label: {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(.tint)
-                            .font(.title3)
-                        Text("セットを記録")
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                    }
+                    Label("セットを記録", systemImage: "plus.circle.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
                 }
+                .buttonStyle(.borderedProminent)
+
                 Button(role: .destructive) {
                     finishSession(session)
                 } label: {
-                    HStack {
-                        Image(systemName: "stop.circle.fill")
-                            .font(.title3)
-                        Text("ワークアウトを終了")
-                            .font(.body)
-                        Spacer()
-                    }
+                    Label("ワークアウトを終了", systemImage: "stop.fill")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
                 }
+                .buttonStyle(.bordered)
             }
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if let endAt = restEndAt {
-                RestTimerBanner(endAt: endAt) {
-                    restEndAt = nil
-                }
-                .padding(.bottom, 4)
-                .background(.bar)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+            .padding(.horizontal)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+            .background(Color(uiColor: .systemGroupedBackground))
         }
         .animation(.easeInOut(duration: 0.2), value: restEndAt)
         .sheet(isPresented: $showingAddSet) {
