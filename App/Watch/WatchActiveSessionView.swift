@@ -11,6 +11,7 @@ struct WatchActiveSessionView: View {
     @State private var showingAddSet = false
     @State private var preselectedExercise: Exercise?
     @State private var errorMessage: String?
+    @State private var healthSession = WatchHealthSession()
 
     var body: some View {
         List {
@@ -69,6 +70,9 @@ struct WatchActiveSessionView: View {
         .sheet(isPresented: $showingAddSet) {
             WatchAddSetView(session: session, preselectedExercise: preselectedExercise)
         }
+        .task {
+            await healthSession.start()
+        }
         .alert("エラー", isPresented: .constant(errorMessage != nil)) {
             Button("OK") { errorMessage = nil }
         } message: {
@@ -120,6 +124,8 @@ struct WatchActiveSessionView: View {
     private func finishSession() {
         let repo = WorkoutSessionRepository(context: modelContext)
         Task { @MainActor in
+            // HKWorkoutSession を終了してリング貢献
+            await healthSession.end()
             do {
                 try await repo.finishSession(session)
             } catch {

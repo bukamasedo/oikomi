@@ -110,8 +110,14 @@ targets:
         CFBundleVersion: "1"
         WKApplication: true
         WKWatchOnly: false
+        WKCompanionAppBundleIdentifier: com.shuhirouchi.oikomi
         NSHealthShareUsageDescription: "HRV・睡眠・心拍データを使ってトレーニング負荷を最適化します"
         NSHealthUpdateUsageDescription: "ワークアウト記録をヘルスケアに保存します"
+    entitlements:
+      path: App/Watch/OikomiWatch.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shuhirouchi.oikomi.watchkitapp
