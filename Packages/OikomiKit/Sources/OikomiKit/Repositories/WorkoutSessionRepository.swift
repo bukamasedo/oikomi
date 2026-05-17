@@ -18,11 +18,13 @@ public final class WorkoutSessionRepository {
     ///
     /// - Parameter routine: 紐付けたいルーティン。`markUsed` も同時に呼ばれる。
     /// - Parameter startLiveActivity: true なら ActivityKit の Live Activity も同時起動（iOSのみ）。
+    /// - Parameter fetchHealthSnapshot: true なら HealthKit から HRV/睡眠/安静時心拍数を取得して紐付け。
     @discardableResult
     public func startSession(
         at date: Date = Date(),
         routine: Routine? = nil,
-        startLiveActivity: Bool = true
+        startLiveActivity: Bool = true,
+        fetchHealthSnapshot: Bool = true
     ) throws -> WorkoutSession {
         let session = WorkoutSession(startedAt: date, routine: routine)
         context.insert(session)
@@ -39,6 +41,27 @@ public final class WorkoutSessionRepository {
                 setCount: 0
             )
         }
+
+        if fetchHealthSnapshot {
+            let sessionId = session.id
+            let captureContext = self.context
+            Task { @MainActor in
+                let snapshot = await HealthStore.shared.fetchSnapshot(referenceDate: date)
+                // データが何も取れなければ無駄なレコードを残さない
+                guard snapshot.hrvSDNN != nil || snapshot.restingHeartRate != nil || snapshot.sleepScore != nil else {
+                    return
+                }
+                let descriptor = FetchDescriptor<WorkoutSession>(
+                    predicate: #Predicate { $0.id == sessionId }
+                )
+                if let target = try? captureContext.fetch(descriptor).first {
+                    captureContext.insert(snapshot)
+                    target.healthSnapshot = snapshot
+                    try? captureContext.save()
+                }
+            }
+        }
+
         return session
     }
 
@@ -82,15 +105,20 @@ public final class WorkoutSessionRepository {
             _ = try? prRepo.updateIfNewBest(from: set)
         }
 
-        // Live Activity の更新
-        Task { @MainActor in
-            await WorkoutActivityController.shared.update(
-                currentExerciseName: exercise.name,
-                setCount: session.sets?.count ?? 0,
-                restEndAt: exercise.defaultRestSeconds > 0
-                    ? completedAt.addingTimeInterval(TimeInterval(exercise.defaultRestSeconds))
-                    : nil
-            )
+        // Live Activity の更新（Live Activity が立ち上がっている時のみ）
+        if WorkoutActivityController.shared.isActive {
+            let name = exercise.name
+            let count = session.sets?.count ?? 0
+            let endAt: Date? = exercise.defaultRestSeconds > 0
+                ? completedAt.addingTimeInterval(TimeInterval(exercise.defaultRestSeconds))
+                : nil
+            Task { @MainActor in
+                await WorkoutActivityController.shared.update(
+                    currentExerciseName: name,
+                    setCount: count,
+                    restEndAt: endAt
+                )
+            }
         }
 
         return set

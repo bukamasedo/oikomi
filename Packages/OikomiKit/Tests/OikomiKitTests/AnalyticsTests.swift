@@ -122,7 +122,12 @@ struct AnalyticsTests {
 
         let cal = Self.calendar
         let now = Date()
-        let lastWeek = cal.date(byAdding: .day, value: -8, to: now)!
+        // -7 だとちょうど 1週間前で境界条件、月曜起算で先週レンジは [-7..-1] 日前。
+        // テストの再現性のため、確実に lastWeekRange に入る -3 〜 -1 日前を選ぶ。
+        // ただし「先週」を表現するため、今週月曜より前の絶対時刻を使う必要がある。
+        // currentWeekRange の lowerBound から -3 日 = 先週の木曜あたり。
+        let weekStart = cal.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+        let lastWeek = cal.date(byAdding: .day, value: -3, to: weekStart)!
         let thisWeek = now
 
         // 先週: 80kg × 8 × 1セット = 640
@@ -158,7 +163,12 @@ struct AnalyticsTests {
 
         let cal = Self.calendar
         let now = Date()
-        let lastWeek = cal.date(byAdding: .day, value: -8, to: now)!
+        // -7 だとちょうど 1週間前で境界条件、月曜起算で先週レンジは [-7..-1] 日前。
+        // テストの再現性のため、確実に lastWeekRange に入る -3 〜 -1 日前を選ぶ。
+        // ただし「先週」を表現するため、今週月曜より前の絶対時刻を使う必要がある。
+        // currentWeekRange の lowerBound から -3 日 = 先週の木曜あたり。
+        let weekStart = cal.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+        let lastWeek = cal.date(byAdding: .day, value: -3, to: weekStart)!
 
         // 先週: 80kg × 8 × 4セット = 2560
         for _ in 0..<4 {
