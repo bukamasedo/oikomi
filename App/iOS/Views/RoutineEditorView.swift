@@ -67,7 +67,7 @@ struct RoutineEditorView: View {
                 }
             }
             .sheet(isPresented: $showingPicker) {
-                ExerciseListPicker(excluding: selectedExercises) { picked in
+                ExercisePickerSheet(excluding: selectedExercises) { picked in
                     selectedExercises.append(picked)
                 }
             }
@@ -112,54 +112,3 @@ struct RoutineEditorView: View {
     }
 }
 
-/// シート用の種目ピッカー。既に選択済みの種目は除外する。
-struct ExerciseListPicker: View {
-
-    @Environment(\.dismiss) private var dismiss
-
-    @Query(sort: \Exercise.name) private var allExercises: [Exercise]
-
-    let excluding: [Exercise]
-    let onPick: (Exercise) -> Void
-
-    private var available: [Exercise] {
-        let excludedIds = Set(excluding.map(\.id))
-        return allExercises.filter { !excludedIds.contains($0.id) }
-    }
-
-    var body: some View {
-        NavigationStack {
-            List {
-                if available.isEmpty {
-                    Text("追加できる種目がありません")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(available) { exercise in
-                        Button {
-                            onPick(exercise)
-                            dismiss()
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(exercise.name)
-                                    .foregroundStyle(.primary)
-                                let groups = exercise.muscleGroups.map(\.displayName).joined(separator: " / ")
-                                if !groups.isEmpty {
-                                    Text(groups)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            .navigationTitle("種目を追加")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("閉じる") { dismiss() }
-                }
-            }
-        }
-    }
-}

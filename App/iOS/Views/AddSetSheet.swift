@@ -13,34 +13,41 @@ struct AddSetSheet: View {
     /// 保存成功時に呼ばれる。レストタイマー起動などに使う。
     var onSaved: ((SetRecord) -> Void)? = nil
 
-    @Query(sort: \Exercise.name) private var exercises: [Exercise]
-
     @State private var selectedExercise: Exercise?
     @State private var weight: Double = 20
     @State private var reps: Int = 8
     @State private var errorMessage: String?
+    @State private var showingPicker = false
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("種目") {
-                    Picker("種目", selection: $selectedExercise) {
-                        Text("選択してください").tag(Exercise?.none)
-                        ForEach(exercises) { exercise in
-                            Text(exercise.name).tag(Optional(exercise))
+                    Button {
+                        showingPicker = true
+                    } label: {
+                        HStack {
+                            if let selected = selectedExercise {
+                                Text(selected.name)
+                                    .foregroundStyle(.primary)
+                            } else {
+                                Text("選択してください")
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
                         }
                     }
-                    .pickerStyle(.menu)
                 }
 
                 if let selected = selectedExercise {
                     if selected.measurementType != .bodyweightReps {
                         Section("重量 (kg)") {
-                            HStack {
-                                Stepper(value: $weight, in: 0...500, step: 2.5) {
-                                    Text(weight.formatted(.number.precision(.fractionLength(1))))
-                                        .font(.title2.monospacedDigit())
-                                }
+                            Stepper(value: $weight, in: 0...500, step: 2.5) {
+                                Text(weight.formatted(.number.precision(.fractionLength(1))))
+                                    .font(.title2.monospacedDigit())
                             }
                         }
                     }
@@ -60,16 +67,20 @@ struct AddSetSheet: View {
                     Button("キャンセル") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") {
-                        saveSet()
-                    }
-                    .disabled(selectedExercise == nil)
+                    Button("保存") { saveSet() }
+                        .disabled(selectedExercise == nil)
                 }
             }
             .alert("エラー", isPresented: .constant(errorMessage != nil)) {
                 Button("OK") { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
+            }
+            .sheet(isPresented: $showingPicker) {
+                ExercisePickerSheet { picked in
+                    selectedExercise = picked
+                    prefillFromLastUse(of: picked)
+                }
             }
         }
         .onAppear {
