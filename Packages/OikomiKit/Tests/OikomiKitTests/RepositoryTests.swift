@@ -19,7 +19,7 @@ struct RepositoryTests {
         return ModelContext(container)
     }
 
-    @Test("seedIfNeeded: 初回は6種目を投入する")
+    @Test("seedIfNeeded: 初回は全種目を投入する")
     func seedFirstTime() throws {
         let context = try Self.makeContext()
         let repo = ExerciseRepository(context: context)
@@ -28,7 +28,10 @@ struct RepositoryTests {
 
         let exercises = try context.fetch(FetchDescriptor<Exercise>())
         #expect(exercises.count == SeedData.starterExercises.count)
+        #expect(exercises.count >= 30)  // v0.1 で 30 種目以上
         #expect(exercises.contains { $0.name == "ベンチプレス" })
+        #expect(exercises.contains { $0.name == "スクワット" })
+        #expect(exercises.contains { $0.name == "プランク" })  // 時間計測種目
     }
 
     @Test("seedIfNeeded: 既存データがあれば再投入しない（冪等）")
