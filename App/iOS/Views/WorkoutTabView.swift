@@ -124,53 +124,55 @@ struct WorkoutTabView: View {
 
     @ViewBuilder
     private func activeSessionView(_ session: WorkoutSession) -> some View {
-        VStack(spacing: 0) {
-            List {
+        List {
+            Section {
+                HStack {
+                    Text("開始")
+                    Spacer()
+                    Text(session.startedAt, style: .time)
+                        .foregroundStyle(.secondary)
+                }
+                HStack {
+                    Text("経過")
+                    Spacer()
+                    Text(session.startedAt, style: .timer)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+            }
+
+            if let endAt = restEndAt {
                 Section {
-                    HStack {
-                        Text("開始")
-                        Spacer()
-                        Text(session.startedAt, style: .time)
-                            .foregroundStyle(.secondary)
+                    RestTimerBanner(endAt: endAt) {
+                        restEndAt = nil
                     }
-                    HStack {
-                        Text("経過")
-                        Spacer()
-                        Text(session.startedAt, style: .timer)
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
+            }
 
-                // ルーティンの種目をクイック選択肢として表示（進捗バー付き）
-                if let routine = session.routine {
-                    Section("ルーティン: \(routine.name)") {
-                        ForEach(routine.orderedExercises) { entry in
-                            routineEntryRow(entry: entry, in: session)
-                        }
-                    }
-                }
-
-                Section("記録済みセット") {
-                    let sets = session.orderedSets
-                    if sets.isEmpty {
-                        Text("まだ記録なし")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(sets) { set in
-                            setRow(set)
-                        }
+            // ルーティンの種目をクイック選択肢として表示（進捗バー付き）
+            if let routine = session.routine {
+                Section("ルーティン: \(routine.name)") {
+                    ForEach(routine.orderedExercises) { entry in
+                        routineEntryRow(entry: entry, in: session)
                     }
                 }
             }
 
-            VStack(spacing: 12) {
-                if let endAt = restEndAt {
-                    RestTimerBanner(endAt: endAt) {
-                        restEndAt = nil
+            Section("記録済みセット") {
+                let sets = session.orderedSets
+                if sets.isEmpty {
+                    Text("まだ記録なし")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(sets) { set in
+                        setRow(set)
                     }
                 }
+            }
 
+            Section {
                 Button {
                     preselectedExercise = nil
                     showingAddSet = true
@@ -178,21 +180,14 @@ struct WorkoutTabView: View {
                     Label("セットを記録", systemImage: "plus.circle.fill")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
                 }
-                .buttonStyle(.borderedProminent)
-
                 Button(role: .destructive) {
                     finishSession(session)
                 } label: {
                     Label("ワークアウトを終了", systemImage: "stop.fill")
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
                 }
-                .buttonStyle(.bordered)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
         }
         .sheet(isPresented: $showingAddSet) {
             AddSetSheet(
