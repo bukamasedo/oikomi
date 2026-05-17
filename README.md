@@ -65,6 +65,29 @@ xcrun swift-format -i -r App Packages/OikomiKit/Sources
 
 Claude Code を使うと、リポジトリ内の `.claude/commands/` に定義されたスラッシュコマンド（`/build`, `/test`, `/format`, `/regen` 等）と、保存時の自動フォーマットフックが利用できます。詳細は [`CLAUDE.md`](CLAUDE.md) を参照。
 
+## 現在の実装状況（v0.1 開発中）
+
+- **iOS アプリ（5タブ）**: ホーム / トレーニング / 履歴 / 分析 / 設定
+- **Apple Watch アプリ**: スタンドアロン記録、Digital Crown 入力
+- **macOS アプリ**: プレースホルダ（本格 UI は v2.0）
+- **ウィジェット拡張**: Live Activity（Dynamic Island 対応）+ 統計ウィジェット
+- **OikomiKit**: 7 つの SwiftData モデル + 4 つの Repository + Analytics + Coaching + HealthKit ラッパー
+- **テスト**: 39 ユニットテスト全成功
+
+### 達成済み主要機能
+
+- ルーティン管理（並べ替え可・進行中の進捗表示）
+- 100 種目のシードライブラリ（検索・部位フィルタ）
+- 自動レストタイマー（種目別 defaultRestSeconds）
+- HealthKit セッション書き込み + HRV / 睡眠 / 安静時心拍数読み取り
+- AI コーチング 3 種（ディロード / PR 予測 / ボリューム警告）
+- 履歴カレンダー UI + コピー機能
+- 種目別最大重量推移チャート（Swift Charts）
+- Live Activity / Dynamic Island
+- Siri / ショートカット記録（App Intents）
+
+詳細な機能リストと実装スコープは [`CLAUDE.md`](CLAUDE.md) の「実装状況」セクションを参照。
+
 ## ライセンス
 
 未定（リリースまでに決定）。
