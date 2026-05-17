@@ -2,12 +2,12 @@ import Foundation
 
 /// 初回起動時に投入する種目マスタ。
 ///
-/// 仕様書 §4.1.4「種目ライブラリ v1.0 で 100 種」の道のりで、まず主要 80 種を提供。
-/// 部位バランス: 胸 12 / 背 12 / 肩 10 / 脚 14 / 腕 12 / 体幹 10 / 全身 6 / 前腕 4
+/// 仕様書 §4.1.4「種目ライブラリ v1.0 で 100 種」を達成。
+/// 部位バランス: 胸 14 / 背 14 / 肩 12 / 脚 16 / 腕 14 / 体幹 12 / 全身 8 / 前腕 6 / 有酸素 4
 public enum SeedData {
 
     public static let starterExercises: [SeedExercise] =
-        chest + back + shoulders + legs + arms + core + fullBody + forearms
+        chest + back + shoulders + legs + arms + core + fullBody + forearms + cardio
 
     // MARK: - 胸 (12)
 
@@ -51,9 +51,16 @@ public enum SeedData {
             muscleGroups: [.triceps, .chest],
             equipment: .bodyweight, measurementType: .bodyweightReps, defaultRestSeconds: 60,
             locations: [.gym, .home]),
+        SeedExercise(name: "スミスマシンベンチプレス", nameEn: "Smith Machine Bench Press",
+            muscleGroups: [.chest, .triceps],
+            equipment: .machine, measurementType: .weightReps, defaultRestSeconds: 150),
+        SeedExercise(name: "プッシュアップ（足上げ）", nameEn: "Decline Push-up",
+            muscleGroups: [.chest, .shoulders],
+            equipment: .bodyweight, measurementType: .bodyweightReps, defaultRestSeconds: 60,
+            locations: [.gym, .home]),
     ]
 
-    // MARK: - 背 (12)
+    // MARK: - 背 (14)
 
     private static let back: [SeedExercise] = [
         SeedExercise(name: "デッドリフト", nameEn: "Deadlift",
@@ -92,9 +99,16 @@ public enum SeedData {
         SeedExercise(name: "ハイパーエクステンション", nameEn: "Hyperextension",
             muscleGroups: [.back, .glutes, .hamstrings],
             equipment: .bodyweight, measurementType: .bodyweightReps, defaultRestSeconds: 90),
+        SeedExercise(name: "インバーテッドロウ", nameEn: "Inverted Row",
+            muscleGroups: [.back, .biceps],
+            equipment: .bodyweight, measurementType: .bodyweightReps, defaultRestSeconds: 90,
+            locations: [.gym, .home]),
+        SeedExercise(name: "ストレートアームプルダウン", nameEn: "Straight-arm Pulldown",
+            muscleGroups: [.back],
+            equipment: .cable, measurementType: .weightReps, defaultRestSeconds: 60),
     ]
 
-    // MARK: - 肩 (10)
+    // MARK: - 肩 (12)
 
     private static let shoulders: [SeedExercise] = [
         SeedExercise(name: "オーバーヘッドプレス", nameEn: "Overhead Press",
@@ -128,9 +142,15 @@ public enum SeedData {
             muscleGroups: [.shoulders, .triceps],
             equipment: .bodyweight, measurementType: .bodyweightReps, defaultRestSeconds: 90,
             locations: [.gym, .home]),
+        SeedExercise(name: "マシンショルダープレス", nameEn: "Machine Shoulder Press",
+            muscleGroups: [.shoulders, .triceps],
+            equipment: .machine, measurementType: .weightReps, defaultRestSeconds: 90),
+        SeedExercise(name: "ケーブルリアデルトフライ", nameEn: "Cable Reverse Fly",
+            muscleGroups: [.shoulders, .back],
+            equipment: .cable, measurementType: .weightReps, defaultRestSeconds: 60),
     ]
 
-    // MARK: - 脚 (14)
+    // MARK: - 脚 (16)
 
     private static let legs: [SeedExercise] = [
         SeedExercise(name: "スクワット", nameEn: "Squat",
@@ -175,9 +195,15 @@ public enum SeedData {
         SeedExercise(name: "シーテッドカーフレイズ", nameEn: "Seated Calf Raise",
             muscleGroups: [.calves],
             equipment: .machine, measurementType: .weightReps, defaultRestSeconds: 60),
+        SeedExercise(name: "ヒップスラスト", nameEn: "Hip Thrust",
+            muscleGroups: [.glutes, .hamstrings],
+            equipment: .barbell, measurementType: .weightReps, defaultRestSeconds: 120),
+        SeedExercise(name: "ステップアップ", nameEn: "Step-up",
+            muscleGroups: [.quads, .glutes],
+            equipment: .dumbbell, measurementType: .weightReps, defaultRestSeconds: 90),
     ]
 
-    // MARK: - 腕 (12)
+    // MARK: - 腕 (14)
 
     private static let arms: [SeedExercise] = [
         SeedExercise(name: "ダンベルカール", nameEn: "Dumbbell Curl",
@@ -216,9 +242,15 @@ public enum SeedData {
         SeedExercise(name: "リバースカール", nameEn: "Reverse Curl",
             muscleGroups: [.biceps, .forearms],
             equipment: .barbell, measurementType: .weightReps, defaultRestSeconds: 60),
+        SeedExercise(name: "ケーブルカール", nameEn: "Cable Curl",
+            muscleGroups: [.biceps],
+            equipment: .cable, measurementType: .weightReps, defaultRestSeconds: 60),
+        SeedExercise(name: "JM プレス", nameEn: "JM Press",
+            muscleGroups: [.triceps],
+            equipment: .barbell, measurementType: .weightReps, defaultRestSeconds: 90),
     ]
 
-    // MARK: - 体幹 (10)
+    // MARK: - 体幹 (12)
 
     private static let core: [SeedExercise] = [
         SeedExercise(name: "プランク", nameEn: "Plank",
@@ -260,9 +292,16 @@ public enum SeedData {
             muscleGroups: [.abs],
             equipment: .bodyweight, measurementType: .bodyweightReps, defaultRestSeconds: 60,
             locations: [.gym, .home]),
+        SeedExercise(name: "ケーブルクランチ", nameEn: "Cable Crunch",
+            muscleGroups: [.abs],
+            equipment: .cable, measurementType: .weightReps, defaultRestSeconds: 60),
+        SeedExercise(name: "マウンテンクライマー", nameEn: "Mountain Climber",
+            muscleGroups: [.abs, .fullBody],
+            equipment: .bodyweight, measurementType: .time, defaultRestSeconds: 60,
+            locations: [.gym, .home]),
     ]
 
-    // MARK: - 全身・コンディショニング (6)
+    // MARK: - 全身・コンディショニング (8)
 
     private static let fullBody: [SeedExercise] = [
         SeedExercise(name: "パワークリーン", nameEn: "Power Clean",
@@ -284,9 +323,15 @@ public enum SeedData {
         SeedExercise(name: "スレッドプッシュ", nameEn: "Sled Push",
             muscleGroups: [.fullBody, .quads],
             equipment: .other, measurementType: .time, defaultRestSeconds: 90),
+        SeedExercise(name: "ボックスジャンプ", nameEn: "Box Jump",
+            muscleGroups: [.quads, .glutes],
+            equipment: .other, measurementType: .bodyweightReps, defaultRestSeconds: 60),
+        SeedExercise(name: "ターキッシュゲットアップ", nameEn: "Turkish Get-up",
+            muscleGroups: [.fullBody, .abs, .shoulders],
+            equipment: .kettlebell, measurementType: .weightReps, defaultRestSeconds: 90),
     ]
 
-    // MARK: - 前腕 (4)
+    // MARK: - 前腕 (6)
 
     private static let forearms: [SeedExercise] = [
         SeedExercise(name: "リストカール", nameEn: "Wrist Curl",
@@ -301,6 +346,30 @@ public enum SeedData {
         SeedExercise(name: "ピンチホールド", nameEn: "Pinch Hold",
             muscleGroups: [.forearms],
             equipment: .other, measurementType: .time, defaultRestSeconds: 60),
+        SeedExercise(name: "ラリアットケトルベルホールド", nameEn: "Kettlebell Bottoms-up Hold",
+            muscleGroups: [.forearms, .shoulders],
+            equipment: .kettlebell, measurementType: .time, defaultRestSeconds: 60),
+        SeedExercise(name: "プレートピンチ", nameEn: "Plate Pinch",
+            muscleGroups: [.forearms],
+            equipment: .other, measurementType: .time, defaultRestSeconds: 60),
+    ]
+
+    // MARK: - 有酸素・補助 (4)
+
+    private static let cardio: [SeedExercise] = [
+        SeedExercise(name: "トレッドミル", nameEn: "Treadmill",
+            muscleGroups: [.fullBody],
+            equipment: .machine, measurementType: .time, defaultRestSeconds: 0),
+        SeedExercise(name: "エアロバイク", nameEn: "Exercise Bike",
+            muscleGroups: [.quads, .calves],
+            equipment: .machine, measurementType: .time, defaultRestSeconds: 0),
+        SeedExercise(name: "ローイングマシン", nameEn: "Rowing Machine",
+            muscleGroups: [.back, .fullBody],
+            equipment: .machine, measurementType: .time, defaultRestSeconds: 0),
+        SeedExercise(name: "縄跳び", nameEn: "Jump Rope",
+            muscleGroups: [.calves, .fullBody],
+            equipment: .other, measurementType: .time, defaultRestSeconds: 60,
+            locations: [.gym, .home]),
     ]
 }
 
