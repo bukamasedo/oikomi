@@ -8,14 +8,8 @@ struct OikomiApp: App {
     let sharedModelContainer: ModelContainer
 
     init() {
-        let schema = Schema(OikomiKit.schemaModels)
-        let configuration = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: false,
-            cloudKitDatabase: .none
-        )
         do {
-            let container = try ModelContainer(for: schema, configurations: [configuration])
+            let container = try SharedModelContainer.bootstrap()
             self.sharedModelContainer = container
 
             // 初回起動時にシード種目を投入 + HealthKit 権限を要求
@@ -29,7 +23,6 @@ struct OikomiApp: App {
                 do {
                     try await HealthStore.shared.requestWorkoutWriteAuthorization()
                 } catch {
-                    // 拒否されても基本機能は動く設計
                     print("HealthKit 権限取得スキップ: \(error)")
                 }
             }
