@@ -142,23 +142,11 @@ struct WorkoutTabView: View {
                     }
                 }
 
-                // ルーティンの種目をクイック選択肢として表示
-                let routineExercises = currentRoutineExercises(for: session)
-                if !routineExercises.isEmpty {
-                    Section("クイック追加") {
-                        ForEach(routineExercises) { exercise in
-                            Button {
-                                preselectedExercise = exercise
-                                showingAddSet = true
-                            } label: {
-                                HStack {
-                                    Text(exercise.name)
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundStyle(.tint)
-                                }
-                            }
+                // ルーティンの種目をクイック選択肢として表示（進捗バー付き）
+                if let routine = session.routine {
+                    Section("ルーティン: \(routine.name)") {
+                        ForEach(routine.orderedExercises) { entry in
+                            routineEntryRow(entry: entry, in: session)
                         }
                     }
                 }
@@ -288,9 +276,40 @@ struct WorkoutTabView: View {
         }
     }
 
-    /// 進行中セッションに紐付けられたルーティンの種目を返す。
-    private func currentRoutineExercises(for session: WorkoutSession) -> [Exercise] {
-        guard let routine = session.routine else { return [] }
-        return routine.orderedExercises.compactMap(\.exercise)
+    /// ルーティン進捗行: 種目名 + 完了/想定セット数 + クイック追加ボタン
+    @ViewBuilder
+    private func routineEntryRow(entry: RoutineExercise, in session: WorkoutSession) -> some View {
+        let completedCount = (session.sets ?? []).filter {
+            !$0.isWarmup && $0.exercise?.id == entry.exercise?.id
+        }.count
+        let planned = entry.plannedSets
+        let isComplete = completedCount >= planned
+
+        Button {
+            if let exercise = entry.exercise {
+                preselectedExercise = exercise
+                showingAddSet = true
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: isComplete ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isComplete ? .green : .secondary)
+                    .font(.title3)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(entry.exercise?.name ?? "（種目なし）")
+                        .foregroundStyle(.primary)
+                    Text("\(completedCount) / \(planned) セット")
+                        .font(.caption)
+                        .foregroundStyle(isComplete ? .green : .secondary)
+                        .monospacedDigit()
+                }
+
+                Spacer()
+
+                Image(systemName: "plus.circle.fill")
+                    .foregroundStyle(.tint)
+            }
+        }
     }
 }
