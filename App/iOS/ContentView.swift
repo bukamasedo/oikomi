@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct ContentView: View {
+
+    @State private var showingOnboarding = !OnboardingState.isCompleted
+
     var body: some View {
         TabView {
             HomeView()
@@ -17,6 +20,9 @@ struct ContentView: View {
 
             SettingsTabView()
                 .tabItem { Label("設定", systemImage: "gearshape") }
+        }
+        .fullScreenCover(isPresented: $showingOnboarding) {
+            OnboardingView(isPresented: $showingOnboarding)
         }
     }
 }
