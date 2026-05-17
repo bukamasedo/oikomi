@@ -34,11 +34,20 @@ struct HomeView: View {
         Array(personalRecords.prefix(5))
     }
 
+    private var coachingAdvice: [CoachingAdvice] {
+        let allSets = completedSessions.flatMap { $0.sets ?? [] }
+        return Array(Analytics.volumeAdvice(from: allSets).prefix(3))
+    }
+
     var body: some View {
         NavigationStack {
             List {
                 if let active = activeSessions.first {
                     activeSection(active)
+                }
+
+                if !coachingAdvice.isEmpty {
+                    coachingSection
                 }
 
                 summarySection
@@ -48,6 +57,44 @@ struct HomeView: View {
                 recentPRSection
             }
             .navigationTitle("ホーム")
+        }
+    }
+
+    @ViewBuilder
+    private var coachingSection: some View {
+        Section("コーチング") {
+            ForEach(coachingAdvice) { advice in
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: iconName(for: advice.severity))
+                        .font(.title3)
+                        .foregroundStyle(color(for: advice.severity))
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(advice.title)
+                            .font(.subheadline.weight(.semibold))
+                        Text(advice.message)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+        }
+    }
+
+    private func iconName(for severity: CoachingAdvice.Severity) -> String {
+        switch severity {
+        case .warning: return "exclamationmark.triangle.fill"
+        case .success: return "checkmark.seal.fill"
+        case .info: return "info.circle.fill"
+        }
+    }
+
+    private func color(for severity: CoachingAdvice.Severity) -> Color {
+        switch severity {
+        case .warning: return .orange
+        case .success: return .green
+        case .info: return .blue
         }
     }
 

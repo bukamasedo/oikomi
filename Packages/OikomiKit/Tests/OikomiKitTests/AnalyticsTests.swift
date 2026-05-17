@@ -111,6 +111,81 @@ struct AnalyticsTests {
 
     // MARK: - currentWeekRange
 
+    // MARK: - volumeAdvice
+
+    @Test("volumeAdvice: 今週が先週比150%超で warning が出る")
+    func volumeAdviceOverwork() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let session = try WorkoutSessionRepository(context: context).startSession()
+
+        let cal = Self.calendar
+        let now = Date()
+        let lastWeek = cal.date(byAdding: .day, value: -8, to: now)!
+        let thisWeek = now
+
+        // 先週: 80kg × 8 × 1セット = 640
+        let s1 = try WorkoutSessionRepository(context: context)
+            .addSet(to: session, exercise: bench, weight: 80, reps: 8)
+        s1.completedAt = lastWeek
+        // 今週: 80kg × 8 × 3セット = 1920 → 先週比 300%
+        for _ in 0..<3 {
+            let s = try WorkoutSessionRepository(context: context)
+                .addSet(to: session, exercise: bench, weight: 80, reps: 8)
+            s.completedAt = thisWeek
+        }
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.volumeAdvice(from: allSets, referenceDate: now, calendar: cal)
+
+        let warning = advices.first { $0.severity == .warning && $0.title.contains("オーバーワーク") }
+        #expect(warning != nil)
+        #expect(warning?.message.contains("胸") == true || warning?.message.contains("上腕三頭筋") == true)
+    }
+
+    @Test("volumeAdvice: 先週多くて今週少ないと不足警告")
+    func volumeAdviceUndertraining() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let session = try WorkoutSessionRepository(context: context).startSession()
+
+        let cal = Self.calendar
+        let now = Date()
+        let lastWeek = cal.date(byAdding: .day, value: -8, to: now)!
+
+        // 先週: 80kg × 8 × 4セット = 2560
+        for _ in 0..<4 {
+            let s = try WorkoutSessionRepository(context: context)
+                .addSet(to: session, exercise: bench, weight: 80, reps: 8)
+            s.completedAt = lastWeek
+        }
+        // 今週: 0
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.volumeAdvice(from: allSets, referenceDate: now, calendar: cal)
+        // last=2560, this=0, 0/2560 < 0.5 → 不足警告のはずだが、guard last > 0 後に ratio < 0.5 で発火
+        let undertraining = advices.first { $0.title.contains("不足") }
+        #expect(undertraining != nil)
+    }
+
+    @Test("volumeAdvice: 極小ボリュームは無視（500 未満）")
+    func volumeAdviceIgnoresLowVolume() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let session = try WorkoutSessionRepository(context: context).startSession()
+
+        // 今週: 20kg × 5 = 100 だけ
+        let s = try WorkoutSessionRepository(context: context)
+            .addSet(to: session, exercise: bench, weight: 20, reps: 5)
+        _ = s
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.volumeAdvice(from: allSets, calendar: Self.calendar)
+        #expect(advices.isEmpty)
+    }
+
     @Test("currentWeekRange: 月曜開始の7日間 range")
     func weekRangeIsSevenDays() {
         let range = Analytics.currentWeekRange(calendar: Self.calendar)

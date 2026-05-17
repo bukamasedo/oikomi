@@ -82,4 +82,126 @@ public enum Analytics {
         let end = cal.date(byAdding: .day, value: 7, to: start)!.addingTimeInterval(-1)
         return start...end
     }
+
+    /// 「先週」の日付範囲（月曜開始）。今週レンジを 7 日前にシフト。
+    public static func lastWeekRange(
+        referenceDate: Date = Date(),
+        calendar: Calendar = .current
+    ) -> ClosedRange<Date> {
+        let thisWeek = currentWeekRange(referenceDate: referenceDate, calendar: calendar)
+        let start = calendar.date(byAdding: .day, value: -7, to: thisWeek.lowerBound)!
+        let end = calendar.date(byAdding: .day, value: -7, to: thisWeek.upperBound)!
+        return start...end
+    }
+
+    /// 先週比ボリューム変動から警告/称賛アドバイスを生成する。
+    ///
+    /// 仕様書 §4.2.2 のボリューム警告ロジック：
+    /// - 先週比 150% 超 → オーバーワーク警告
+    /// - 先週比 50% 未満（かつ先週に十分なボリュームあり）→ 不足警告
+    /// - それ以外で先週比 90〜110% → 安定の称賛
+    ///
+    /// 結果はインパクト（変化幅）の大きい順に並べて返す。
+    public static func volumeAdvice(
+        from sets: [SetRecord],
+        referenceDate: Date = Date(),
+        calendar: Calendar = .current
+    ) -> [CoachingAdvice] {
+        let thisWeekRange = currentWeekRange(referenceDate: referenceDate, calendar: calendar)
+        let lastWeekRange = lastWeekRange(referenceDate: referenceDate, calendar: calendar)
+        let thisWeek = volumeByMuscleGroup(sets: sets, in: thisWeekRange)
+        let lastWeek = volumeByMuscleGroup(sets: sets, in: lastWeekRange)
+
+        var advices: [CoachingAdvice] = []
+
+        // 過剰/不足の判定
+        let allMuscles = Set(thisWeek.keys).union(lastWeek.keys)
+        for muscle in allMuscles {
+            let this = thisWeek[muscle] ?? 0
+            let last = lastWeek[muscle] ?? 0
+
+            // どちらも極小なら無視
+            guard max(this, last) >= 500 else { continue }
+
+            // 先週ゼロで今週多い → 新規参入。1.5倍ルールには該当しないが情報として有用なので軽い info
+            if last == 0 && this > 0 {
+                advices.append(
+                    CoachingAdvice(
+                        title: "新しい部位",
+                        message: "\(muscle.displayName)を今週から再開しました。",
+                        severity: .info,
+                        impact: this
+                    )
+                )
+                continue
+            }
+            // 今週ゼロで先週多い → 抜け。下記の 50% 判定と等価なのでスキップ
+            guard last > 0 else { continue }
+
+            let ratio = this / last
+
+            if ratio > 1.5 {
+                let percent = Int((ratio * 100).rounded())
+                advices.append(
+                    CoachingAdvice(
+                        title: "オーバーワーク注意",
+                        message: "今週の\(muscle.displayName)トレが先週比\(percent)%です。回復を意識しましょう。",
+                        severity: .warning,
+                        impact: this - last
+                    )
+                )
+            } else if ratio < 0.5 {
+                let percent = Int((ratio * 100).rounded())
+                advices.append(
+                    CoachingAdvice(
+                        title: "ボリューム不足",
+                        message: "今週の\(muscle.displayName)トレは先週比\(percent)%です。追加できる余地があります。",
+                        severity: .warning,
+                        impact: last - this
+                    )
+                )
+            } else if (0.9...1.1).contains(ratio) {
+                advices.append(
+                    CoachingAdvice(
+                        title: "安定したペース",
+                        message: "今週の\(muscle.displayName)は先週とほぼ同じボリュームを維持できています。",
+                        severity: .success,
+                        impact: this
+                    )
+                )
+            }
+        }
+
+        return advices.sorted { $0.impact > $1.impact }
+    }
+}
+
+/// ホーム画面・通知に出す簡易コーチングメッセージ。
+public struct CoachingAdvice: Sendable, Identifiable, Hashable {
+    public let id: UUID
+    public let title: String
+    public let message: String
+    public let severity: Severity
+    /// 並び替えに使う重要度。値が大きいほど上位表示
+    public let impact: Double
+
+    public init(
+        id: UUID = UUID(),
+        title: String,
+        message: String,
+        severity: Severity,
+        impact: Double
+    ) {
+        self.id = id
+        self.title = title
+        self.message = message
+        self.severity = severity
+        self.impact = impact
+    }
+
+    public enum Severity: String, Sendable {
+        case info
+        case warning
+        case success
+    }
 }
