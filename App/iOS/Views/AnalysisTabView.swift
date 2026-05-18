@@ -19,6 +19,7 @@ struct AnalysisTabView: View {
 
     @State private var selectedExercise: Exercise?
     @State private var showingExercisePicker = false
+    @State private var showingProSheet = false
 
     private var allSets: [SetRecord] {
         completedSessions.flatMap { $0.sets ?? [] }
@@ -48,8 +49,12 @@ struct AnalysisTabView: View {
                     )
                 } else {
                     List {
-                        weeklyVolumeSection
-                        exerciseTrendSection
+                        if ProGate.canSeeAdvancedAnalytics {
+                            weeklyVolumeSection
+                            exerciseTrendSection
+                        } else {
+                            advancedAnalyticsLockedSection
+                        }
                         prsSection
                     }
                 }
@@ -63,6 +68,23 @@ struct AnalysisTabView: View {
             .navigationDestination(for: Exercise.self) { exercise in
                 ExerciseDetailView(exercise: exercise)
             }
+        }
+    }
+
+    // MARK: - Pro Lock
+
+    @ViewBuilder
+    private var advancedAnalyticsLockedSection: some View {
+        Section("詳細分析") {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Pro 限定", systemImage: "lock.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.tint)
+                Text("週次総ボリュームと種目別の最大重量推移は Pro プランで閲覧できます。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 4)
         }
     }
 

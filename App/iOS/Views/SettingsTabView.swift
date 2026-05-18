@@ -18,6 +18,7 @@ struct SettingsTabView: View {
     @State private var showOnboarding = false
     @State private var errorMessage: String?
     @State private var showCloudKitChangeAlert = false
+    @State private var exportedURL: URL?
 
     var body: some View {
         NavigationStack {
@@ -183,11 +184,58 @@ struct SettingsTabView: View {
             } label: {
                 Label("オンボーディングを再表示", systemImage: "play.circle")
             }
+            exportButton
             Button(role: .destructive) {
                 showResetConfirm = true
             } label: {
                 Label("すべてのデータを削除", systemImage: "trash")
             }
+        }
+    }
+
+    @ViewBuilder
+    private var exportButton: some View {
+        if ProGate.canExportData {
+            Button {
+                exportData()
+            } label: {
+                HStack {
+                    Label("CSV としてエクスポート", systemImage: "square.and.arrow.up")
+                    if let url = exportedURL {
+                        Spacer()
+                        ShareLink(item: url) {
+                            Image(systemName: "paperplane.fill")
+                                .foregroundStyle(.tint)
+                        }
+                    }
+                }
+            }
+        } else {
+            Button {
+                showProSheet = true
+            } label: {
+                HStack {
+                    Label("CSV としてエクスポート", systemImage: "square.and.arrow.up")
+                    Spacer()
+                    Text("Pro")
+                        .font(.caption2.weight(.semibold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color.yellow.opacity(0.3))
+                        )
+                }
+            }
+        }
+    }
+
+    private func exportData() {
+        do {
+            let url = try DataExporter.writeCSVToTemp(context: modelContext)
+            exportedURL = url
+        } catch {
+            errorMessage = "エクスポートに失敗: \(error.localizedDescription)"
         }
     }
 
