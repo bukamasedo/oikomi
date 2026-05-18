@@ -16,13 +16,19 @@ struct OikomiApp: App {
             // 受信時の upsert に使う ModelContext を毎回 mainContext から取得
             WCSyncBridge.shared.activate { container.mainContext }
 
-            // 初回起動時にシード種目を投入 + HealthKit 権限を要求
+            // 初回起動時にシード種目を投入 + HealthKit 権限を要求 + stale session 掃除
             Task { @MainActor in
                 let repo = ExerciseRepository(context: container.mainContext)
                 do {
                     try repo.seedIfNeeded()
                 } catch {
                     print("シード投入失敗: \(error)")
+                }
+                // 24h以上前のまま終了されていないセッションを自動終了（UI のアクティブ表示が
+                // 消えなくなる症状を防ぐ）
+                let sessionRepo = WorkoutSessionRepository(context: container.mainContext)
+                if let cleaned = try? sessionRepo.cleanupStaleActiveSessions(), cleaned > 0 {
+                    print("[Oikomi.sync] cleaned up \(cleaned) stale active sessions on launch")
                 }
                 do {
                     try await HealthStore.shared.requestWorkoutWriteAuthorization()

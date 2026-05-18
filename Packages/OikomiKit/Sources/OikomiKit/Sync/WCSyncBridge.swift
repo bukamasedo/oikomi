@@ -62,7 +62,13 @@ public final class WCSyncBridge {
             sessions: [session.makeDTO()],
             sets: setDTOs
         )
-        dispatch(envelope)
+        let isFinish = session.endedAt != nil
+        print(
+            "[Oikomi.sync] send sessionUpsert id=\(session.id.uuidString.prefix(8)) endedAt=\(session.endedAt?.description ?? "nil") guaranteed=\(isFinish)"
+        )
+        // 終了イベントは reachable の揺れで sendMessage が cancel されることがあるため、
+        // OS の永続キュー transferUserInfo に並行配送して必着にする。
+        dispatch(envelope, guaranteedDelivery: isFinish)
     }
 
     public func sendSetUpsert(_ set: SetRecord) {
@@ -106,6 +112,9 @@ public final class WCSyncBridge {
     // MARK: - 受信（delegate から MainActor で呼ばれる）
 
     fileprivate func handleEnvelope(_ envelope: SyncEnvelope) {
+        print(
+            "[Oikomi.sync] received envelope kind=\(envelope.kind.rawValue) sessions=\(envelope.sessions.count) sets=\(envelope.sets.count) routines=\(envelope.routines.count)"
+        )
         switch envelope.kind {
         case .sessionUpsert, .setUpsert, .routineUpsert, .routineDeleted, .fullSyncResponse:
             applyEnvelopeToLocalStore(envelope)
@@ -134,6 +143,10 @@ public final class WCSyncBridge {
 
         do {
             try context.save()
+            // @Query が予期せぬキャッシュを持っている場合に備えて pending changes を flush。
+            // SwiftData は save() で内部的に通知を出すが、processPendingChanges でさらに
+            // 観察者に確実にイベントを伝える保険。
+            context.processPendingChanges()
         } catch {
             print("WCSyncBridge: applyEnvelope save failed: \(error)")
         }
@@ -173,6 +186,7 @@ public final class WCSyncBridge {
         ).first
 
         let session: WorkoutSession
+        let wasExisting = existing != nil
         if let existing {
             session = existing
         } else {
@@ -192,6 +206,10 @@ public final class WCSyncBridge {
         } else {
             session.routine = nil
         }
+
+        print(
+            "[Oikomi.sync] upsert session id=\(dto.id.uuidString.prefix(8)) endedAt=\(dto.endedAt?.description ?? "nil") existing=\(wasExisting ? "Y" : "N")"
+        )
     }
 
     private func upsert(set dto: SetRecordDTO, in context: ModelContext) {
@@ -272,7 +290,7 @@ public final class WCSyncBridge {
 
     // MARK: - 送信路
 
-    private func dispatch(_ envelope: SyncEnvelope) {
+    private func dispatch(_ envelope: SyncEnvelope, guaranteedDelivery: Bool = false) {
         #if canImport(WatchConnectivity)
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
@@ -298,8 +316,18 @@ public final class WCSyncBridge {
             // ファイルスコープの @Sendable 関数経由でアクター継承を断ち切り、失敗時は OS の
             // 配送キュー transferUserInfo にフォールバックさせる（reachable 復旧時に自動配送）。
             sendWithFallback(session: session, payload: payload)
+            if guaranteedDelivery {
+                // 終了イベントなど絶対に届けたいものは、sendMessage が OS 内部で cancel
+                // されるケースに備えて transferUserInfo に並行投入する。
+                // upsert は id ベースの冪等処理なので二重受信しても結果は同じ。
+                print("[Oikomi.sync] dispatch route=sendMessage+transferUserInfo (guaranteed)")
+                session.transferUserInfo(payload)
+            } else {
+                print("[Oikomi.sync] dispatch route=sendMessage")
+            }
         } else {
             // 相手が起動していない / バックグラウンドのとき → キューイング
+            print("[Oikomi.sync] dispatch route=transferUserInfo (not reachable)")
             session.transferUserInfo(payload)
         }
         #endif

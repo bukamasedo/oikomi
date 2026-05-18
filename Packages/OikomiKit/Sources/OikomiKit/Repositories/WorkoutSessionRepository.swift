@@ -185,4 +185,27 @@ public final class WorkoutSessionRepository {
         context.delete(session)
         try context.save()
     }
+
+    /// `olderThan` 秒以上前に開始されたまま終了していないセッションを自動終了する。
+    ///
+    /// 開発中のクラッシュ/再インストールで「endedAt が nil のまま残った」
+    /// stale active session を起動時に掃除し、UI の「アクティブ表示が消えない」
+    /// 症状を防ぐ。終了時刻は startedAt + 1 秒（即時終了扱い）。
+    /// WCSyncBridge へは送らない（他デバイスも各自掃除する想定）。
+    ///
+    /// - Returns: 終了に切り替えたセッションの数
+    @discardableResult
+    public func cleanupStaleActiveSessions(olderThan: TimeInterval = 24 * 3600) throws -> Int {
+        let cutoff = Date().addingTimeInterval(-olderThan)
+        let descriptor = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate<WorkoutSession> { $0.endedAt == nil && $0.startedAt < cutoff }
+        )
+        let stale = try context.fetch(descriptor)
+        guard !stale.isEmpty else { return 0 }
+        for session in stale {
+            session.endedAt = session.startedAt.addingTimeInterval(1)
+        }
+        try context.save()
+        return stale.count
+    }
 }
