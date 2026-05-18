@@ -55,7 +55,13 @@ public final class WCSyncBridge {
     // MARK: - 送信
 
     public func sendSessionUpsert(_ session: WorkoutSession, sets: [SetRecord] = []) {
-        if applyingRemoteUpdate { return }
+        print(
+            "[Oikomi.sync] sendSessionUpsert entry id=\(session.id.uuidString.prefix(8)) endedAt=\(session.endedAt?.description ?? "nil") applyingRemoteUpdate=\(applyingRemoteUpdate)"
+        )
+        if applyingRemoteUpdate {
+            print("[Oikomi.sync] sendSessionUpsert SKIPPED (applyingRemoteUpdate=true)")
+            return
+        }
         let setDTOs = sets.compactMap { $0.makeDTO() }
         let envelope = SyncEnvelope(
             kind: .sessionUpsert,

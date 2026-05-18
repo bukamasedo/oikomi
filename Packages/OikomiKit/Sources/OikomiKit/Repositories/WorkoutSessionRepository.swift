@@ -162,8 +162,16 @@ public final class WorkoutSessionRepository {
         at date: Date = Date(),
         writeToHealthKit: Bool = true
     ) async throws {
+        let sid = session.id.uuidString.prefix(8)
+        print("[Oikomi.sync] finishSession step=enter id=\(sid)")
         session.endedAt = date
-        try context.save()
+        do {
+            try context.save()
+            print("[Oikomi.sync] finishSession step=saved id=\(sid)")
+        } catch {
+            print("[Oikomi.sync] finishSession step=save_failed id=\(sid) error=\(error)")
+            throw error
+        }
 
         if writeToHealthKit {
             do {
@@ -171,13 +179,18 @@ public final class WorkoutSessionRepository {
                     session.healthKitWorkoutUUID = uuid
                     try context.save()
                 }
+                print("[Oikomi.sync] finishSession step=hk_done id=\(sid)")
             } catch {
                 // HealthKit 書き込み失敗はセッション保存自体には影響させない
+                print("[Oikomi.sync] finishSession step=hk_skipped id=\(sid) error=\(error)")
             }
         }
 
         await WorkoutActivityController.shared.end()
+        print("[Oikomi.sync] finishSession step=activity_ended id=\(sid)")
+
         WCSyncBridge.shared.sendSessionUpsert(session)
+        print("[Oikomi.sync] finishSession step=upsert_called id=\(sid)")
     }
 
     /// セッションを削除する（途中で破棄したい場合）。
