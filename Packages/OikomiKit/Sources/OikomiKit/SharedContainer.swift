@@ -46,7 +46,13 @@ public enum SharedModelContainer {
         #else
         let defaultEnabled = true
         #endif
-        let wantCloudKit = UserDefaults.standard.object(forKey: cloudKitEnabledKey) as? Bool ?? defaultEnabled
+        let userWantsCloudKit = UserDefaults.standard.object(forKey: cloudKitEnabledKey) as? Bool ?? defaultEnabled
+
+        // Pro 限定機能（仕様書 §10）。bootstrap は同期文脈のため、SubscriptionManager が
+        // 前回 refreshEntitlement 時に書き込んだキャッシュ値を参照する。
+        // 初回起動 / Pro 未契約は false → ローカル動作。購入後の次回起動から iCloud が有効化。
+        let cachedProActive = UserDefaults.standard.bool(forKey: SubscriptionManager.lastKnownProActiveKey)
+        let wantCloudKit = userWantsCloudKit && cachedProActive
 
         if wantCloudKit && !isStoredInMemoryOnly {
             // まず CloudKit 有効で試す

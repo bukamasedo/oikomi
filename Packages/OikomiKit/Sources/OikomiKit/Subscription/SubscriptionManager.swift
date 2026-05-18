@@ -15,6 +15,10 @@ public final class SubscriptionManager {
 
     public static let shared = SubscriptionManager()
 
+    /// `bootstrap()` のような同期文脈から isProActive を確認するために、UserDefaults に
+    /// 直近の値をキャッシュする。リネーム時は SharedContainer 側と合わせて変更すること。
+    public static let lastKnownProActiveKey = "OikomiLastKnownProActive"
+
     /// App Store から取得済みの Product 一覧（月額 / 年額）。
     public private(set) var products: [Product] = []
 
@@ -122,6 +126,8 @@ public final class SubscriptionManager {
             }
         }
         self.isProActive = active
+        // 同期文脈（SharedContainer.bootstrap など）から参照できるようキャッシュ
+        UserDefaults.standard.set(active, forKey: Self.lastKnownProActiveKey)
         await updateIntroEligibility()
     }
 
