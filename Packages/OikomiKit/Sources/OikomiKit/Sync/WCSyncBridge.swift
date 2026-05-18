@@ -295,8 +295,9 @@ public final class WCSyncBridge {
             // errorHandler は WatchConnectivity の bg queue (NSOperationQueue UTILITY) で呼ばれる。
             // WCSyncBridge は @MainActor なので inline closure を渡すと MainActor 隔離を継承し、
             // bg queue で実行された瞬間 swift_task_checkIsolatedSwift が assertion を発火させる。
-            // 明示的に nonisolated な関数値を渡してアクター継承を断ち切る。
-            session.sendMessage(payload, replyHandler: nil, errorHandler: wcSendMessageErrorHandler)
+            // ファイルスコープの @Sendable 関数経由でアクター継承を断ち切り、失敗時は OS の
+            // 配送キュー transferUserInfo にフォールバックさせる（reachable 復旧時に自動配送）。
+            sendWithFallback(session: session, payload: payload)
         } else {
             // 相手が起動していない / バックグラウンドのとき → キューイング
             session.transferUserInfo(payload)
@@ -307,11 +308,24 @@ public final class WCSyncBridge {
 
 #if canImport(WatchConnectivity)
 
-/// WCSession.sendMessage の errorHandler。MainActor 隔離を継承しないようファイルスコープに置く。
-/// print 以外の副作用は持たないので bg queue から呼ばれても安全。
-@Sendable
-private func wcSendMessageErrorHandler(_ error: any Error) {
-    print("WCSyncBridge sendMessage failed: \(error)")
+/// sendMessage 失敗時の transferUserInfo フォールバックを担う @Sendable ヘルパー。
+/// 失敗 closure は WC の bg queue で呼ばれるため、アクター継承を断ち切る必要がある。
+/// payload と session の WCSession.default は両方 Sendable なので、ファイルスコープで安全に扱える。
+private func sendWithFallback(session: WCSession, payload: [String: Any]) {
+    // payload は [String: Any] で Sendable ではないが、ここで持つだけで MainActor 越境はしない。
+    // closure 内で再構成しても結果は同じだが、エンコード重複を避けるため capture する。
+    let payloadForRetry = payload
+    session.sendMessage(
+        payload,
+        replyHandler: nil,
+        errorHandler: { @Sendable (error: any Error) in
+            // bg queue で実行される。print と WCSession の API 呼び出しは thread-safe。
+            print("WCSyncBridge sendMessage failed: \(error.localizedDescription)")
+            // OS の配送キューに乗せる。reachable=NO 時や直後の unreachable 化でも
+            // 後で必ず配送される。
+            WCSession.default.transferUserInfo(payloadForRetry)
+        }
+    )
 }
 
 #endif
