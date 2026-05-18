@@ -35,4 +35,42 @@ struct SubscriptionManagerTests {
         #expect(a.purchaseInProgress == false)
         #expect(a.products.isEmpty)
     }
+
+    @Test("ProGate: Free プランの上限定数")
+    @MainActor
+    func proGateLimits() {
+        #expect(ProGate.freeRoutineLimit == 3)
+        #expect(ProGate.freeCustomExerciseLimit == 5)
+    }
+
+    @Test("ProGate: 未購入時は全 Pro 機能が無効")
+    @MainActor
+    func proGateOffByDefault() {
+        // テスト環境では Transaction.currentEntitlements は空のため isProActive == false
+        #expect(ProGate.isProActive == false)
+        #expect(ProGate.canCreateUnlimitedRoutines == false)
+        #expect(ProGate.canCreateUnlimitedCustomExercises == false)
+        #expect(ProGate.canReadHealthData == false)
+        #expect(ProGate.canUseAICoaching == false)
+        #expect(ProGate.canUseLiveActivity == false)
+        #expect(ProGate.canUseICloudSync == false)
+        #expect(ProGate.canSeeAdvancedAnalytics == false)
+        #expect(ProGate.canExportData == false)
+    }
+
+    @Test("ProGateError: localizedDescription に Pro 文字列を含む")
+    func proGateErrorMessages() {
+        let errors: [ProGateError] = [
+            .routineLimitReached(current: 3, limit: 3),
+            .customExerciseLimitReached(current: 5, limit: 5),
+            .healthDataReadRequiresPro,
+            .aiCoachingRequiresPro,
+            .liveActivityRequiresPro,
+            .iCloudSyncRequiresPro,
+        ]
+        for error in errors {
+            let desc = error.errorDescription ?? ""
+            #expect(desc.contains("Pro"))
+        }
+    }
 }

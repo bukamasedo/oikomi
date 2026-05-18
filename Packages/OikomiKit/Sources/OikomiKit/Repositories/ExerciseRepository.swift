@@ -55,6 +55,8 @@ public final class ExerciseRepository {
     }
 
     /// カスタム種目を追加する。
+    ///
+    /// Free プランで `ProGate.freeCustomExerciseLimit` を超えると `ProGateError` を投げる。
     @discardableResult
     public func addCustomExercise(
         name: String,
@@ -64,6 +66,17 @@ public final class ExerciseRepository {
         measurementType: MeasurementType = .weightReps,
         defaultRestSeconds: Int = 90
     ) throws -> Exercise {
+        if !ProGate.canCreateUnlimitedCustomExercises {
+            let existingCustomCount = try context.fetch(
+                FetchDescriptor<Exercise>(predicate: #Predicate { $0.isCustom == true })
+            ).count
+            if existingCustomCount >= ProGate.freeCustomExerciseLimit {
+                throw ProGateError.customExerciseLimitReached(
+                    current: existingCustomCount,
+                    limit: ProGate.freeCustomExerciseLimit
+                )
+            }
+        }
         let exercise = Exercise(
             name: name,
             nameEn: nameEn,

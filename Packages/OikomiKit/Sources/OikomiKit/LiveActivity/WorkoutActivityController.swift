@@ -19,12 +19,14 @@ public final class WorkoutActivityController {
     private var current: Activity<WorkoutActivityAttributes>?
 
     /// セッション開始時に呼び出す。
+    /// **Pro 限定機能**: Free プランでは何もしない（仕様書 §10）。
     public func start(
         sessionId: UUID,
         routineName: String?,
         startedAt: Date,
         setCount: Int = 0
     ) {
+        guard ProGate.canUseLiveActivity else { return }
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
         let attributes = WorkoutActivityAttributes(

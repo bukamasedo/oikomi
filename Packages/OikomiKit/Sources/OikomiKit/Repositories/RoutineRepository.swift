@@ -17,8 +17,15 @@ public final class RoutineRepository {
     /// 新規ルーティンを作成する。
     ///
     /// `exercises` の順で `RoutineExercise` を生成し、`order` は配列の index を採用する。
+    /// Free プランで上限 (`ProGate.freeRoutineLimit`) に達していると `ProGateError` を投げる。
     @discardableResult
     public func createRoutine(name: String, exercises: [Exercise] = []) throws -> Routine {
+        if !ProGate.canCreateUnlimitedRoutines {
+            let existing = try context.fetchCount(FetchDescriptor<Routine>())
+            if existing >= ProGate.freeRoutineLimit {
+                throw ProGateError.routineLimitReached(current: existing, limit: ProGate.freeRoutineLimit)
+            }
+        }
         let routine = Routine(name: name)
         context.insert(routine)
         for (index, exercise) in exercises.enumerated() {

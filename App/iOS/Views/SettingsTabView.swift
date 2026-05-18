@@ -111,8 +111,22 @@ struct SettingsTabView: View {
     private var iCloudSection: some View {
         Section {
             Toggle(isOn: $cloudKitEnabled) {
-                Label("iCloud 同期", systemImage: "icloud")
+                HStack {
+                    Label("iCloud 同期", systemImage: "icloud")
+                    if !ProGate.canUseICloudSync {
+                        Spacer()
+                        Text("Pro")
+                            .font(.caption2.weight(.semibold))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill(Color.yellow.opacity(0.3))
+                            )
+                    }
+                }
             }
+            .disabled(!ProGate.canUseICloudSync)
             .onChange(of: cloudKitEnabled) { _, _ in
                 showCloudKitChangeAlert = true
             }
@@ -122,10 +136,19 @@ struct SettingsTabView: View {
                 Spacer()
                 statusBadge
             }
+
+            if !ProGate.canUseICloudSync {
+                Button {
+                    showProSheet = true
+                } label: {
+                    Label("Pro にアップグレード", systemImage: "star.fill")
+                        .foregroundStyle(.tint)
+                }
+            }
         } header: {
             Text("マルチデバイス同期")
         } footer: {
-            Text("iPhone・Apple Watch・iPad・Mac 間で記録を自動同期します。すべての計算はオンデバイス、データは Apple の iCloud（ユーザーのプライベートデータベース）に保存されます。設定変更後はアプリの再起動が必要です。")
+            Text("iPhone・Apple Watch・iPad・Mac 間で記録を自動同期します。すべての計算はオンデバイス、データは Apple の iCloud（ユーザーのプライベートデータベース）に保存されます。設定変更後はアプリの再起動が必要です。Pro 限定機能です。")
         }
         .alert("再起動が必要です", isPresented: $showCloudKitChangeAlert) {
             Button("OK") {}

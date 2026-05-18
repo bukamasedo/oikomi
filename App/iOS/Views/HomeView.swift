@@ -35,6 +35,8 @@ struct HomeView: View {
     }
 
     private var coachingAdvice: [CoachingAdvice] {
+        // Pro 限定機能（仕様書 §10）: Free プランではコーチングを生成しない
+        guard ProGate.canUseAICoaching else { return [] }
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
         let deload = Analytics.deloadAdvice(sessions: completedSessions, sets: allSets)
         let volume = Analytics.volumeAdvice(from: allSets)
