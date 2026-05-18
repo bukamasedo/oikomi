@@ -35,6 +35,8 @@ struct OikomiApp: App {
                 } catch {
                     print("HealthKit 権限取得スキップ: \(error)")
                 }
+                // StoreKit 2: products ロード + Transaction listener 開始 + 現在の権利確認
+                await SubscriptionManager.shared.start()
             }
         } catch {
             fatalError("ModelContainer 初期化失敗: \(error)")

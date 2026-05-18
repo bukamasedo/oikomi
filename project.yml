@@ -169,6 +169,7 @@ schemes:
         Oikomi: all
     run:
       config: Debug
+      storeKitConfiguration: Oikomi.storekit
     test:
       config: Debug
     archive:
@@ -179,6 +180,7 @@ schemes:
         OikomiWatch: all
     run:
       config: Debug
+      storeKitConfiguration: Oikomi.storekit
   OikomiMac:
     build:
       targets:

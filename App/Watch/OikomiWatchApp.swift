@@ -26,6 +26,8 @@ struct OikomiWatchApp: App {
                     print("[Oikomi.sync] Watch cleaned up \(cleaned) stale active sessions on launch")
                 }
                 await RestTimerNotifier.requestAuthorization()
+                // StoreKit 2 を Watch 側でも独立して起動（同一 Apple ID なら entitlements 共通）
+                await SubscriptionManager.shared.start()
             }
         } catch {
             fatalError("ModelContainer 初期化失敗: \(error)")

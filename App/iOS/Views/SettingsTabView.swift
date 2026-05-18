@@ -1,4 +1,5 @@
 import SwiftData
+import StoreKit
 import SwiftUI
 import OikomiKit
 
@@ -250,81 +251,231 @@ private struct ProUpgradeSheet: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    @State private var subscriptionManager = SubscriptionManager.shared
+    @State private var selectedProductID: String = ProductIDs.proYearly
+    @State private var showRestoredAlert = false
+
+    private var monthlyProduct: Product? {
+        subscriptionManager.products.first(where: { $0.id == ProductIDs.proMonthly })
+    }
+    private var yearlyProduct: Product? {
+        subscriptionManager.products.first(where: { $0.id == ProductIDs.proYearly })
+    }
+    private var selectedProduct: Product? {
+        subscriptionManager.products.first(where: { $0.id == selectedProductID })
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 28) {
-                    VStack(spacing: 8) {
-                        Image(systemName: "star.circle.fill")
-                            .font(.system(size: 56))
-                            .foregroundStyle(.yellow)
-                        Text("Oikomi Pro")
-                            .font(.largeTitle.weight(.bold))
-                        Text("14 日間無料でお試し")
-                            .font(.headline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.top, 24)
-
-                    VStack(alignment: .leading, spacing: 16) {
-                        ProBullet(title: "AIコーチング", detail: "ディロード推奨・PR予測・ボリューム警告")
-                        ProBullet(title: "Live Activity / Dynamic Island", detail: "ロック画面とアイランドに常時表示")
-                        ProBullet(title: "HealthKit 詳細読み取り", detail: "HRV・睡眠で負荷を自動調整")
-                        ProBullet(title: "iCloud 同期", detail: "iPhone・Watch・Mac でデータ共有")
-                        ProBullet(title: "Family Sharing", detail: "最大 6 名で利用可能")
-                        ProBullet(title: "ルーティン・カスタム種目 無制限", detail: "Free は 3 / 5 まで")
-                    }
-                    .padding(.horizontal, 24)
-
-                    VStack(spacing: 12) {
-                        priceRow(label: "年額プラン", price: "¥5,800 / 年", note: "実質 ¥483/月（月額比 38% オフ）", isHighlighted: true)
-                        priceRow(label: "月額プラン", price: "¥780 / 月", note: nil, isHighlighted: false)
-                    }
-                    .padding(.horizontal, 24)
-
-                    Text("StoreKit 2 統合は v1.0 ローンチ前に実装予定です。")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-
-                    Spacer()
+                    headerSection
+                    bulletsSection
+                    pricingSection
+                    ctaSection
+                    secondarySection
                 }
+                .padding(.bottom, 24)
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }
                 }
             }
+            .alert("購入を復元しました", isPresented: $showRestoredAlert) {
+                Button("OK") {}
+            } message: {
+                Text(subscriptionManager.isProActive
+                     ? "Pro が有効になりました。"
+                     : "復元可能な購入が見つかりませんでした。")
+            }
+            .alert(
+                "エラー",
+                isPresented: Binding(
+                    get: { subscriptionManager.lastError != nil },
+                    set: { _ in subscriptionManager.clearLastError() }
+                )
+            ) {
+                Button("OK") {}
+            } message: {
+                Text(subscriptionManager.lastError ?? "")
+            }
+            .task {
+                if subscriptionManager.products.isEmpty {
+                    await subscriptionManager.loadProducts()
+                }
+            }
+            .onChange(of: subscriptionManager.isProActive) { _, newValue in
+                if newValue { dismiss() }
+            }
         }
     }
 
+    // MARK: - Sections
+
     @ViewBuilder
-    private func priceRow(label: String, price: String, note: String?, isHighlighted: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(label)
+    private var headerSection: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "star.circle.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(.yellow)
+            Text("Oikomi Pro")
+                .font(.largeTitle.weight(.bold))
+            if subscriptionManager.isEligibleForIntroOffer {
+                Text("14 日間無料でお試し")
                     .font(.headline)
-                Spacer()
-                Text(price)
-                    .font(.headline.monospacedDigit())
-            }
-            if let note {
-                Text(note)
-                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(isHighlighted ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.08))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(isHighlighted ? Color.accentColor : .clear, lineWidth: 1)
-        )
+        .padding(.top, 24)
+    }
+
+    @ViewBuilder
+    private var bulletsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            ProBullet(title: "AIコーチング", detail: "ディロード推奨・PR予測・ボリューム警告")
+            ProBullet(title: "Live Activity / Dynamic Island", detail: "ロック画面とアイランドに常時表示")
+            ProBullet(title: "HealthKit 詳細読み取り", detail: "HRV・睡眠で負荷を自動調整")
+            ProBullet(title: "iCloud 同期", detail: "iPhone・Watch・Mac でデータ共有")
+            ProBullet(title: "Family Sharing", detail: "最大 6 名で利用可能")
+            ProBullet(title: "ルーティン・カスタム種目 無制限", detail: "Free は 3 / 5 まで")
+        }
+        .padding(.horizontal, 24)
+    }
+
+    @ViewBuilder
+    private var pricingSection: some View {
+        VStack(spacing: 12) {
+            if subscriptionManager.products.isEmpty {
+                ProgressView()
+                    .padding(.vertical, 24)
+            } else {
+                if let yearly = yearlyProduct {
+                    priceRow(
+                        product: yearly,
+                        label: "年額プラン",
+                        note: "実質 ¥483/月（月額比 38% オフ）"
+                    )
+                }
+                if let monthly = monthlyProduct {
+                    priceRow(
+                        product: monthly,
+                        label: "月額プラン",
+                        note: nil
+                    )
+                }
+            }
+        }
+        .padding(.horizontal, 24)
+    }
+
+    @ViewBuilder
+    private var ctaSection: some View {
+        Button {
+            Task { await purchaseSelected() }
+        } label: {
+            HStack {
+                if subscriptionManager.purchaseInProgress {
+                    ProgressView()
+                        .tint(.white)
+                }
+                Text(ctaLabel)
+                    .font(.headline)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(.borderedProminent)
+        .padding(.horizontal, 24)
+        .disabled(subscriptionManager.purchaseInProgress || selectedProduct == nil)
+    }
+
+    private var ctaLabel: String {
+        if subscriptionManager.isEligibleForIntroOffer {
+            return "14日間無料で始める"
+        }
+        return "購入する"
+    }
+
+    @ViewBuilder
+    private var secondarySection: some View {
+        VStack(spacing: 8) {
+            Button {
+                Task { await restorePurchases() }
+            } label: {
+                Text("購入を復元")
+                    .font(.subheadline)
+            }
+            .disabled(subscriptionManager.purchaseInProgress)
+
+            HStack(spacing: 16) {
+                Link("利用規約", destination: URL(string: "https://example.com/terms")!)
+                Link("プライバシーポリシー", destination: URL(string: "https://example.com/privacy")!)
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 24)
+    }
+
+    @ViewBuilder
+    private func priceRow(product: Product, label: String, note: String?) -> some View {
+        let isHighlighted = product.id == selectedProductID
+        Button {
+            selectedProductID = product.id
+        } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Image(systemName: isHighlighted ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(isHighlighted ? Color.accentColor : .secondary)
+                    Text(label)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text(product.displayPrice)
+                        .font(.headline.monospacedDigit())
+                        .foregroundStyle(.primary)
+                }
+                if let note {
+                    Text(note)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 24)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isHighlighted ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.08))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(isHighlighted ? Color.accentColor : .clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Actions
+
+    private func purchaseSelected() async {
+        guard let product = selectedProduct else { return }
+        do {
+            _ = try await subscriptionManager.purchase(product)
+        } catch {
+            // SubscriptionManager 内部で lastError がセットされない経路もあるためここでも保険
+            print("[Oikomi.sub] purchase failed: \(error)")
+        }
+    }
+
+    private func restorePurchases() async {
+        do {
+            try await subscriptionManager.restore()
+            showRestoredAlert = true
+        } catch {
+            print("[Oikomi.sub] restore failed: \(error)")
+        }
     }
 }
 

@@ -1,0 +1,95 @@
+{
+  "identifier" : "C1B1A2E0-9A40-4A2C-9C2C-9AA53A6B7E11",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "ja_JP",
+    "_storefront" : "JPN",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "B1A1F1E0-0001-4A2C-9C2C-1AA53A6B7E11",
+      "localizations" : [
+        {
+          "description" : "Oikomi Pro サブスクリプション",
+          "displayName" : "Oikomi Pro",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "Oikomi Pro subscription",
+          "displayName" : "Oikomi Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "Oikomi Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "780",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "A0000001",
+          "introductoryOffer" : {
+            "internalID" : "A0010001",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P2W"
+          },
+          "localizations" : [
+            {
+              "description" : "Pro 機能をすべて使えます（月額）",
+              "displayName" : "Oikomi Pro 月額",
+              "locale" : "ja_JP"
+            },
+            {
+              "description" : "Unlock all Oikomi Pro features (monthly)",
+              "displayName" : "Oikomi Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.shuhirouchi.oikomi.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Oikomi Pro Monthly",
+          "subscriptionGroupID" : "B1A1F1E0-0001-4A2C-9C2C-1AA53A6B7E11",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "5800",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "A0000002",
+          "introductoryOffer" : {
+            "internalID" : "A0010002",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P2W"
+          },
+          "localizations" : [
+            {
+              "description" : "Pro 機能をすべて使えます（年額・実質 ¥483/月）",
+              "displayName" : "Oikomi Pro 年額",
+              "locale" : "ja_JP"
+            },
+            {
+              "description" : "Unlock all Oikomi Pro features (yearly)",
+              "displayName" : "Oikomi Pro Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.shuhirouchi.oikomi.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Oikomi Pro Yearly",
+          "subscriptionGroupID" : "B1A1F1E0-0001-4A2C-9C2C-1AA53A6B7E11",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
