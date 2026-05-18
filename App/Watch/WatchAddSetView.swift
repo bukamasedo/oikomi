@@ -9,6 +9,10 @@ struct WatchAddSetView: View {
 
     let session: WorkoutSession
     var preselectedExercise: Exercise?
+    /// 計画セットの「調整」フローで渡される。設定されている場合、保存時は markSetCompleted を呼ぶ。
+    var editingPlannedSet: SetRecord?
+    /// 編集モードで完了化したときレストタイマー endAt を親に返すコールバック。
+    var onCompleted: ((Date?) -> Void)?
 
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
 
@@ -38,7 +42,7 @@ struct WatchAddSetView: View {
                 }
                 .padding(.horizontal, 4)
             }
-            .navigationTitle("記録")
+            .navigationTitle(editingPlannedSet != nil ? "調整" : "記録")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -148,6 +152,19 @@ struct WatchAddSetView: View {
     }
 
     private func setupInitial() {
+        // 計画セットの「調整」モード: 計画値をプリフィル
+        if let planned = editingPlannedSet, selectedExercise == nil {
+            selectedExercise = planned.exercise
+            if let w = planned.weight {
+                weight = w
+                crownWeight = w
+            }
+            if let r = planned.reps {
+                reps = r
+                crownReps = Double(r)
+            }
+            return
+        }
         if let preselected = preselectedExercise, selectedExercise == nil {
             selectedExercise = preselected
             prefillFromLastUse(of: preselected)
@@ -171,12 +188,26 @@ struct WatchAddSetView: View {
         guard let exercise = selectedExercise else { return }
         let repo = WorkoutSessionRepository(context: modelContext)
         do {
-            try repo.addSet(
-                to: session,
-                exercise: exercise,
-                weight: useBodyweight ? nil : weight,
-                reps: reps
-            )
+            if let plannedSet = editingPlannedSet {
+                // 計画セット → 実績化（調整した値で markSetCompleted）
+                let endAt = try repo.markSetCompleted(
+                    plannedSet,
+                    actualWeight: useBodyweight ? nil : weight,
+                    actualReps: reps
+                )
+                if let endAt {
+                    RestTimerNotifier.scheduleRestEnd(at: endAt)
+                }
+                onCompleted?(endAt)
+            } else {
+                // iPhone と同様、新規セットは「計画」状態で保存し、後でタップして完了化する。
+                _ = try repo.addPlannedSet(
+                    to: session,
+                    exercise: exercise,
+                    weight: useBodyweight ? nil : weight,
+                    reps: reps
+                )
+            }
             dismiss()
         } catch {
             errorMessage = "保存失敗: \(error.localizedDescription)"
@@ -184,21 +215,45 @@ struct WatchAddSetView: View {
     }
 }
 
-/// Watch 用の簡素な種目選択ピッカー。検索 UI はせず、種目名でグルーピング表示。
+/// Watch 用の簡素な種目選択ピッカー。お気に入り種目を上部に固定表示。
 struct WatchExercisePicker: View {
 
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
 
     let onPick: (Exercise) -> Void
 
+    private var favorites: [Exercise] { exercises.filter { $0.isFavorite } }
+    private var nonFavorites: [Exercise] { exercises.filter { !$0.isFavorite } }
+
     var body: some View {
-        List(exercises) { exercise in
-            Button {
-                onPick(exercise)
-                dismiss()
-            } label: {
+        List {
+            if !favorites.isEmpty {
+                Section("お気に入り") {
+                    ForEach(favorites) { exercise in
+                        pickerRow(exercise)
+                    }
+                }
+            }
+            Section(favorites.isEmpty ? "" : "すべて") {
+                ForEach(nonFavorites) { exercise in
+                    pickerRow(exercise)
+                }
+            }
+        }
+        .navigationTitle("種目")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private func pickerRow(_ exercise: Exercise) -> some View {
+        Button {
+            onPick(exercise)
+            dismiss()
+        } label: {
+            HStack(spacing: 6) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(exercise.name)
                         .font(.body)
@@ -209,9 +264,15 @@ struct WatchExercisePicker: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                Spacer()
+                Image(systemName: exercise.isFavorite ? "star.fill" : "star")
+                    .foregroundStyle(exercise.isFavorite ? .yellow : .secondary.opacity(0.5))
+                    .font(.caption)
+                    .onTapGesture {
+                        let repo = ExerciseRepository(context: modelContext)
+                        try? repo.toggleFavorite(exercise)
+                    }
             }
         }
-        .navigationTitle("種目")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }

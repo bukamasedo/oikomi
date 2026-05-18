@@ -8,6 +8,7 @@ import OikomiKit
 /// 単一選択モードで動作し、選択された Exercise を `onPick` で返す。
 struct ExercisePickerSheet: View {
 
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     @Query(sort: \Exercise.name) private var allExercises: [Exercise]
@@ -20,6 +21,7 @@ struct ExercisePickerSheet: View {
 
     @State private var searchText: String = ""
     @State private var selectedFilter: MuscleGroup?
+    @State private var favoritesOnly: Bool = false
 
     init(excluding: [Exercise] = [], onPick: @escaping (Exercise) -> Void) {
         self.excluding = excluding
@@ -30,12 +32,21 @@ struct ExercisePickerSheet: View {
         let excludedIds = Set(excluding.map(\.id))
         return allExercises.filter { exercise in
             if excludedIds.contains(exercise.id) { return false }
+            if favoritesOnly && !exercise.isFavorite { return false }
             if let filter = selectedFilter, !exercise.muscleGroups.contains(filter) { return false }
             if searchText.isEmpty { return true }
             let query = searchText.lowercased()
             return exercise.name.lowercased().contains(query)
                 || exercise.nameEn.lowercased().contains(query)
         }
+    }
+
+    private var favorites: [Exercise] {
+        filtered.filter { $0.isFavorite }
+    }
+
+    private var nonFavorites: [Exercise] {
+        filtered.filter { !$0.isFavorite }
     }
 
     private var availableMuscleFilters: [MuscleGroup] {
@@ -59,17 +70,20 @@ struct ExercisePickerSheet: View {
                             description: Text("検索ワードやフィルタを調整してください")
                         )
                     } else {
-                        ForEach(filtered) { exercise in
-                            Button {
-                                onPick(exercise)
-                                dismiss()
-                            } label: {
-                                row(exercise)
+                        if !favorites.isEmpty {
+                            Section("お気に入り") {
+                                ForEach(favorites) { exercise in
+                                    exerciseRowButton(exercise)
+                                }
+                            }
+                        }
+                        Section(favorites.isEmpty ? "" : "すべての種目") {
+                            ForEach(nonFavorites) { exercise in
+                                exerciseRowButton(exercise)
                             }
                         }
                     }
                 }
-                .listStyle(.plain)
             }
             .navigationTitle("種目を選ぶ")
             .navigationBarTitleDisplayMode(.inline)
@@ -86,17 +100,51 @@ struct ExercisePickerSheet: View {
     private var filterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                chip(label: "すべて", isSelected: selectedFilter == nil) {
+                chip(label: "すべて", isSelected: selectedFilter == nil && !favoritesOnly) {
                     selectedFilter = nil
+                    favoritesOnly = false
+                }
+                chip(label: "★ お気に入り", isSelected: favoritesOnly) {
+                    favoritesOnly.toggle()
+                    if favoritesOnly { selectedFilter = nil }
                 }
                 ForEach(availableMuscleFilters, id: \.self) { group in
                     chip(label: group.displayName, isSelected: selectedFilter == group) {
                         selectedFilter = selectedFilter == group ? nil : group
+                        if selectedFilter != nil { favoritesOnly = false }
                     }
                 }
             }
             .padding(.horizontal)
         }
+    }
+
+    @ViewBuilder
+    private func exerciseRowButton(_ exercise: Exercise) -> some View {
+        HStack(spacing: 8) {
+            Button {
+                onPick(exercise)
+                dismiss()
+            } label: {
+                row(exercise)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                toggleFavorite(exercise)
+            } label: {
+                Image(systemName: exercise.isFavorite ? "star.fill" : "star")
+                    .foregroundStyle(exercise.isFavorite ? .yellow : .secondary)
+                    .font(.title3)
+                    .padding(.horizontal, 4)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func toggleFavorite(_ exercise: Exercise) {
+        let repo = ExerciseRepository(context: modelContext)
+        try? repo.toggleFavorite(exercise)
     }
 
     @ViewBuilder

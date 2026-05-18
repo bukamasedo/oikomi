@@ -39,6 +39,8 @@ public struct SetRecordDTO: Codable, Sendable, Hashable {
     public let durationSeconds: Int?
     public let isWarmup: Bool
     public let completedAt: Date
+    /// 計画(未完了) vs 実績(完了)。後方互換のため Optional。nil は true として扱う。
+    public let isCompleted: Bool?
 
     public init(
         id: UUID,
@@ -49,7 +51,8 @@ public struct SetRecordDTO: Codable, Sendable, Hashable {
         reps: Int? = nil,
         durationSeconds: Int? = nil,
         isWarmup: Bool = false,
-        completedAt: Date
+        completedAt: Date,
+        isCompleted: Bool? = true
     ) {
         self.id = id
         self.sessionId = sessionId
@@ -60,6 +63,18 @@ public struct SetRecordDTO: Codable, Sendable, Hashable {
         self.durationSeconds = durationSeconds
         self.isWarmup = isWarmup
         self.completedAt = completedAt
+        self.isCompleted = isCompleted
+    }
+}
+
+/// 種目のお気に入り状態を伝える軽量 DTO。Exercise マスタ全体ではなく差分のみ送る。
+public struct ExerciseFavoriteDTO: Codable, Sendable, Hashable {
+    public let exerciseName: String
+    public let isFavorite: Bool
+
+    public init(exerciseName: String, isFavorite: Bool) {
+        self.exerciseName = exerciseName
+        self.isFavorite = isFavorite
     }
 }
 
@@ -96,6 +111,7 @@ public struct SyncEnvelope: Codable, Sendable {
         case routineDeleted       // ルーティン削除
         case fullSyncRequest      // 受信側から「全部送って」依頼
         case fullSyncResponse     // 上記の応答
+        case exerciseFavoriteUpdate  // 種目のお気に入りトグル
     }
 
     public let kind: Kind
@@ -104,6 +120,8 @@ public struct SyncEnvelope: Codable, Sendable {
     public let sets: [SetRecordDTO]
     public let routines: [RoutineDTO]
     public let deletedRoutineIds: [UUID]
+    /// 後方互換のため Optional。古いバイナリは未送信なので nil で受信される。
+    public let exerciseFavorites: [ExerciseFavoriteDTO]?
 
     public init(
         kind: Kind,
@@ -111,7 +129,8 @@ public struct SyncEnvelope: Codable, Sendable {
         sessions: [WorkoutSessionDTO] = [],
         sets: [SetRecordDTO] = [],
         routines: [RoutineDTO] = [],
-        deletedRoutineIds: [UUID] = []
+        deletedRoutineIds: [UUID] = [],
+        exerciseFavorites: [ExerciseFavoriteDTO]? = nil
     ) {
         self.kind = kind
         self.timestamp = timestamp
@@ -119,6 +138,7 @@ public struct SyncEnvelope: Codable, Sendable {
         self.sets = sets
         self.routines = routines
         self.deletedRoutineIds = deletedRoutineIds
+        self.exerciseFavorites = exerciseFavorites
     }
 }
 
@@ -150,7 +170,8 @@ extension SetRecord {
             reps: reps,
             durationSeconds: durationSeconds,
             isWarmup: isWarmup,
-            completedAt: completedAt
+            completedAt: completedAt,
+            isCompleted: isCompleted
         )
     }
 }

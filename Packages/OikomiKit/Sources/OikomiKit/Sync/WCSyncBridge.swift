@@ -110,6 +110,21 @@ public final class WCSyncBridge {
         dispatch(envelope)
     }
 
+    /// 種目のお気に入り状態を相手デバイスに送る。Exercise は name で照合する既存規約に従う。
+    public func sendExerciseFavoriteUpdate(exerciseId: UUID, isFavorite: Bool) {
+        if applyingRemoteUpdate { return }
+        guard let provider = modelContextProvider else { return }
+        let context = provider()
+        guard let exercise = try? context.fetch(
+            FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == exerciseId })
+        ).first else { return }
+        let envelope = SyncEnvelope(
+            kind: .exerciseFavoriteUpdate,
+            exerciseFavorites: [ExerciseFavoriteDTO(exerciseName: exercise.name, isFavorite: isFavorite)]
+        )
+        dispatch(envelope)
+    }
+
     public func requestFullSync() {
         let envelope = SyncEnvelope(kind: .fullSyncRequest)
         dispatch(envelope)
@@ -122,7 +137,7 @@ public final class WCSyncBridge {
             "[Oikomi.sync] received envelope kind=\(envelope.kind.rawValue) sessions=\(envelope.sessions.count) sets=\(envelope.sets.count) routines=\(envelope.routines.count)"
         )
         switch envelope.kind {
-        case .sessionUpsert, .setUpsert, .routineUpsert, .routineDeleted, .fullSyncResponse:
+        case .sessionUpsert, .setUpsert, .routineUpsert, .routineDeleted, .fullSyncResponse, .exerciseFavoriteUpdate:
             applyEnvelopeToLocalStore(envelope)
         case .fullSyncRequest:
             respondToFullSyncRequest()
@@ -146,6 +161,7 @@ public final class WCSyncBridge {
         for dto in envelope.sessions { upsert(session: dto, in: context) }
         for dto in envelope.sets { upsert(set: dto, in: context) }
         for id in envelope.deletedRoutineIds { deleteRoutine(id: id, in: context) }
+        for dto in envelope.exerciseFavorites ?? [] { applyExerciseFavorite(dto, in: context) }
 
         do {
             try context.save()
@@ -270,10 +286,20 @@ public final class WCSyncBridge {
         setRecord.durationSeconds = dto.durationSeconds
         setRecord.isWarmup = dto.isWarmup
         setRecord.completedAt = dto.completedAt
+        // 古い envelope は isCompleted を持たない → true として扱う（既存挙動互換）
+        setRecord.isCompleted = dto.isCompleted ?? true
 
         if let weight = dto.weight, let reps = dto.reps, weight > 0, reps > 0 {
             setRecord.estimated1RM = OneRepMax.epley(weight: weight, reps: reps)
         }
+    }
+
+    private func applyExerciseFavorite(_ dto: ExerciseFavoriteDTO, in context: ModelContext) {
+        let name = dto.exerciseName
+        guard let exercise = try? context.fetch(
+            FetchDescriptor<Exercise>(predicate: #Predicate { $0.name == name })
+        ).first else { return }
+        exercise.isFavorite = dto.isFavorite
     }
 
     private func upsert(routine dto: RoutineDTO, in context: ModelContext) {

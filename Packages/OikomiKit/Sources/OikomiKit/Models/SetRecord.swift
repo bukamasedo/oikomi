@@ -33,6 +33,11 @@ public final class SetRecord {
 
     public var completedAt: Date = Date()
 
+    /// 計画(未完了) vs 実績(完了)を区別する。
+    /// 既存データは全て「即記録」フローで作成されているためデフォルト true で
+    /// lightweight migration を破壊しない。`addPlannedSet` 経由のセットのみ false。
+    public var isCompleted: Bool = true
+
     public init(
         id: UUID = UUID(),
         exercise: Exercise? = nil,
@@ -45,7 +50,8 @@ public final class SetRecord {
         isWarmup: Bool = false,
         estimated1RM: Double? = nil,
         restSeconds: Int? = nil,
-        completedAt: Date = Date()
+        completedAt: Date = Date(),
+        isCompleted: Bool = true
     ) {
         self.id = id
         self.exercise = exercise
@@ -59,5 +65,6 @@ public final class SetRecord {
         self.estimated1RM = estimated1RM
         self.restSeconds = restSeconds
         self.completedAt = completedAt
+        self.isCompleted = isCompleted
     }
 }

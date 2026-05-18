@@ -47,6 +47,13 @@ public final class ExerciseRepository {
         }
     }
 
+    /// 種目のお気に入り状態をトグルする。WCSync 経由で他デバイスにも同期される。
+    public func toggleFavorite(_ exercise: Exercise) throws {
+        exercise.isFavorite.toggle()
+        try context.save()
+        WCSyncBridge.shared.sendExerciseFavoriteUpdate(exerciseId: exercise.id, isFavorite: exercise.isFavorite)
+    }
+
     /// カスタム種目を追加する。
     @discardableResult
     public func addCustomExercise(

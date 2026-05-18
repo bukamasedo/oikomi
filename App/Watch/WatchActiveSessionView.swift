@@ -9,66 +9,67 @@ struct WatchActiveSessionView: View {
     let session: WorkoutSession
 
     @State private var showingAddSet = false
+    @State private var showingExercisePicker = false
     @State private var preselectedExercise: Exercise?
+    @State private var editingPlannedSet: SetRecord?
     @State private var errorMessage: String?
+    @State private var restEndAt: Date?
+    @State private var confirmingFinish = false
     @State private var healthSession = WatchHealthSession()
 
     var body: some View {
         List {
-            Section {
-                HStack {
-                    Image(systemName: "timer")
-                    Text(session.startedAt, style: .timer)
-                        .monospacedDigit()
-                }
-                .font(.subheadline)
-            }
-
-            // ルーティン種目をクイック追加
-            if let routine = session.routine {
-                Section("ルーティン") {
-                    ForEach(routine.orderedExercises) { entry in
-                        Button {
-                            preselectedExercise = entry.exercise
-                            showingAddSet = true
-                        } label: {
-                            entryRow(entry)
-                        }
+            if let endAt = restEndAt {
+                Section {
+                    WatchRestTimerView(endAt: endAt) {
+                        restEndAt = nil
+                        RestTimerNotifier.cancel()
                     }
                 }
+                .listRowBackground(Color.clear)
             }
 
-            Section("セット") {
-                let sets = session.orderedSets
-                if sets.isEmpty {
-                    Text("まだ記録なし")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(sets) { set in
-                        setRow(set)
-                    }
-                }
+            ForEach(groupedExercises(session), id: \.0.id) { exercise, sets in
+                exerciseSection(exercise: exercise, sets: sets)
             }
 
-            Section {
+            Button {
+                showingExercisePicker = true
+            } label: {
+                Label("種目を追加", systemImage: "plus.circle")
+                    .font(.caption)
+            }
+        }
+        .navigationTitle(session.routine?.name ?? "進行中")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    preselectedExercise = nil
-                    showingAddSet = true
+                    confirmingFinish = true
                 } label: {
-                    Label("セット追加", systemImage: "plus.circle.fill")
-                }
-                Button(role: .destructive) {
-                    finishSession()
-                } label: {
-                    Label("終了", systemImage: "stop.fill")
+                    Image(systemName: "stop.circle.fill")
+                        .foregroundStyle(.red)
                 }
             }
         }
-        .navigationTitle("進行中")
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingAddSet) {
             WatchAddSetView(session: session, preselectedExercise: preselectedExercise)
+        }
+        .sheet(isPresented: $showingExercisePicker) {
+            NavigationStack {
+                WatchExercisePicker { picked in
+                    addExerciseToSession(picked)
+                }
+            }
+        }
+        .sheet(item: $editingPlannedSet) { plannedSet in
+            WatchAddSetView(session: session, editingPlannedSet: plannedSet) { restEnd in
+                restEndAt = restEnd
+            }
+        }
+        .confirmationDialog("ワークアウトを終了しますか？", isPresented: $confirmingFinish, titleVisibility: .visible) {
+            Button("終了する", role: .destructive) { finishSession() }
+            Button("キャンセル", role: .cancel) {}
         }
         .task {
             await healthSession.start()
@@ -80,44 +81,108 @@ struct WatchActiveSessionView: View {
         }
     }
 
-    @ViewBuilder
-    private func entryRow(_ entry: RoutineExercise) -> some View {
-        let completed = (session.sets ?? []).filter {
-            !$0.isWarmup && $0.exercise?.id == entry.exercise?.id
-        }.count
-        let isComplete = completed >= entry.plannedSets
+    /// セッション内のセットを種目別にグループ化（初出順）
+    private func groupedExercises(_ session: WorkoutSession) -> [(Exercise, [SetRecord])] {
+        var firstAppearance: [UUID: Int] = [:]
+        var byExercise: [UUID: (Exercise, [SetRecord])] = [:]
+        for set in session.orderedSets {
+            guard let ex = set.exercise else { continue }
+            if firstAppearance[ex.id] == nil {
+                firstAppearance[ex.id] = set.order
+                byExercise[ex.id] = (ex, [])
+            }
+            byExercise[ex.id]?.1.append(set)
+        }
+        return byExercise.values.sorted { lhs, rhs in
+            (firstAppearance[lhs.0.id] ?? 0) < (firstAppearance[rhs.0.id] ?? 0)
+        }
+    }
 
-        HStack {
-            Image(systemName: isComplete ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(isComplete ? .green : .secondary)
-                .font(.caption)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(entry.exercise?.name ?? "—")
-                    .font(.caption)
-                Text("\(completed)/\(entry.plannedSets)")
+    @ViewBuilder
+    private func exerciseSection(exercise: Exercise, sets: [SetRecord]) -> some View {
+        let completed = sets.filter(\.isCompleted).count
+        Section {
+            ForEach(sets) { set in
+                setRow(set)
+            }
+            Button {
+                preselectedExercise = exercise
+                showingAddSet = true
+            } label: {
+                Label("セット", systemImage: "plus.circle")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+            }
+        } header: {
+            HStack {
+                Text(exercise.name)
+                    .font(.caption.weight(.semibold))
+                    .textCase(nil)
+                Spacer()
+                Text("\(completed)/\(sets.count)")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(completed >= sets.count && sets.count > 0 ? .green : .secondary)
             }
         }
     }
 
     @ViewBuilder
     private func setRow(_ set: SetRecord) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(set.exercise?.name ?? "—")
-                .font(.caption)
-            HStack(spacing: 4) {
-                if let weight = set.weight, let reps = set.reps {
-                    Text("\(weight.formatted())kg × \(reps)")
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                } else if let reps = set.reps {
-                    Text("\(reps)レップ")
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.secondary)
+        Button {
+            if !set.isCompleted {
+                completePlanned(set)
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(set.isCompleted ? .green : .secondary)
+                if let w = set.weight, let r = set.reps {
+                    Text("\(w.formatted())kg × \(r)")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(set.isCompleted ? .secondary : .primary)
+                } else if let r = set.reps {
+                    Text("\(r)レップ")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(set.isCompleted ? .secondary : .primary)
+                }
+                Spacer()
+                if !set.isCompleted {
+                    Button {
+                        editingPlannedSet = set
+                    } label: {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.caption2)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
                 }
             }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func completePlanned(_ set: SetRecord) {
+        let repo = WorkoutSessionRepository(context: modelContext)
+        do {
+            let endAt = try repo.markSetCompleted(set)
+            if let endAt {
+                restEndAt = endAt
+                RestTimerNotifier.scheduleRestEnd(at: endAt)
+            }
+        } catch {
+            errorMessage = "完了失敗: \(error.localizedDescription)"
+        }
+    }
+
+    private func addExerciseToSession(_ exercise: Exercise) {
+        let lastForExercise = session.orderedSets.last { $0.exercise?.id == exercise.id }
+        let useBodyweight = exercise.measurementType == .bodyweightReps
+        let weight = useBodyweight ? nil : (lastForExercise?.weight ?? 20)
+        let reps = lastForExercise?.reps ?? 8
+        let repo = WorkoutSessionRepository(context: modelContext)
+        do {
+            _ = try repo.addPlannedSet(to: session, exercise: exercise, weight: weight, reps: reps)
+        } catch {
+            errorMessage = "種目追加失敗: \(error.localizedDescription)"
         }
     }
 

@@ -10,6 +10,8 @@ struct AddSetSheet: View {
     let session: WorkoutSession
     /// 開く前に選択しておきたい種目（クイック追加から渡す）
     var preselectedExercise: Exercise? = nil
+    /// 「計画として追加」モード。true なら addPlannedSet を使い未完了セットを生成する。
+    var planMode: Bool = false
     /// 保存成功時に呼ばれる。レストタイマー起動などに使う。
     var onSaved: ((SetRecord) -> Void)? = nil
 
@@ -60,7 +62,7 @@ struct AddSetSheet: View {
                     }
                 }
             }
-            .navigationTitle("セットを記録")
+            .navigationTitle("セット追加")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -122,12 +124,22 @@ struct AddSetSheet: View {
         let repo = WorkoutSessionRepository(context: modelContext)
         do {
             let useBodyweight = exercise.measurementType == .bodyweightReps
-            let saved = try repo.addSet(
-                to: session,
-                exercise: exercise,
-                weight: useBodyweight ? nil : weight,
-                reps: reps
-            )
+            let saved: SetRecord
+            if planMode {
+                saved = try repo.addPlannedSet(
+                    to: session,
+                    exercise: exercise,
+                    weight: useBodyweight ? nil : weight,
+                    reps: reps
+                )
+            } else {
+                saved = try repo.addSet(
+                    to: session,
+                    exercise: exercise,
+                    weight: useBodyweight ? nil : weight,
+                    reps: reps
+                )
+            }
             onSaved?(saved)
             dismiss()
         } catch {

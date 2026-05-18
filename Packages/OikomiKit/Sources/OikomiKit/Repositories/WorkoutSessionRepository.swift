@@ -24,12 +24,35 @@ public final class WorkoutSessionRepository {
         at date: Date = Date(),
         routine: Routine? = nil,
         startLiveActivity: Bool = true,
-        fetchHealthSnapshot: Bool = true
+        fetchHealthSnapshot: Bool = true,
+        expandPlannedSets: Bool = true
     ) throws -> WorkoutSession {
         let session = WorkoutSession(startedAt: date, routine: routine)
         context.insert(session)
         if let routine {
             routine.lastUsedAt = date
+            // RoutineExercise の planned* を未完了 SetRecord に展開する。
+            // ユーザーは Watch 側でこれをタップするだけで完了化できる。
+            // `startSessionByCopying` のように既に実績セットを足す予定があれば false で抑止。
+            if expandPlannedSets {
+                var order = 0
+                for routineEx in routine.orderedExercises {
+                    guard let exercise = routineEx.exercise else { continue }
+                    let plannedReps = routineEx.plannedReps > 0 ? routineEx.plannedReps : nil
+                    for _ in 0..<max(routineEx.plannedSets, 0) {
+                        let plannedSet = SetRecord(
+                            exercise: exercise,
+                            session: session,
+                            order: order,
+                            weight: routineEx.plannedWeight,
+                            reps: plannedReps,
+                            isCompleted: false
+                        )
+                        context.insert(plannedSet)
+                        order += 1
+                    }
+                }
+            }
         }
         try context.save()
 
@@ -128,6 +151,89 @@ public final class WorkoutSessionRepository {
         return set
     }
 
+    /// 計画セット（未完了）をセッションに追加する。
+    ///
+    /// iPhone の「今日のメニュー」やセッション途中での追加計画から呼ぶ。
+    /// `markSetCompleted(_:)` で実績化されるまで PR 評価・Live Activity 更新は走らない。
+    @discardableResult
+    public func addPlannedSet(
+        to session: WorkoutSession,
+        exercise: Exercise,
+        weight: Double?,
+        reps: Int?,
+        durationSeconds: Int? = nil,
+        isWarmup: Bool = false
+    ) throws -> SetRecord {
+        let nextOrder = (session.sets ?? []).map(\.order).max().map { $0 + 1 } ?? 0
+        let set = SetRecord(
+            exercise: exercise,
+            session: session,
+            order: nextOrder,
+            weight: weight,
+            reps: reps,
+            durationSeconds: durationSeconds,
+            isWarmup: isWarmup,
+            isCompleted: false
+        )
+        context.insert(set)
+        try context.save()
+        WCSyncBridge.shared.sendSetUpsert(set)
+        return set
+    }
+
+    /// 計画セットを完了化する。
+    ///
+    /// `actualWeight` / `actualReps` を渡せば実績で上書き（Watch の「調整」フロー）。
+    /// nil なら計画値のままで完了（Watch の 1 タップ完了フロー）。
+    /// PR 自動更新と Live Activity 更新が走り、レストタイマー終了時刻を返す。
+    @discardableResult
+    public func markSetCompleted(
+        _ set: SetRecord,
+        actualWeight: Double? = nil,
+        actualReps: Int? = nil,
+        actualDurationSeconds: Int? = nil,
+        completedAt: Date = Date()
+    ) throws -> Date? {
+        if let actualWeight { set.weight = actualWeight }
+        if let actualReps { set.reps = actualReps }
+        if let actualDurationSeconds { set.durationSeconds = actualDurationSeconds }
+        set.isCompleted = true
+        set.completedAt = completedAt
+        if let weight = set.weight, weight > 0, let reps = set.reps, reps > 0 {
+            set.estimated1RM = OneRepMax.epley(weight: weight, reps: reps)
+        }
+        let restSec = set.exercise?.defaultRestSeconds ?? 0
+        if restSec > 0 {
+            set.restSeconds = restSec
+        }
+        try context.save()
+
+        if !set.isWarmup {
+            let prRepo = PersonalRecordRepository(context: context)
+            _ = try? prRepo.updateIfNewBest(from: set)
+        }
+
+        WCSyncBridge.shared.sendSetUpsert(set)
+
+        let restEndAt: Date? = restSec > 0
+            ? completedAt.addingTimeInterval(TimeInterval(restSec))
+            : nil
+
+        if WorkoutActivityController.shared.isActive, let exercise = set.exercise {
+            let name = exercise.name
+            let count = set.session?.sets?.filter { $0.isCompleted }.count ?? 0
+            Task { @MainActor in
+                await WorkoutActivityController.shared.update(
+                    currentExerciseName: name,
+                    setCount: count,
+                    restEndAt: restEndAt
+                )
+            }
+        }
+
+        return restEndAt
+    }
+
     /// 既存セッションを複製して新しいセッションを開始する。
     ///
     /// 仕様書 §4.1.4「履歴コピー」の実装。`source` の routine 紐付けと全セット内容（種目・重量・
@@ -138,8 +244,10 @@ public final class WorkoutSessionRepository {
         _ source: WorkoutSession,
         at date: Date = Date()
     ) throws -> WorkoutSession {
-        let newSession = try startSession(at: date, routine: source.routine)
-        for sourceSet in source.orderedSets {
+        // 履歴の実績を即「完了済み」で複製するため、ルーティンの planned 展開は抑止する
+        let newSession = try startSession(at: date, routine: source.routine, expandPlannedSets: false)
+        // 過去のセッションに残った planned (未完了) セットは「実績」ではないので複製対象外
+        for sourceSet in source.orderedSets where sourceSet.isCompleted {
             guard let exercise = sourceSet.exercise else { continue }
             try addSet(
                 to: newSession,

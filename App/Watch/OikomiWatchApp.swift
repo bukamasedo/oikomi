@@ -13,7 +13,7 @@ struct OikomiWatchApp: App {
             sharedModelContainer = container
             WCSyncBridge.shared.activate { container.mainContext }
             // Watch スタンドアロン前提のため、種目シードを Watch 側でも実行（iPhone 同期に依存しない）
-            // + stale active session 掃除（iPhone と対称）
+            // + stale active session 掃除（iPhone と対称）+ レスト終了通知の許可リクエスト
             Task { @MainActor in
                 let exerciseRepo = ExerciseRepository(context: container.mainContext)
                 do {
@@ -25,6 +25,7 @@ struct OikomiWatchApp: App {
                 if let cleaned = try? sessionRepo.cleanupStaleActiveSessions(), cleaned > 0 {
                     print("[Oikomi.sync] Watch cleaned up \(cleaned) stale active sessions on launch")
                 }
+                await RestTimerNotifier.requestAuthorization()
             }
         } catch {
             fatalError("ModelContainer 初期化失敗: \(error)")

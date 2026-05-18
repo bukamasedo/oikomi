@@ -26,6 +26,9 @@ public final class Exercise {
     public var defaultRestSeconds: Int = 90
     public var isCustom: Bool = false
 
+    /// お気に入り登録。ExercisePicker で上段に固定表示するため。
+    public var isFavorite: Bool = false
+
     @Relationship(inverse: \SetRecord.exercise)
     public var setRecords: [SetRecord]? = []
 
