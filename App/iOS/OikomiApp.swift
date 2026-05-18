@@ -16,11 +16,11 @@ struct OikomiApp: App {
             // 受信時の upsert に使う ModelContext を毎回 mainContext から取得
             WCSyncBridge.shared.activate { container.mainContext }
 
-            // 初回起動時にシード種目を投入 + HealthKit 権限を要求 + stale session 掃除
+            // 起動時にシード種目を（差分）投入 + HealthKit 権限を要求 + stale session 掃除
             Task { @MainActor in
                 let repo = ExerciseRepository(context: container.mainContext)
                 do {
-                    try repo.seedIfNeeded()
+                    try repo.ensureSeedExercisesPresent()
                 } catch {
                     print("シード投入失敗: \(error)")
                 }

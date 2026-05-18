@@ -28,6 +28,25 @@ public final class ExerciseRepository {
         try context.save()
     }
 
+    /// SeedData の中で、ローカル DB に nameEn 一致のレコードが無いものを追加する。
+    ///
+    /// 起動時に呼び出す。冪等。SeedData.swift にシード種目を追記しただけで既存ユーザーにも
+    /// 自動的に新種目が反映される。nameEn を dedup キーに使う（日本語名は表記揺れがあるため）。
+    public func ensureSeedExercisesPresent() throws {
+        let existing = try context.fetch(FetchDescriptor<Exercise>())
+        let existingNameEn = Set(existing.map { $0.nameEn })
+
+        var inserted = 0
+        for seed in SeedData.starterExercises where !existingNameEn.contains(seed.nameEn) {
+            context.insert(seed.makeExercise())
+            inserted += 1
+        }
+        if inserted > 0 {
+            try context.save()
+            print("[Oikomi.seed] inserted \(inserted) new seed exercises")
+        }
+    }
+
     /// カスタム種目を追加する。
     @discardableResult
     public func addCustomExercise(

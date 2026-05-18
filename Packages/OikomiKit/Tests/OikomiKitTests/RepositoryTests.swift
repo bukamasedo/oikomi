@@ -46,6 +46,52 @@ struct RepositoryTests {
         #expect(exercises.count == SeedData.starterExercises.count)
     }
 
+    @Test("ensureSeedExercisesPresent: 空DBで全シード種目を投入する")
+    func ensureSeedFreshDB() throws {
+        let context = try Self.makeContext()
+        let repo = ExerciseRepository(context: context)
+
+        try repo.ensureSeedExercisesPresent()
+
+        let exercises = try context.fetch(FetchDescriptor<Exercise>())
+        #expect(exercises.count == SeedData.starterExercises.count)
+        #expect(exercises.count >= 120)  // v1.0.x で 120 種に拡充
+        #expect(exercises.contains { $0.nameEn == "Hamstring Stretch" })  // mobility 追加分
+        #expect(exercises.contains { $0.nameEn == "Stair Climber" })       // cardio 追加分
+    }
+
+    @Test("ensureSeedExercisesPresent: 2回呼んでも重複追加しない（冪等）")
+    func ensureSeedIdempotent() throws {
+        let context = try Self.makeContext()
+        let repo = ExerciseRepository(context: context)
+
+        try repo.ensureSeedExercisesPresent()
+        try repo.ensureSeedExercisesPresent()
+
+        let exercises = try context.fetch(FetchDescriptor<Exercise>())
+        #expect(exercises.count == SeedData.starterExercises.count)
+    }
+
+    @Test("ensureSeedExercisesPresent: 部分的に投入済みでも不足分のみ追加する（差分シード）")
+    func ensureSeedAddsMissingOnly() throws {
+        let context = try Self.makeContext()
+        let repo = ExerciseRepository(context: context)
+
+        // 既存ユーザーを模擬: starterExercises の先頭 50 件だけを投入
+        let preexisting = Array(SeedData.starterExercises.prefix(50))
+        for seed in preexisting {
+            context.insert(seed.makeExercise())
+        }
+        try context.save()
+
+        try repo.ensureSeedExercisesPresent()
+
+        let exercises = try context.fetch(FetchDescriptor<Exercise>())
+        #expect(exercises.count == SeedData.starterExercises.count)
+        let nameEnSet = Set(exercises.map(\.nameEn))
+        #expect(nameEnSet.count == exercises.count)  // 重複なし
+    }
+
     @Test("startSession + addSet + finishSession の一連")
     func workoutFlow() async throws {
         let context = try Self.makeContext()
