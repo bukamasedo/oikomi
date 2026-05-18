@@ -15,10 +15,15 @@ struct StatsWidget: Widget {
         }
         .configurationDisplayName("Oikomi 統計")
         .description("連続記録日数と今週のトレーニング状況を表示")
-        .supportedFamilies([
-            .systemSmall, .systemMedium,
-            .accessoryCircular, .accessoryRectangular, .accessoryInline,
-        ])
+        .supportedFamilies(supportedFamilies)
+    }
+
+    private var supportedFamilies: [WidgetFamily] {
+        #if os(watchOS)
+        return [.accessoryCircular, .accessoryRectangular, .accessoryInline]
+        #else
+        return [.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular, .accessoryInline]
+        #endif
     }
 }
 
@@ -100,10 +105,17 @@ struct StatsWidgetView: View {
             rectangular
         case .accessoryInline:
             inline
-        case .systemMedium:
-            medium
         default:
-            small
+            #if os(watchOS)
+            // watchOS では accessory ファミリーのみサポート。fallback も circular に。
+            circular
+            #else
+            if family == .systemMedium {
+                medium
+            } else {
+                small
+            }
+            #endif
         }
     }
 
