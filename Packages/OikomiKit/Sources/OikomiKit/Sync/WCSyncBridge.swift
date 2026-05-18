@@ -210,6 +210,26 @@ public final class WCSyncBridge {
         print(
             "[Oikomi.sync] upsert session id=\(dto.id.uuidString.prefix(8)) endedAt=\(dto.endedAt?.description ?? "nil") existing=\(wasExisting ? "Y" : "N")"
         )
+
+        // 不変条件「アクティブセッションは 1 つだけ」を強制。
+        // 新規アクティブな session が来たら、他のアクティブはすべて終了扱いにする。
+        // 多デバイス間の独立スタートで活アクティブが累積する症状を防ぐ。
+        if dto.endedAt == nil {
+            let myId = dto.id
+            let othersDescriptor = FetchDescriptor<WorkoutSession>(
+                predicate: #Predicate<WorkoutSession> {
+                    $0.endedAt == nil && $0.id != myId
+                }
+            )
+            if let others = try? context.fetch(othersDescriptor) {
+                for other in others {
+                    other.endedAt = other.startedAt.addingTimeInterval(1)
+                    print(
+                        "[Oikomi.sync] auto-ended stale active session id=\(other.id.uuidString.prefix(8)) (single-active invariant)"
+                    )
+                }
+            }
+        }
     }
 
     private func upsert(set dto: SetRecordDTO, in context: ModelContext) {
