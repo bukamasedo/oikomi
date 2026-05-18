@@ -292,11 +292,11 @@ public final class WCSyncBridge {
         ]
 
         if session.isReachable {
-            // errorHandler は bg queue で呼ばれるので、その中で別の WC API を叩かない。
-            // 失敗時のリカバリは次回 write 時の dispatch に委ねる。
-            session.sendMessage(payload, replyHandler: nil) { error in
-                print("WCSyncBridge sendMessage failed: \(error)")
-            }
+            // errorHandler は WatchConnectivity の bg queue (NSOperationQueue UTILITY) で呼ばれる。
+            // WCSyncBridge は @MainActor なので inline closure を渡すと MainActor 隔離を継承し、
+            // bg queue で実行された瞬間 swift_task_checkIsolatedSwift が assertion を発火させる。
+            // 明示的に nonisolated な関数値を渡してアクター継承を断ち切る。
+            session.sendMessage(payload, replyHandler: nil, errorHandler: wcSendMessageErrorHandler)
         } else {
             // 相手が起動していない / バックグラウンドのとき → キューイング
             session.transferUserInfo(payload)
@@ -304,6 +304,17 @@ public final class WCSyncBridge {
         #endif
     }
 }
+
+#if canImport(WatchConnectivity)
+
+/// WCSession.sendMessage の errorHandler。MainActor 隔離を継承しないようファイルスコープに置く。
+/// print 以外の副作用は持たないので bg queue から呼ばれても安全。
+@Sendable
+private func wcSendMessageErrorHandler(_ error: any Error) {
+    print("WCSyncBridge sendMessage failed: \(error)")
+}
+
+#endif
 
 // MARK: - JSON encoder / decoder（ISO8601）
 
