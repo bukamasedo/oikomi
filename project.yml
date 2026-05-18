@@ -36,6 +36,9 @@ targets:
         product: OikomiKit
       - target: OikomiWidgets
         embed: true
+      - target: OikomiWatch
+        embed: true
+        codeSign: false
     info:
       path: App/iOS/Info.plist
       properties:
