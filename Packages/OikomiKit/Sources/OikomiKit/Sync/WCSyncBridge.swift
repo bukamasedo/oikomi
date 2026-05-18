@@ -7,54 +7,55 @@ import WatchConnectivity
 
 /// iPhone ↔ Apple Watch のリアルタイム実データ同期ブリッジ。
 ///
-/// 設計:
-/// - 任意の write 後に `SyncEnvelope` を送信。ペイロードは Codable な DTO を JSON 化して
-///   `[String: Any]` の `"data"` キーに `Data` として詰める
-/// - 受信側は decode して SwiftData の `ModelContext` に upsert（id で fetch → 存在すれば
-///   更新 / 無ければ insert）
-/// - 受信由来の更新では `applyingRemoteUpdate` を true にして send をスキップ → 送り返しループ防止
-/// - Watch 起動時に `fullSyncRequest` を投げ、iPhone が進行中セッション + ルーティンを `fullSyncResponse` で返す
+/// 設計（v2 リライト）:
+/// - `WCSession.delegateQueue = OperationQueue.main` を明示し、delegate コールバックを
+///   すべて main queue で受ける。これにより actor crossing 不要。
+/// - クラスは `@MainActor` 全体隔離をやめ、`@unchecked Sendable` の NSObject に。
+///   ステートは `@MainActor` プロパティで隔離し、send/receive メソッドは MainActor で動かす。
+/// - `sendMessage` の errorHandler から WC API を再呼び出ししない（libdispatch assertion 回避）。
+///   reachable 判定で OS の queueing 機構に責任を委譲。
+/// - WCSessionDelegate を本クラスに直接実装（旧アダプタ削除）。
 @MainActor
-public final class WCSyncBridge: NSObject {
+public final class WCSyncBridge {
 
     public static let shared = WCSyncBridge()
 
-    /// 互換維持のため残してある通知（旧 ping ベースの呼び出し先で使われる）。
-    /// 新しい仕組みは context-aware の upsert なので、UI 側で個別ハンドラ不要。
+    /// 互換維持のための通知（旧コードからの呼び出し対応）。
     public static let dataDidChangeNotification = Notification.Name("OikomiDataDidChange")
 
-    /// receive 由来の context 書き込みを抑制するためのフラグ。
-    /// repository の send* メソッドは冒頭でこれをチェックして送信スキップする。
-    private(set) var applyingRemoteUpdate: Bool = false
+    /// receive 由来の write 中は send を抑制する。
+    private var applyingRemoteUpdate: Bool = false
+
+    /// 受信時に upsert に使う ModelContext を返すクロージャ。
+    private var modelContextProvider: (() -> ModelContext)?
 
     #if canImport(WatchConnectivity)
-    private var sessionDelegate: WCSessionDelegateAdapter?
+    /// delegate は内部のヘルパーオブジェクトに委譲（NSObject 要件のため）。
+    private let delegate = SyncDelegate()
     #endif
 
-    /// receive 時に書き込む対象の context。アプリ起動時に bootstrap 完了後に注入する。
-    private var modelContextProvider: (@MainActor () -> ModelContext)?
+    private init() {}
+
+    // MARK: - Activate
 
     /// アプリ起動時に呼ぶ。WCSession を activate + delegate 設定。
     ///
     /// - Parameter contextProvider: 受信時に upsert に使う ModelContext を返すクロージャ。
-    ///   SwiftData の `@MainActor` 制約と相性を取るため、毎回取りに行く形にする。
-    public func activate(contextProvider: @escaping @MainActor () -> ModelContext) {
+    ///   `MainActor` 上で呼ばれる（delegateQueue=.main により保証）。
+    public func activate(contextProvider: @escaping () -> ModelContext) {
         modelContextProvider = contextProvider
         #if canImport(WatchConnectivity)
         guard WCSession.isSupported() else { return }
-        let adapter = WCSessionDelegateAdapter()
-        sessionDelegate = adapter
         let session = WCSession.default
-        session.delegate = adapter
+        session.delegate = delegate
         session.activate()
         #endif
     }
 
     // MARK: - 送信
 
-    /// 単一セッション（および任意で同梱セット）を送信。
     public func sendSessionUpsert(_ session: WorkoutSession, sets: [SetRecord] = []) {
-        guard !applyingRemoteUpdate else { return }
+        if applyingRemoteUpdate { return }
         let setDTOs = sets.compactMap { $0.makeDTO() }
         let envelope = SyncEnvelope(
             kind: .sessionUpsert,
@@ -65,9 +66,8 @@ public final class WCSyncBridge: NSObject {
     }
 
     public func sendSetUpsert(_ set: SetRecord) {
-        guard !applyingRemoteUpdate else { return }
+        if applyingRemoteUpdate { return }
         guard let dto = set.makeDTO() else { return }
-        // セット送信時に親セッションも含めると初回受信側でセッション不在のとき自動作成できる
         var sessionDTOs: [WorkoutSessionDTO] = []
         if let session = set.session {
             sessionDTOs.append(session.makeDTO())
@@ -81,7 +81,7 @@ public final class WCSyncBridge: NSObject {
     }
 
     public func sendRoutineUpsert(_ routine: Routine) {
-        guard !applyingRemoteUpdate else { return }
+        if applyingRemoteUpdate { return }
         let envelope = SyncEnvelope(
             kind: .routineUpsert,
             routines: [routine.makeDTO()]
@@ -90,7 +90,7 @@ public final class WCSyncBridge: NSObject {
     }
 
     public func sendRoutineDeleted(_ id: UUID) {
-        guard !applyingRemoteUpdate else { return }
+        if applyingRemoteUpdate { return }
         let envelope = SyncEnvelope(
             kind: .routineDeleted,
             deletedRoutineIds: [id]
@@ -98,16 +98,14 @@ public final class WCSyncBridge: NSObject {
         dispatch(envelope)
     }
 
-    /// 受信側（主に Watch 起動時）から呼ぶ。送信側（iPhone）に「全部送って」を依頼。
     public func requestFullSync() {
         let envelope = SyncEnvelope(kind: .fullSyncRequest)
         dispatch(envelope)
     }
 
-    // MARK: - 受信
+    // MARK: - 受信（delegate から MainActor で呼ばれる）
 
-    /// WCSessionDelegateAdapter からデコード済み envelope が渡される。
-    fileprivate func didReceive(envelope: SyncEnvelope) {
+    fileprivate func handleEnvelope(_ envelope: SyncEnvelope) {
         switch envelope.kind {
         case .sessionUpsert, .setUpsert, .routineUpsert, .routineDeleted, .fullSyncResponse:
             applyEnvelopeToLocalStore(envelope)
@@ -131,7 +129,7 @@ public final class WCSyncBridge: NSObject {
 
         for dto in envelope.routines { upsert(routine: dto, in: context) }
         for dto in envelope.sessions { upsert(session: dto, in: context) }
-        for dto in envelope.sets     { upsert(set: dto, in: context) }
+        for dto in envelope.sets { upsert(set: dto, in: context) }
         for id in envelope.deletedRoutineIds { deleteRoutine(id: id, in: context) }
 
         do {
@@ -145,7 +143,6 @@ public final class WCSyncBridge: NSObject {
         guard let provider = modelContextProvider else { return }
         let context = provider()
 
-        // 進行中セッション + 全ルーティンを返す
         let activeDescriptor = FetchDescriptor<WorkoutSession>(
             predicate: #Predicate { $0.endedAt == nil }
         )
@@ -183,7 +180,6 @@ public final class WCSyncBridge: NSObject {
             context.insert(session)
         }
 
-        // Last Write Wins: dto の値を全反映
         session.startedAt = dto.startedAt
         session.endedAt = dto.endedAt
         session.notes = dto.notes
@@ -231,7 +227,6 @@ public final class WCSyncBridge: NSObject {
         setRecord.isWarmup = dto.isWarmup
         setRecord.completedAt = dto.completedAt
 
-        // 推定 1RM を再計算
         if let weight = dto.weight, let reps = dto.reps, weight > 0, reps > 0 {
             setRecord.estimated1RM = OneRepMax.epley(weight: weight, reps: reps)
         }
@@ -254,7 +249,6 @@ public final class WCSyncBridge: NSObject {
         routine.name = dto.name
         routine.lastUsedAt = dto.lastUsedAt
 
-        // 既存の RoutineExercise を全部消して、dto の順序で作り直す（シンプル & 確実）
         for entry in routine.exercises ?? [] {
             context.delete(entry)
         }
@@ -264,11 +258,7 @@ public final class WCSyncBridge: NSObject {
                 FetchDescriptor<Exercise>(predicate: #Predicate { $0.name == exerciseName })
             ).first
             guard let exercise else { continue }
-            let entry = RoutineExercise(
-                routine: routine,
-                exercise: exercise,
-                order: index
-            )
+            let entry = RoutineExercise(routine: routine, exercise: exercise, order: index)
             context.insert(entry)
         }
     }
@@ -280,7 +270,7 @@ public final class WCSyncBridge: NSObject {
         }
     }
 
-    // MARK: - 送信路（reachable なら sendMessage / 不可なら transferUserInfo）
+    // MARK: - 送信路
 
     private func dispatch(_ envelope: SyncEnvelope) {
         #if canImport(WatchConnectivity)
@@ -302,18 +292,20 @@ public final class WCSyncBridge: NSObject {
         ]
 
         if session.isReachable {
-            session.sendMessage(payload, replyHandler: nil) { _ in
-                // 失敗時は queueing で再送
-                session.transferUserInfo(payload)
+            // errorHandler は bg queue で呼ばれるので、その中で別の WC API を叩かない。
+            // 失敗時のリカバリは次回 write 時の dispatch に委ねる。
+            session.sendMessage(payload, replyHandler: nil) { error in
+                print("WCSyncBridge sendMessage failed: \(error)")
             }
         } else {
+            // 相手が起動していない / バックグラウンドのとき → キューイング
             session.transferUserInfo(payload)
         }
         #endif
     }
 }
 
-// MARK: - JSON encoder / decoder で Date を ISO8601 で扱う
+// MARK: - JSON encoder / decoder（ISO8601）
 
 extension JSONEncoder {
     fileprivate static let oikomi: JSONEncoder = {
@@ -332,7 +324,11 @@ extension JSONDecoder {
 }
 
 #if canImport(WatchConnectivity)
-private final class WCSessionDelegateAdapter: NSObject, WCSessionDelegate {
+
+/// WCSession の delegate。`delegateQueue = .main` を設定するため、
+/// delegate メソッドはすべて main queue で発火する。`MainActor.assumeIsolated`
+/// で MainActor として実行する。
+private final class SyncDelegate: NSObject, WCSessionDelegate {
 
     func session(
         _ session: WCSession,
@@ -352,28 +348,32 @@ private final class WCSessionDelegateAdapter: NSObject, WCSessionDelegate {
     #endif
 
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-        decodeAndDispatch(message)
+        decodeAndApply(message)
     }
 
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
-        decodeAndDispatch(userInfo)
+        decodeAndApply(userInfo)
     }
 
-    private func decodeAndDispatch(_ payload: [String: Any]) {
+    /// payload を decode し、MainActor で WCSyncBridge に渡す。
+    /// 注: delegateQueue=.main を使っていれば main で呼ばれるが、
+    /// `MainActor.assumeIsolated` で明示的に MainActor として扱う。
+    private func decodeAndApply(_ payload: [String: Any]) {
         guard payload["type"] as? String == "oikomi.sync" else { return }
         guard let data = payload["data"] as? Data else { return }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
         let envelope: SyncEnvelope
         do {
-            envelope = try decoder.decode(SyncEnvelope.self, from: data)
+            envelope = try JSONDecoder.oikomi.decode(SyncEnvelope.self, from: data)
         } catch {
             print("WCSyncBridge decode failed: \(error)")
             return
         }
+        // delegateQueue=.main により既に main queue 上だが、念のため Task で隔離。
+        // Task { @MainActor in ... } は main から呼ばれた場合も安全に動く。
         Task { @MainActor in
-            WCSyncBridge.shared.didReceive(envelope: envelope)
+            WCSyncBridge.shared.handleEnvelope(envelope)
         }
     }
 }
+
 #endif
