@@ -178,12 +178,17 @@ public final class WCSyncBridge {
         guard let provider = modelContextProvider else { return }
         let context = provider()
 
-        let activeDescriptor = FetchDescriptor<WorkoutSession>(
-            predicate: #Predicate { $0.endedAt == nil }
+        // 直近 7 日のセッション (active と ended の両方) を返す。
+        // active のみだと「Watch 側は終了済みだが iPhone は active と認識」
+        // という終了イベント取りこぼし状態を修復できない。最近終了したセッションも
+        // 含めて配ることで、iPhone の foreground 復帰時に endedAt を引き直せる。
+        let cutoff = Date().addingTimeInterval(-7 * 24 * 3600)
+        let recentDescriptor = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate { $0.startedAt > cutoff }
         )
         let routineDescriptor = FetchDescriptor<Routine>()
 
-        let sessions = (try? context.fetch(activeDescriptor)) ?? []
+        let sessions = (try? context.fetch(recentDescriptor)) ?? []
         let routines = (try? context.fetch(routineDescriptor)) ?? []
 
         let sessionDTOs = sessions.map { $0.makeDTO() }

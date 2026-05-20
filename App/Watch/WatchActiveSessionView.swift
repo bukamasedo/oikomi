@@ -189,13 +189,18 @@ struct WatchActiveSessionView: View {
     private func finishSession() {
         let repo = WorkoutSessionRepository(context: modelContext)
         Task { @MainActor in
-            // HKWorkoutSession を終了してリング貢献
-            await healthSession.end()
+            // 順序が重要: HKWorkoutSession.end() を呼ぶと watchOS がアプリの
+            // foreground 特権を解除し、後続の WC 送信がサスペンドで失敗する恐れがある。
+            // 先にローカル save + WC 送信 + Live Activity end を完了させる。
+            // HK 書き込みは下の healthSession.end() の builder.finishWorkout に
+            // 一任して二重書き込みを避ける（HealthStore.saveWorkout は使わない）。
             do {
-                try await repo.finishSession(session)
+                try await repo.finishSession(session, writeToHealthKit: false)
             } catch {
                 errorMessage = "終了失敗: \(error.localizedDescription)"
             }
+            // HKWorkoutSession を終了してリング貢献。失敗しても同期は既に完了済み。
+            await healthSession.end()
         }
     }
 }

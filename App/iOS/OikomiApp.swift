@@ -7,6 +7,8 @@ struct OikomiApp: App {
 
     let sharedModelContainer: ModelContainer
 
+    @Environment(\.scenePhase) private var scenePhase
+
     init() {
         do {
             let container = try SharedModelContainer.bootstrap()
@@ -48,5 +50,14 @@ struct OikomiApp: App {
             ContentView()
         }
         .modelContainer(sharedModelContainer)
+        .onChange(of: scenePhase) { _, newPhase in
+            // foreground 復帰時に Watch へ fullSync を要求する信頼性ネット。
+            // 何らかの理由で Watch の終了イベント (sessionUpsert) が iPhone に
+            // 届かず active のまま残った場合に、ここで Watch の最新状態を取り直して
+            // endedAt を反映できる。
+            if newPhase == .active {
+                WCSyncBridge.shared.requestFullSync()
+            }
+        }
     }
 }
