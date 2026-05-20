@@ -24,7 +24,11 @@
 	<string>ワークアウト記録をヘルスケアに保存します</string>
 	<key>WKApplication</key>
 	<true/>
-	<key>WKWatchOnly</key>
-	<false/>
+	<key>WKCompanionAppBundleIdentifier</key>
+	<string>com.shuhirouchi.oikomi</string>
+	<key>WKRunsIndependentlyOfCompanionApp</key>
+	<true/>
+	<key>WKSupportsLiveActivities</key>
+	<true/>
 </dict>
 </plist>
