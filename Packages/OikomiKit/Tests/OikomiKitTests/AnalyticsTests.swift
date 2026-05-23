@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
+
 @testable import OikomiKit
 
 @Suite("Analytics")
@@ -25,51 +26,142 @@ struct AnalyticsTests {
         return cal
     }()
 
-    // MARK: - streakDays
+    // MARK: - weeklySessionDays
 
-    @Test("streakDays: 完了済みセッションがゼロなら0")
-    func streakEmpty() {
-        let result = Analytics.streakDays(sessions: [], calendar: Self.calendar)
+    @Test("weeklySessionDays: 完了済みセッションがゼロなら0")
+    func weekDaysEmpty() {
+        let range = Analytics.currentWeekRange(calendar: Self.calendar)
+        let result = Analytics.weeklySessionDays(sessions: [], in: range, calendar: Self.calendar)
         #expect(result == 0)
     }
 
-    @Test("streakDays: 今日に1セッションのみなら1")
-    func streakToday() {
-        let session = WorkoutSession(startedAt: Date())
-        session.endedAt = Date()
-        let result = Analytics.streakDays(sessions: [session], calendar: Self.calendar)
+    @Test("weeklySessionDays: 同日複数セッションは 1 日にまとめる")
+    func weekDaysDeduplicatesSameDay() {
+        let cal = Self.calendar
+        let now = Date()
+        let range = Analytics.currentWeekRange(referenceDate: now, calendar: cal)
+        // 今日 2 セッション
+        let morning = cal.startOfDay(for: now)
+        let evening = cal.date(byAdding: .hour, value: 18, to: morning)!
+        let s1 = WorkoutSession(startedAt: morning)
+        s1.endedAt = morning
+        let s2 = WorkoutSession(startedAt: evening)
+        s2.endedAt = evening
+        let result = Analytics.weeklySessionDays(sessions: [s1, s2], in: range, calendar: cal)
         #expect(result == 1)
     }
 
-    @Test("streakDays: 連続3日なら3")
-    func streakThreeDays() {
-        let now = Date()
+    @Test("weeklySessionDays: 今週月・水・金で3")
+    func weekDaysThreeDistinctDays() {
         let cal = Self.calendar
-        let sessions = (0...2).map { offset -> WorkoutSession in
-            let date = cal.date(byAdding: .day, value: -offset, to: now)!
+        let now = Date()
+        let weekStart = cal.dateInterval(of: .weekOfYear, for: now)!.start
+        let range = Analytics.currentWeekRange(referenceDate: now, calendar: cal)
+        let sessions = [0, 2, 4].map { offset -> WorkoutSession in
+            let date = cal.date(byAdding: .day, value: offset, to: weekStart)!
             let s = WorkoutSession(startedAt: date)
             s.endedAt = date
             return s
         }
-        let result = Analytics.streakDays(sessions: sessions, referenceDate: now, calendar: cal)
+        let result = Analytics.weeklySessionDays(sessions: sessions, in: range, calendar: cal)
         #expect(result == 3)
     }
 
-    @Test("streakDays: 2日前で止まっていれば（昨日抜け）0")
-    func streakBrokenAtYesterday() {
-        let now = Date()
+    @Test("weeklySessionDays: 範囲外は集計しない")
+    func weekDaysIgnoresOutsideRange() {
         let cal = Self.calendar
-        let twoDaysAgo = cal.date(byAdding: .day, value: -2, to: now)!
-        let s = WorkoutSession(startedAt: twoDaysAgo)
-        s.endedAt = twoDaysAgo
-        let result = Analytics.streakDays(sessions: [s], referenceDate: now, calendar: cal)
+        let now = Date()
+        let range = Analytics.currentWeekRange(referenceDate: now, calendar: cal)
+        let lastWeek = cal.date(byAdding: .day, value: -10, to: now)!
+        let s = WorkoutSession(startedAt: lastWeek)
+        s.endedAt = lastWeek
+        let result = Analytics.weeklySessionDays(sessions: [s], in: range, calendar: cal)
         #expect(result == 0)
     }
 
-    @Test("streakDays: 完了していないセッションは無視")
-    func streakIgnoresInProgress() {
-        let session = WorkoutSession(startedAt: Date())  // endedAt = nil
-        let result = Analytics.streakDays(sessions: [session], calendar: Self.calendar)
+    @Test("weeklySessionDays: 未完了セッションは無視")
+    func weekDaysIgnoresInProgress() {
+        let cal = Self.calendar
+        let range = Analytics.currentWeekRange(calendar: cal)
+        let s = WorkoutSession(startedAt: Date())  // endedAt = nil
+        let result = Analytics.weeklySessionDays(sessions: [s], in: range, calendar: cal)
+        #expect(result == 0)
+    }
+
+    // MARK: - consecutiveActiveWeeks
+
+    @Test("consecutiveActiveWeeks: 空配列なら0")
+    func consecutiveWeeksEmpty() {
+        let result = Analytics.consecutiveActiveWeeks(sessions: [], calendar: Self.calendar)
+        #expect(result == 0)
+    }
+
+    @Test("consecutiveActiveWeeks: 今週のみ活動なら1")
+    func consecutiveWeeksThisOnly() {
+        let s = WorkoutSession(startedAt: Date())
+        s.endedAt = Date()
+        let result = Analytics.consecutiveActiveWeeks(sessions: [s], calendar: Self.calendar)
+        #expect(result == 1)
+    }
+
+    @Test("consecutiveActiveWeeks: 今週未実施でも先週あれば1（休養日と同じ哲学）")
+    func consecutiveWeeksLastWeekOnly() {
+        let cal = Self.calendar
+        let now = Date()
+        let lastWeek = cal.date(byAdding: .day, value: -7, to: now)!
+        let s = WorkoutSession(startedAt: lastWeek)
+        s.endedAt = lastWeek
+        let result = Analytics.consecutiveActiveWeeks(sessions: [s], referenceDate: now, calendar: cal)
+        #expect(result == 1)
+    }
+
+    @Test("consecutiveActiveWeeks: 3週連続活動なら3")
+    func consecutiveWeeksThree() {
+        let cal = Self.calendar
+        let now = Date()
+        let sessions = (0...2).map { offset -> WorkoutSession in
+            let date = cal.date(byAdding: .weekOfYear, value: -offset, to: now)!
+            let s = WorkoutSession(startedAt: date)
+            s.endedAt = date
+            return s
+        }
+        let result = Analytics.consecutiveActiveWeeks(
+            sessions: sessions, referenceDate: now, calendar: cal)
+        #expect(result == 3)
+    }
+
+    @Test("consecutiveActiveWeeks: 2週前で途切れていれば 0（今週も先週も未実施）")
+    func consecutiveWeeksBroken() {
+        let cal = Self.calendar
+        let now = Date()
+        let twoWeeksAgo = cal.date(byAdding: .weekOfYear, value: -2, to: now)!
+        let s = WorkoutSession(startedAt: twoWeeksAgo)
+        s.endedAt = twoWeeksAgo
+        let result = Analytics.consecutiveActiveWeeks(
+            sessions: [s], referenceDate: now, calendar: cal)
+        #expect(result == 0)
+    }
+
+    @Test("consecutiveActiveWeeks: 真ん中の週が抜けていれば streak は最新側のみ")
+    func consecutiveWeeksGap() {
+        let cal = Self.calendar
+        let now = Date()
+        // 今週 + 2 週前（先週なし）→ 今週は連続 1
+        let thisWeek = now
+        let twoWeeksAgo = cal.date(byAdding: .weekOfYear, value: -2, to: now)!
+        let s1 = WorkoutSession(startedAt: thisWeek)
+        s1.endedAt = thisWeek
+        let s2 = WorkoutSession(startedAt: twoWeeksAgo)
+        s2.endedAt = twoWeeksAgo
+        let result = Analytics.consecutiveActiveWeeks(
+            sessions: [s1, s2], referenceDate: now, calendar: cal)
+        #expect(result == 1)
+    }
+
+    @Test("consecutiveActiveWeeks: 未完了セッションは無視")
+    func consecutiveWeeksIgnoresInProgress() {
+        let s = WorkoutSession(startedAt: Date())  // endedAt = nil
+        let result = Analytics.consecutiveActiveWeeks(sessions: [s], calendar: Self.calendar)
         #expect(result == 0)
     }
 
@@ -107,6 +199,162 @@ struct AnalyticsTests {
         let oldStart = oldEnd.addingTimeInterval(-3600)
         let volume = Analytics.volumeByMuscleGroup(sets: [set], in: oldStart...oldEnd)
         #expect(volume.isEmpty)
+    }
+
+    // MARK: - setCountByMuscleGroup
+
+    @Test("setCountByMuscleGroup: ベンチ1セットで chest/triceps/shoulders に +1")
+    func setCountSingleSetMultiMuscle() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+
+        let session = try WorkoutSessionRepository(context: context).startSession()
+        let set = try WorkoutSessionRepository(context: context)
+            .addSet(to: session, exercise: bench, weight: 80, reps: 8)
+
+        let range = set.completedAt.addingTimeInterval(-60)...set.completedAt.addingTimeInterval(60)
+        let counts = Analytics.setCountByMuscleGroup(sets: [set], in: range)
+        #expect(counts[.chest] == 1)
+        #expect(counts[.triceps] == 1)
+        #expect(counts[.shoulders] == 1)
+    }
+
+    @Test("setCountByMuscleGroup: warmup セットは集計しない")
+    func setCountExcludesWarmup() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+
+        let session = try WorkoutSessionRepository(context: context).startSession()
+        let warm = try WorkoutSessionRepository(context: context)
+            .addSet(to: session, exercise: bench, weight: 40, reps: 10, isWarmup: true)
+        let work = try WorkoutSessionRepository(context: context)
+            .addSet(to: session, exercise: bench, weight: 80, reps: 8)
+
+        let range = warm.completedAt.addingTimeInterval(-60)...work.completedAt.addingTimeInterval(60)
+        let counts = Analytics.setCountByMuscleGroup(sets: [warm, work], in: range)
+        #expect(counts[.chest] == 1)
+    }
+
+    @Test("setCountByMuscleGroup: 計画のみ（isCompleted=false）は集計しない")
+    func setCountExcludesPlanned() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+
+        let session = try WorkoutSessionRepository(context: context).startSession()
+        let planned = try WorkoutSessionRepository(context: context)
+            .addPlannedSet(to: session, exercise: bench, weight: 80, reps: 8)
+
+        let range = planned.completedAt.addingTimeInterval(-60)...planned.completedAt.addingTimeInterval(60)
+        let counts = Analytics.setCountByMuscleGroup(sets: [planned], in: range)
+        #expect(counts.isEmpty)
+    }
+
+    @Test("setCountByMuscleGroup: 範囲外のセットは集計しない")
+    func setCountRespectsRange() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+
+        let session = try WorkoutSessionRepository(context: context).startSession()
+        let set = try WorkoutSessionRepository(context: context)
+            .addSet(to: session, exercise: bench, weight: 80, reps: 8)
+
+        let oldEnd = set.completedAt.addingTimeInterval(-3600)
+        let oldStart = oldEnd.addingTimeInterval(-3600)
+        let counts = Analytics.setCountByMuscleGroup(sets: [set], in: oldStart...oldEnd)
+        #expect(counts.isEmpty)
+    }
+
+    // MARK: - weeklySetCountReport
+
+    @Test("weeklySetCountReport: fullBody は含まない")
+    func weeklySetCountExcludesFullBody() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+
+        let report = Analytics.weeklySetCountReport(
+            sets: allSets,
+            calendar: Self.calendar
+        )
+        #expect(!report.contains { $0.muscle == .fullBody })
+    }
+
+    @Test("weeklySetCountReport: count 0 → insufficient")
+    func weeklySetCountInsufficient() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+
+        let report = Analytics.weeklySetCountReport(
+            sets: allSets,
+            calendar: Self.calendar
+        )
+        // セッションがゼロなら chest など MEV > 0 の部位はすべて insufficient
+        let chest = report.first { $0.muscle == .chest }
+        #expect(chest?.status == .insufficient)
+    }
+
+    @Test("weeklySetCountReport: MAV 超過で excessive")
+    func weeklySetCountExcessive() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let session = try repo.startSession()
+
+        // chest の MAV=22 を超える 25 セット
+        for _ in 0..<25 {
+            try repo.addSet(to: session, exercise: bench, weight: 60, reps: 8)
+        }
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let report = Analytics.weeklySetCountReport(sets: allSets, calendar: Self.calendar)
+        let chest = report.first { $0.muscle == .chest }
+        #expect(chest?.count == 25)
+        #expect(chest?.status == .excessive)
+    }
+
+    @Test("weeklySetCountReport: MEV〜MAV レンジ内で optimal")
+    func weeklySetCountOptimal() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let session = try repo.startSession()
+
+        // chest MEV=10 MAV=22 のレンジ内 (15)
+        for _ in 0..<15 {
+            try repo.addSet(to: session, exercise: bench, weight: 60, reps: 8)
+        }
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let report = Analytics.weeklySetCountReport(sets: allSets, calendar: Self.calendar)
+        let chest = report.first { $0.muscle == .chest }
+        #expect(chest?.count == 15)
+        #expect(chest?.status == .optimal)
+    }
+
+    @Test("weeklySetCountReport: count 降順ソート")
+    func weeklySetCountSortedDescending() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let session = try repo.startSession()
+
+        for _ in 0..<5 {
+            try repo.addSet(to: session, exercise: bench, weight: 60, reps: 8)
+        }
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let report = Analytics.weeklySetCountReport(sets: allSets, calendar: Self.calendar)
+        // 全部位が出る前提で、counts が降順
+        let counts = report.map(\.count)
+        #expect(counts == counts.sorted(by: >))
     }
 
     // MARK: - currentWeekRange
@@ -246,25 +494,28 @@ struct AnalyticsTests {
         #expect(!advices.contains { $0.title.contains("休息") })
     }
 
-    // MARK: - prPredictions
+    // MARK: - prPredictions (線形回帰)
 
-    @Test("prPredictions: 直近セッションが PR の 95% 以上なら予測アドバイス")
-    func prPredictionFires() throws {
+    @Test("prPredictions: 5 セッション以上の明確な上昇トレンドで予測 advice を出す")
+    func prPredictionRisingTrend() throws {
         let context = try Self.makeContext()
         try ExerciseRepository(context: context).seedIfNeeded()
         let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
         let repo = WorkoutSessionRepository(context: context)
-        let session = try repo.startSession()
 
-        // 過去 PR: 80kg × 8 = est 1RM 101.33
-        try repo.addSet(to: session, exercise: bench, weight: 80, reps: 8)
+        // 80 → 84kg まで 1kg ずつ漸増（計 5 セッション）。reps は 8 固定。
+        // estimated1RM は 101.33 → 106.4 と直線的に上昇するので R² ≈ 1 で発火する。
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<5 {
+            let weight = Double(80 + offset)
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: weight, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+
         let records = try context.fetch(FetchDescriptor<PersonalRecord>())
-        #expect(records.count == 1)
-
-        // 直近セッション: 79kg × 8 = est 1RM 100.07（PR の 98.7%）
-        let session2 = try repo.startSession()
-        try repo.addSet(to: session2, exercise: bench, weight: 79, reps: 8)
-
         let allSets = try context.fetch(FetchDescriptor<SetRecord>())
         let predictions = Analytics.prPredictions(sets: allSets, records: records)
 
@@ -272,29 +523,123 @@ struct AnalyticsTests {
         #expect(predictions.first?.title.contains("PR") == true)
     }
 
-    @Test("prPredictions: 直近セッションが PR から大きく落ちていれば出さない")
-    func prPredictionSkipsWhenFar() throws {
+    @Test("prPredictions: 横ばいトレンドでは予測を出さない")
+    func prPredictionFlatTrend() throws {
         let context = try Self.makeContext()
         try ExerciseRepository(context: context).seedIfNeeded()
         let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
         let repo = WorkoutSessionRepository(context: context)
 
-        // PR: 100kg × 5 = est 1RM 116.67
-        let s1 = try repo.startSession()
-        try repo.addSet(to: s1, exercise: bench, weight: 100, reps: 5)
+        // 5 セッションすべて同じ重量・レップ → slope ≈ 0、予測値 ≤ PR
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<5 {
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: 80, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+
         let records = try context.fetch(FetchDescriptor<PersonalRecord>())
-
-        // 直近: 60kg × 5 = est 1RM 70（PR の 60%）
-        let s2 = try repo.startSession()
-        try repo.addSet(to: s2, exercise: bench, weight: 60, reps: 5)
-
-        // s1 のセットは除外して直近 only にしたいが、両方持ったまま prPredictions に渡しても
-        // 「最高値が PR の 95% 以上」の条件で評価される。PR は s1 由来 100kg-5rep、
-        // 直近セッションの max は 70 → ratio 60% で出さない（threshold 95%）
         let allSets = try context.fetch(FetchDescriptor<SetRecord>())
-            .filter { $0.session?.id == s2.id }
         let predictions = Analytics.prPredictions(sets: allSets, records: records)
+
         #expect(predictions.isEmpty)
+    }
+
+    @Test("prPredictions: サンプル不足（4 セッション）では予測を出さない")
+    func prPredictionInsufficientSamples() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<4 {
+            let weight = Double(80 + offset)
+            let date = cal.date(byAdding: .day, value: -(3 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: weight, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let predictions = Analytics.prPredictions(sets: allSets, records: records)
+
+        #expect(predictions.isEmpty)
+    }
+
+    @Test("linearRegression: 完全直線で R² == 1、slope と intercept が一致")
+    func linearRegressionPerfectFit() {
+        let points: [(x: Double, y: Double)] = (0..<5).map { (Double($0), Double($0) * 2 + 3) }
+        let fit = Analytics.linearRegression(points)
+        #expect(fit != nil)
+        #expect(abs((fit?.slope ?? 0) - 2) < 1e-9)
+        #expect(abs((fit?.intercept ?? 0) - 3) < 1e-9)
+        #expect(abs((fit?.r2 ?? 0) - 1) < 1e-9)
+    }
+
+    // MARK: - hrvDeloadAdvice
+
+    @Test("deloadAdvice: HRV が直近 14 日平均より 15% 以上低下で warning")
+    func hrvDeloadFires() {
+        let cal = Self.calendar
+        let now = cal.date(from: DateComponents(year: 2026, month: 5, day: 23))!
+
+        // 直近 3 日（0..-2）: 平均 40ms / 過去 14 日（-6..-13）: 平均 60ms → 33% 落ち → 警告
+        var series: [HealthTrendPoint] = []
+        for offset in 0..<3 {
+            let date = cal.date(byAdding: .day, value: -offset, to: now)!
+            series.append(HealthTrendPoint(date: date, value: 40))
+        }
+        for offset in 6...13 {
+            let date = cal.date(byAdding: .day, value: -offset, to: now)!
+            series.append(HealthTrendPoint(date: date, value: 60))
+        }
+
+        let advices = Analytics.deloadAdvice(
+            sessions: [], sets: [], hrvSeries: series, referenceDate: now, calendar: cal)
+        #expect(advices.contains { $0.title.contains("HRV") })
+    }
+
+    @Test("deloadAdvice: HRV が安定していれば警告を出さない")
+    func hrvDeloadStable() {
+        let cal = Self.calendar
+        let now = cal.date(from: DateComponents(year: 2026, month: 5, day: 23))!
+
+        // 直近 3 日も過去 14 日も同じ平均 60ms → 落ちなし
+        var series: [HealthTrendPoint] = []
+        for offset in 0..<3 {
+            let date = cal.date(byAdding: .day, value: -offset, to: now)!
+            series.append(HealthTrendPoint(date: date, value: 60))
+        }
+        for offset in 6...13 {
+            let date = cal.date(byAdding: .day, value: -offset, to: now)!
+            series.append(HealthTrendPoint(date: date, value: 60))
+        }
+
+        let advices = Analytics.deloadAdvice(
+            sessions: [], sets: [], hrvSeries: series, referenceDate: now, calendar: cal)
+        #expect(!advices.contains { $0.title.contains("HRV") })
+    }
+
+    @Test("deloadAdvice: HRV サンプルが少ない時は警告を出さない")
+    func hrvDeloadInsufficientSamples() {
+        let cal = Self.calendar
+        let now = cal.date(from: DateComponents(year: 2026, month: 5, day: 23))!
+
+        // 直近 3 日に 1 件しかない & ベースラインも 1 件 → 各ウィンドウ 3 件未満で警告対象外
+        let series: [HealthTrendPoint] = [
+            HealthTrendPoint(date: now, value: 30),
+            HealthTrendPoint(
+                date: cal.date(byAdding: .day, value: -7, to: now)!, value: 60),
+        ]
+
+        let advices = Analytics.deloadAdvice(
+            sessions: [], sets: [], hrvSeries: series, referenceDate: now, calendar: cal)
+        #expect(!advices.contains { $0.title.contains("HRV") })
     }
 
     @Test("currentWeekRange: 月曜開始の7日間 range")

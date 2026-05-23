@@ -1,7 +1,11 @@
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
 
+/// watchOS のセット記録 / 調整シート。
+///
+/// Digital Crown による重量・レップ入力を最優先。
+/// `digitalCrownRotation` の sensitivity/step は触らない（Phase A プランの境界）。
 struct WatchAddSetView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -30,7 +34,7 @@ struct WatchAddSetView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: WatchSpacing.m) {
                     exercisePickerSection
                     if selectedExercise != nil {
                         if !useBodyweight {
@@ -40,7 +44,8 @@ struct WatchAddSetView: View {
                         saveButton
                     }
                 }
-                .padding(.horizontal, 4)
+                .padding(.horizontal, WatchSpacing.s)
+                .padding(.vertical, WatchSpacing.s)
             }
             .navigationTitle(editingPlannedSet != nil ? "調整" : "記録")
             .navigationBarTitleDisplayMode(.inline)
@@ -55,8 +60,11 @@ struct WatchAddSetView: View {
                 Text(errorMessage ?? "")
             }
         }
+        .tint(WatchColor.brand)
         .onAppear(perform: setupInitial)
     }
+
+    // MARK: - Sections
 
     @ViewBuilder
     private var exercisePickerSection: some View {
@@ -66,90 +74,105 @@ struct WatchAddSetView: View {
                 prefillFromLastUse(of: picked)
             }
         } label: {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("種目")
+            HStack(spacing: WatchSpacing.s) {
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(WatchColor.brand)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("種目")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(selectedExercise?.name ?? "選択")
+                        .font(.body)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text(selectedExercise?.name ?? "選択")
-                    .font(.body)
+                    .foregroundStyle(.tertiary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(8)
-            .background(Color.gray.opacity(0.15))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(WatchSpacing.m)
+            .background(
+                WatchColor.cardBackground,
+                in: RoundedRectangle(cornerRadius: WatchRadius.card, style: .continuous))
         }
         .buttonStyle(.plain)
     }
 
     @ViewBuilder
     private var weightSection: some View {
-        VStack(spacing: 4) {
-            Text("重量")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text("\(weight.formatted(.number.precision(.fractionLength(1)))) kg")
-                .font(.title2.monospacedDigit().weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.accentColor.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .focusable()
-                .digitalCrownRotation(
-                    $crownWeight,
-                    from: 0,
-                    through: 500,
-                    by: 2.5,
-                    sensitivity: .medium,
-                    isContinuous: false,
-                    isHapticFeedbackEnabled: true
-                )
-                .onChange(of: crownWeight) { _, new in
-                    weight = (new / 2.5).rounded() * 2.5
-                }
-        }
+        valueCard(label: "重量", value: "\(weight.formatted(.number.precision(.fractionLength(1)))) kg")
+            .focusable()
+            .digitalCrownRotation(
+                $crownWeight,
+                from: 0,
+                through: 500,
+                by: 2.5,
+                sensitivity: .medium,
+                isContinuous: false,
+                isHapticFeedbackEnabled: true
+            )
+            .onChange(of: crownWeight) { _, new in
+                weight = (new / 2.5).rounded() * 2.5
+            }
     }
 
     @ViewBuilder
     private var repsSection: some View {
-        VStack(spacing: 4) {
-            Text("レップ数")
+        valueCard(label: "レップ", value: "\(reps)")
+            .focusable()
+            .digitalCrownRotation(
+                $crownReps,
+                from: 1,
+                through: 100,
+                by: 1,
+                sensitivity: .high,
+                isContinuous: false,
+                isHapticFeedbackEnabled: true
+            )
+            .onChange(of: crownReps) { _, new in
+                reps = Int(new.rounded())
+            }
+    }
+
+    /// 値カードの共通スタイル。Digital Crown は呼び出し側でアタッチする。
+    @ViewBuilder
+    private func valueCard(label: String, value: String) -> some View {
+        VStack(spacing: 2) {
+            Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-            Text("\(reps)")
+            Text(value)
                 .font(.title2.monospacedDigit().weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.accentColor.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .focusable()
-                .digitalCrownRotation(
-                    $crownReps,
-                    from: 1,
-                    through: 100,
-                    by: 1,
-                    sensitivity: .high,
-                    isContinuous: false,
-                    isHapticFeedbackEnabled: true
-                )
-                .onChange(of: crownReps) { _, new in
-                    reps = Int(new.rounded())
-                }
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, WatchSpacing.l)
+        .background(
+            WatchColor.brand.opacity(0.16),
+            in: RoundedRectangle(cornerRadius: WatchRadius.card, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: WatchRadius.card, style: .continuous)
+                .strokeBorder(WatchColor.brand.opacity(0.3), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
     private var saveButton: some View {
-        Button {
-            saveSet()
-        } label: {
-            Label("保存", systemImage: "checkmark")
+        Button(action: saveSet) {
+            Label(editingPlannedSet != nil ? "完了" : "保存", systemImage: "checkmark")
                 .font(.body.weight(.semibold))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, WatchSpacing.s)
         }
         .buttonStyle(.borderedProminent)
+        .tint(WatchColor.brand)
         .disabled(selectedExercise == nil)
     }
+
+    // MARK: - Lifecycle
 
     private func setupInitial() {
         // 計画セットの「調整」モード: 計画値をプリフィル
@@ -183,6 +206,8 @@ struct WatchAddSetView: View {
             crownReps = Double(lastReps)
         }
     }
+
+    // MARK: - Save
 
     private func saveSet() {
         guard let exercise = selectedExercise else { return }
@@ -253,20 +278,25 @@ struct WatchExercisePicker: View {
             onPick(exercise)
             dismiss()
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: WatchSpacing.s) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(exercise.name)
                         .font(.body)
-                    let groups = exercise.muscleGroups.prefix(2).map(\.displayName).joined(separator: " / ")
+                        .lineLimit(1)
+                    let groups = exercise.muscleGroups.prefix(2).map(\.displayName).joined(
+                        separator: " / ")
                     if !groups.isEmpty {
                         Text(groups)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                 }
                 Spacer()
                 Image(systemName: exercise.isFavorite ? "star.fill" : "star")
-                    .foregroundStyle(exercise.isFavorite ? .yellow : .secondary.opacity(0.5))
+                    .foregroundStyle(
+                        exercise.isFavorite ? .yellow : .secondary.opacity(0.5)
+                    )
                     .font(.caption)
                     .onTapGesture {
                         let repo = ExerciseRepository(context: modelContext)

@@ -6,6 +6,39 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>AppIconBarbell</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconBarbell</string>
+				</array>
+				<key>CFBundleIconName</key>
+				<string>AppIconBarbell</string>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconProtein</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconProtein</string>
+				</array>
+				<key>CFBundleIconName</key>
+				<string>AppIconProtein</string>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+		</dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconName</key>
+			<string>AppIcon</string>
+		</dict>
+	</dict>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -19,9 +52,9 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>HRV・睡眠・心拍データを使ってトレーニング負荷を最適化します</string>
+	<string>トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。データはオンデバイスでのみ処理され、外部送信はありません。</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>ワークアウト記録をヘルスケアに保存します</string>
+	<string>完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。</string>
 	<key>NSMotionUsageDescription</key>
 	<string>Apple Watch のセンサーでレップ自動カウントに使用します</string>
 	<key>NSSupportsLiveActivities</key>

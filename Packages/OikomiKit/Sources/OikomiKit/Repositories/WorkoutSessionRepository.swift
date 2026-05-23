@@ -1,6 +1,10 @@
 import Foundation
 import SwiftData
 
+#if canImport(WidgetKit)
+    import WidgetKit
+#endif
+
 /// ワークアウトセッション関連の書き込み操作を集約する。
 ///
 /// 読み取りは SwiftUI 側で `@Query` を直接使う方が慣用的なので、
@@ -65,7 +69,16 @@ public final class WorkoutSessionRepository {
             )
         }
 
-        WCSyncBridge.shared.sendSessionUpsert(session)
+        // 受信側 (Watch ↔ iPhone) で session.routine を解決できるよう、
+        // Routine 本体を先に送ってからセッションを送る。順序保証はないが、
+        // 受信側の pendingSessionRoutineLinks で遅延リンクのフォールバックも入っている。
+        if let routine {
+            WCSyncBridge.shared.sendRoutineUpsert(routine)
+        }
+        // expandPlannedSets で生成した未完了 SetRecord を相手端末でも復元できるよう、
+        // セット配列を同梱する。空セッションでは空配列が流れるだけで害はない。
+        WCSyncBridge.shared.sendSessionUpsert(session, sets: session.orderedSets)
+        reloadStatsWidgetTimelines()
 
         if fetchHealthSnapshot {
             let sessionId = session.id
@@ -131,12 +144,14 @@ public final class WorkoutSessionRepository {
         }
 
         WCSyncBridge.shared.sendSetUpsert(set)
+        reloadStatsWidgetTimelines()
 
         // Live Activity の更新（Live Activity が立ち上がっている時のみ）
         if WorkoutActivityController.shared.isActive {
             let name = exercise.name
             let count = session.sets?.count ?? 0
-            let endAt: Date? = exercise.defaultRestSeconds > 0
+            let endAt: Date? =
+                exercise.defaultRestSeconds > 0
                 ? completedAt.addingTimeInterval(TimeInterval(exercise.defaultRestSeconds))
                 : nil
             Task { @MainActor in
@@ -214,10 +229,18 @@ public final class WorkoutSessionRepository {
         }
 
         WCSyncBridge.shared.sendSetUpsert(set)
+        reloadStatsWidgetTimelines()
 
-        let restEndAt: Date? = restSec > 0
+        let restEndAt: Date? =
+            restSec > 0
             ? completedAt.addingTimeInterval(TimeInterval(restSec))
             : nil
+
+        // 相手端末のレストタイマーも起動。完了時刻と total を確定した値で渡し、
+        // 受信側で defaultRestSeconds を再計算しない（種目マスタ差分による表示ずれを回避）。
+        if let endAt = restEndAt {
+            WCSyncBridge.shared.sendRestTimerStart(endAt: endAt, totalSeconds: restSec)
+        }
 
         if WorkoutActivityController.shared.isActive, let exercise = set.exercise {
             let name = exercise.name
@@ -232,6 +255,79 @@ public final class WorkoutSessionRepository {
         }
 
         return restEndAt
+    }
+
+    /// 完了済みセットを未完了 (planned) 状態に戻す。
+    ///
+    /// 「うっかりチェックを入れてしまった」ケースの取消用。1RM スナップショットと
+    /// レスト秒数はクリアし、再完了時に再計算される。
+    /// 過去に発生した PR は遡って取消さない (履歴の整合性より UX 単純さを優先)。
+    @discardableResult
+    public func uncompleteSet(_ set: SetRecord) throws -> SetRecord {
+        set.isCompleted = false
+        set.estimated1RM = nil
+        set.restSeconds = nil
+        try context.save()
+
+        WCSyncBridge.shared.sendSetUpsert(set)
+        // 完了→未完了に戻したら、相手端末のレストタイマーも止める（スキップと同じ扱い）。
+        WCSyncBridge.shared.sendRestTimerCancel()
+        reloadStatsWidgetTimelines()
+
+        // Live Activity の setCount を再計算
+        if WorkoutActivityController.shared.isActive, let session = set.session {
+            let count = session.sets?.filter { $0.isCompleted }.count ?? 0
+            let lastCompletedName =
+                session.orderedSets.last(where: { $0.isCompleted })?.exercise?.name
+                ?? set.exercise?.name ?? ""
+            Task { @MainActor in
+                await WorkoutActivityController.shared.update(
+                    currentExerciseName: lastCompletedName,
+                    setCount: count,
+                    restEndAt: nil
+                )
+            }
+        }
+
+        return set
+    }
+
+    /// 既存セット (planned / completed どちらも) の重量・レップ・所要秒数を上書きする。
+    ///
+    /// 完了済みセットは 1RM 再計算と PR 自動再評価が走る。
+    /// 未完了 (planned) セットは値だけ更新し、完了化は別途 `markSetCompleted` を呼ぶこと。
+    /// Live Activity の更新は伴わない (種目自体は変わらないため UI コストに見合わない)。
+    @discardableResult
+    public func updateSet(
+        _ set: SetRecord,
+        weight: Double?,
+        reps: Int?,
+        durationSeconds: Int? = nil
+    ) throws -> SetRecord {
+        set.weight = weight
+        set.reps = reps
+        if let durationSeconds {
+            set.durationSeconds = durationSeconds
+        }
+        if set.isCompleted {
+            if let w = weight, w > 0, let r = reps, r > 0 {
+                set.estimated1RM = OneRepMax.epley(weight: w, reps: r)
+            } else {
+                set.estimated1RM = nil
+            }
+        }
+        try context.save()
+
+        // 完了済み・非ウォームアップなら PR 再評価。値を下げた場合に既存 PR が下回ることはあるが、
+        // PersonalRecordRepository.updateIfNewBest は「新記録なら更新」しかしないので副作用は安全側。
+        if set.isCompleted && !set.isWarmup {
+            let prRepo = PersonalRecordRepository(context: context)
+            _ = try? prRepo.updateIfNewBest(from: set)
+        }
+
+        WCSyncBridge.shared.sendSetUpsert(set)
+        reloadStatsWidgetTimelines()
+        return set
     }
 
     /// 既存セッションを複製して新しいセッションを開始する。
@@ -298,6 +394,7 @@ public final class WorkoutSessionRepository {
         print("[Oikomi.sync] finishSession step=activity_ended id=\(sid)")
 
         WCSyncBridge.shared.sendSessionUpsert(session)
+        reloadStatsWidgetTimelines()
         print("[Oikomi.sync] finishSession step=upsert_called id=\(sid)")
     }
 
@@ -305,6 +402,31 @@ public final class WorkoutSessionRepository {
     public func deleteSession(_ session: WorkoutSession) throws {
         context.delete(session)
         try context.save()
+        reloadStatsWidgetTimelines()
+    }
+
+    private func reloadStatsWidgetTimelines() {
+        #if canImport(WidgetKit)
+            WidgetCenter.shared.reloadTimelines(ofKind: "OikomiStatsWidget")
+        #endif
+    }
+
+    /// 指定種目について、過去全セッション横断で最終完了 SetRecord を返す。
+    ///
+    /// ルーティン編集 UI で planned* の初期値を「直近実績」から埋める用途。
+    /// ウォームアップと未完了 (計画) セットは除外し、`completedAt` 降順の先頭を取る。
+    public func lastCompletedSet(for exercise: Exercise) throws -> SetRecord? {
+        let exerciseId = exercise.id
+        var descriptor = FetchDescriptor<SetRecord>(
+            predicate: #Predicate<SetRecord> { set in
+                set.isCompleted == true
+                    && set.isWarmup == false
+                    && set.exercise?.id == exerciseId
+            },
+            sortBy: [SortDescriptor(\.completedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first
     }
 
     /// `olderThan` 秒以上前に開始されたまま終了していないセッションを自動終了する。

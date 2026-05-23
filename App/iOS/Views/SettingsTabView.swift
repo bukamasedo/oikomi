@@ -1,7 +1,7 @@
-import SwiftData
-import StoreKit
-import SwiftUI
 import OikomiKit
+import StoreKit
+import SwiftData
+import SwiftUI
 
 /// アプリ設定タブ。
 ///
@@ -12,6 +12,8 @@ struct SettingsTabView: View {
     @Environment(\.modelContext) private var modelContext
 
     @AppStorage("OikomiPreferredLocation") private var preferredLocationRaw: String = Location.gym.rawValue
+    @AppStorage(WeeklyTrainingTarget.storageKey) private var weeklyTargetDays: Int =
+        WeeklyTrainingTarget.defaultDays
     @AppStorage(SharedModelContainer.cloudKitEnabledKey) private var cloudKitEnabled: Bool = true
     @State private var showResetConfirm = false
     @State private var showProSheet = false
@@ -20,14 +22,29 @@ struct SettingsTabView: View {
     @State private var showCloudKitChangeAlert = false
     @State private var exportedURL: URL?
 
+    #if DEBUG
+        @State private var mockIsRunning = false
+        @State private var mockSummary: MockDataGenerator.Summary?
+        @State private var showMockClearConfirm = false
+    #endif
+
     var body: some View {
         NavigationStack {
             List {
-                proSection
+                Section { proHeroRow }
+                    .listRowInsets(
+                        EdgeInsets(
+                            top: OikomiSpacing.s, leading: OikomiSpacing.l, bottom: OikomiSpacing.s,
+                            trailing: OikomiSpacing.l)
+                    )
+                    .listRowBackground(Color.clear)
                 preferenceSection
                 iCloudSection
                 healthKitSection
                 dataSection
+                #if DEBUG
+                    developerSection
+                #endif
                 aboutSection
             }
             .navigationTitle("設定")
@@ -36,15 +53,11 @@ struct SettingsTabView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
-            .confirmationDialog(
-                "全データを削除しますか？",
-                isPresented: $showResetConfirm,
-                titleVisibility: .visible
-            ) {
+            .alert("全データを削除しますか？", isPresented: $showResetConfirm) {
                 Button("全て削除", role: .destructive) { resetAllData() }
                 Button("キャンセル", role: .cancel) {}
             } message: {
-                Text("セッション・PR・ルーティン・カスタム種目をすべて削除します。シード種目は再投入されます。")
+                Text("セッション・PR・ルーティン・カスタム種目をすべて削除します。シード種目は再投入されます。Apple Watch のローカルデータも削除されます。")
             }
             .sheet(isPresented: $showProSheet) {
                 ProUpgradeSheet()
@@ -52,48 +65,91 @@ struct SettingsTabView: View {
             .fullScreenCover(isPresented: $showOnboarding) {
                 OnboardingView(isPresented: $showOnboarding)
             }
+            #if DEBUG
+                .alert("テストデータを削除しますか？", isPresented: $showMockClearConfirm) {
+                    Button("削除", role: .destructive) {
+                        Task { await clearMockData() }
+                    }
+                    Button("キャンセル", role: .cancel) {}
+                } message: {
+                    Text("MockDataGenerator が生成したセッション・ルーティン・HealthKit データを削除します。実データは保持されます。")
+                }
+            #endif
         }
     }
 
     // MARK: - Sections
 
     @ViewBuilder
-    private var proSection: some View {
-        Section {
-            Button {
-                showProSheet = true
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "star.circle.fill")
-                        .font(.title)
-                        .foregroundStyle(.yellow)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Pro にアップグレード")
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-                        Text("AIコーチング / Live Activity / マルチデバイス同期")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
+    private var proHeroRow: some View {
+        let isPro = ProGate.isProActive
+        Button {
+            showProSheet = true
+        } label: {
+            HStack(spacing: OikomiSpacing.m) {
+                ZStack {
+                    Circle().fill(.white.opacity(0.22))
+                    Image(systemName: isPro ? "star.fill" : "star.circle.fill")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(.white)
                 }
+                .frame(width: 48, height: 48)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(isPro ? "Oikomi Pro" : "Pro にアップグレード")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    Text(isPro ? "全機能を利用できます" : "HRV 連動コーチング / iCloud 同期 / 無制限ルーティン")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.9))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.8))
             }
-            .buttonStyle(.plain)
+            .padding(OikomiSpacing.l)
+            .background(
+                LinearGradient(
+                    colors: isPro
+                        ? [OikomiColor.proAccent, OikomiColor.brandSecondary]
+                        : [OikomiColor.brandPrimary, OikomiColor.brandSecondary],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+            )
         }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
     private var preferenceSection: some View {
-        Section("環境") {
+        Section {
             Picker(selection: $preferredLocationRaw) {
                 Text("ジム").tag(Location.gym.rawValue)
                 Text("自宅").tag(Location.home.rawValue)
             } label: {
                 Label("トレーニング場所", systemImage: "location")
             }
+
+            Picker(selection: $weeklyTargetDays) {
+                ForEach(WeeklyTrainingTarget.allowedRange, id: \.self) { days in
+                    Text("週 \(days) 日").tag(days)
+                }
+            } label: {
+                Label("週次トレーニング目標", systemImage: "calendar.badge.checkmark")
+            }
+
+            NavigationLink {
+                AppIconPickerView()
+            } label: {
+                Label("アプリアイコン", systemImage: "app.badge")
+            }
+        } header: {
+            Text("環境")
+        } footer: {
+            Text("ホーム画面とウィジェットの達成リングがこの目標日数を基準に表示されます。筋トレは休養日込みのサイクルが前提なので、無理のない頻度を選んでください。")
         }
     }
 
@@ -149,7 +205,9 @@ struct SettingsTabView: View {
         } header: {
             Text("マルチデバイス同期")
         } footer: {
-            Text("iPhone・Apple Watch・iPad・Mac 間で記録を自動同期します。すべての計算はオンデバイス、データは Apple の iCloud（ユーザーのプライベートデータベース）に保存されます。設定変更後はアプリの再起動が必要です。Pro 限定機能です。")
+            Text(
+                "iPhone・Apple Watch・iPad・Mac 間で記録を自動同期します。すべての計算はオンデバイス、データは Apple の iCloud（ユーザーのプライベートデータベース）に保存されます。設定変更後はアプリの再起動が必要です。Pro 限定機能です。"
+            )
         }
         .alert("再起動が必要です", isPresented: $showCloudKitChangeAlert) {
             Button("OK") {}
@@ -189,6 +247,7 @@ struct SettingsTabView: View {
                 showResetConfirm = true
             } label: {
                 Label("すべてのデータを削除", systemImage: "trash")
+                    .foregroundStyle(.red)
             }
         }
     }
@@ -242,6 +301,11 @@ struct SettingsTabView: View {
     @ViewBuilder
     private var aboutSection: some View {
         Section("情報") {
+            NavigationLink {
+                GlossaryView()
+            } label: {
+                Label("用語解説", systemImage: "book.closed")
+            }
             LabeledContent("バージョン") {
                 Text("0.1.0")
                     .foregroundStyle(.secondary)
@@ -253,6 +317,92 @@ struct SettingsTabView: View {
             }
         }
     }
+
+    #if DEBUG
+        @ViewBuilder
+        private var developerSection: some View {
+            Section {
+                Button {
+                    Task { await generateMockData() }
+                } label: {
+                    HStack {
+                        Label("テストデータ (6週間) を生成", systemImage: "wand.and.stars")
+                        Spacer()
+                        if mockIsRunning {
+                            ProgressView()
+                        }
+                    }
+                }
+                .disabled(mockIsRunning)
+
+                if let summary = mockSummary {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("生成完了")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.green)
+                        Text("セッション: \(summary.sessionsCreated) / セット: \(summary.setsCreated)")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                        Text("ルーティン: \(summary.routinesCreated) / PR 更新: \(summary.personalRecordsTouched)")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                        Text(
+                            summary.didWriteHealthKit
+                                ? "HealthKit サンプル: \(summary.healthSamplesWritten)"
+                                : "HealthKit: 権限なし / スキップ"
+                        )
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 2)
+                }
+
+                Button(role: .destructive) {
+                    showMockClearConfirm = true
+                } label: {
+                    Label("テストデータを削除", systemImage: "trash.slash")
+                        .foregroundStyle(.red)
+                }
+                .disabled(mockIsRunning)
+            } header: {
+                Text("開発者ツール")
+            } footer: {
+                Text(
+                    "DEBUG ビルド限定。月・水・金 を Push / Pull / Legs にローテーションした 6 週間分のリアルな履歴を生成し、HealthKit にも HRV / 安静時心拍数 / 睡眠 / 体重 / HKWorkout を書き込みます（権限ダイアログが出ます）。"
+                )
+            }
+        }
+
+        private func generateMockData() async {
+            mockIsRunning = true
+            mockSummary = nil
+            defer { mockIsRunning = false }
+            do {
+                let summary = try await MockDataGenerator.generateRecentHistory(
+                    context: modelContext,
+                    weeks: 6,
+                    writeToHealthKit: true
+                )
+                mockSummary = summary
+            } catch {
+                errorMessage = "テストデータ生成失敗: \(error.localizedDescription)"
+            }
+        }
+
+        private func clearMockData() async {
+            mockIsRunning = true
+            defer { mockIsRunning = false }
+            do {
+                try await MockDataGenerator.clearMockData(
+                    context: modelContext,
+                    removeFromHealthKit: true
+                )
+                mockSummary = nil
+            } catch {
+                errorMessage = "テストデータ削除失敗: \(error.localizedDescription)"
+            }
+        }
+    #endif
 
     // MARK: - Actions
 
@@ -269,6 +419,8 @@ struct SettingsTabView: View {
             try modelContext.save()
             // シード再投入
             try ExerciseRepository(context: modelContext).seedIfNeeded()
+            // Apple Watch のローカルデータも削除する
+            WCSyncBridge.shared.sendBulkDelete()
         } catch {
             errorMessage = "リセット失敗: \(error.localizedDescription)"
         }
@@ -356,9 +508,10 @@ private struct ProUpgradeSheet: View {
             .alert("購入を復元しました", isPresented: $showRestoredAlert) {
                 Button("OK") {}
             } message: {
-                Text(subscriptionManager.isProActive
-                     ? "Pro が有効になりました。"
-                     : "復元可能な購入が見つかりませんでした。")
+                Text(
+                    subscriptionManager.isProActive
+                        ? "Pro が有効になりました。"
+                        : "復元可能な購入が見つかりませんでした。")
             }
             .alert(
                 "エラー",
@@ -404,12 +557,12 @@ private struct ProUpgradeSheet: View {
     @ViewBuilder
     private var bulletsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            ProBullet(title: "AIコーチング", detail: "ディロード推奨・PR予測・ボリューム警告")
-            ProBullet(title: "Live Activity / Dynamic Island", detail: "ロック画面とアイランドに常時表示")
-            ProBullet(title: "HealthKit 詳細読み取り", detail: "HRV・睡眠で負荷を自動調整")
+            ProBullet(title: "HRV 連動 AI コーチング", detail: "HRV 低下を検知して自動ディロード推奨")
+            ProBullet(title: "線形回帰 PR 予測", detail: "直近セッションのトレンドから次回 PR を予測")
+            ProBullet(title: "HealthKit 詳細読み取り", detail: "HRV・睡眠・安静時心拍数で負荷を自動調整")
             ProBullet(title: "iCloud 同期", detail: "iPhone・Watch・Mac でデータ共有")
             ProBullet(title: "Family Sharing", detail: "最大 6 名で利用可能")
-            ProBullet(title: "ルーティン・カスタム種目 無制限", detail: "Free は 3 / 5 まで")
+            ProBullet(title: "ルーティン・カスタム種目 無制限", detail: "Free は 5 / 5 まで")
         }
         .padding(.horizontal, 24)
     }

@@ -1,7 +1,8 @@
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
 
+/// 完了済みセッションの詳細画面。Hero header + 種目カード + コピー CTA。
 struct SessionDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -15,85 +16,51 @@ struct SessionDetailView: View {
     @State private var showingActiveBlockedAlert = false
     @State private var errorMessage: String?
 
-    private var setsByExercise: [(exerciseName: String, sets: [SetRecord])] {
-        let grouped = Dictionary(grouping: session.orderedSets) { set in
-            set.exercise?.name ?? "（種目不明）"
+    private var setsByExercise: [(exercise: Exercise, sets: [SetRecord])] {
+        var seen = Set<UUID>()
+        var ordered: [(Exercise, [SetRecord])] = []
+        for set in session.orderedSets {
+            guard let ex = set.exercise else { continue }
+            if seen.insert(ex.id).inserted {
+                ordered.append((ex, []))
+            }
+            if let idx = ordered.firstIndex(where: { $0.0.id == ex.id }) {
+                ordered[idx].1.append(set)
+            }
         }
-        return grouped
-            .map { (exerciseName: $0.key, sets: $0.value.sorted { $0.order < $1.order }) }
-            .sorted { $0.sets.first?.order ?? 0 < $1.sets.first?.order ?? 0 }
+        return ordered.map { (exercise: $0.0, sets: $0.1) }
+    }
+
+    private var totalVolume: Double {
+        session.orderedSets
+            .filter(\.isCompleted)
+            .reduce(0) { acc, s in
+                guard let w = s.weight, let r = s.reps else { return acc }
+                return acc + w * Double(r)
+            }
     }
 
     var body: some View {
-        List {
-            Section("セッション") {
-                LabeledContent("日付") {
-                    Text(session.startedAt, style: .date)
-                }
-                LabeledContent("開始") {
-                    Text(session.startedAt, style: .time)
-                }
-                if let endedAt = session.endedAt {
-                    LabeledContent("終了") {
-                        Text(endedAt, style: .time)
-                    }
-                }
-                if let duration = session.durationSeconds {
-                    LabeledContent("所要時間") {
-                        Text(formatDuration(duration))
-                    }
-                }
-                LabeledContent("総セット数") {
-                    Text("\(session.sets?.count ?? 0)")
-                }
-                if let routine = session.routine {
-                    LabeledContent("ルーティン") {
-                        Text(routine.name)
-                    }
-                }
-            }
+        ScrollView {
+            VStack(spacing: OikomiSpacing.l) {
+                heroCard
 
-            ForEach(setsByExercise, id: \.exerciseName) { group in
-                Section(group.exerciseName) {
-                    ForEach(group.sets) { set in
-                        HStack {
-                            Text("セット \(set.order + 1)")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            if let weight = set.weight, let reps = set.reps {
-                                Text("\(weight.formatted())kg × \(reps)")
-                                    .font(.body.monospacedDigit())
-                            } else if let reps = set.reps {
-                                Text("\(reps)レップ")
-                                    .font(.body.monospacedDigit())
-                            }
-                            if let rm = set.estimated1RM {
-                                Text("1RM \(rm.formatted(.number.precision(.fractionLength(1))))kg")
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                    }
+                ForEach(setsByExercise, id: \.exercise.id) { group in
+                    ExerciseInSessionCard(
+                        exercise: group.exercise,
+                        sets: group.sets,
+                        readOnly: true
+                    )
                 }
+
+                copyButton
             }
+            .padding(.horizontal, OikomiSpacing.l)
+            .padding(.vertical, OikomiSpacing.l)
         }
+        .background(OikomiColor.appBackground)
         .navigationTitle(session.startedAt.formatted(date: .abbreviated, time: .omitted))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    if activeSessions.isEmpty {
-                        showingCopyConfirmation = true
-                    } else {
-                        showingActiveBlockedAlert = true
-                    }
-                } label: {
-                    Label("コピーして開始", systemImage: "doc.on.doc")
-                }
-                .disabled(session.endedAt == nil)
-            }
-        }
         .confirmationDialog(
             "このセッションをコピーして開始しますか？",
             isPresented: $showingCopyConfirmation,
@@ -116,11 +83,90 @@ struct SessionDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private var heroCard: some View {
+        let setCount = session.sets?.count ?? 0
+        VStack(alignment: .leading, spacing: OikomiSpacing.m) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(session.startedAt, style: .date)
+                        .font(.headline)
+                    Text(session.startedAt, style: .time)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if let routine = session.routine {
+                    Label(routine.name, systemImage: "list.bullet.clipboard")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, OikomiSpacing.s)
+                        .padding(.vertical, 4)
+                        .background(OikomiColor.elevatedBackground, in: Capsule())
+                }
+            }
+
+            Divider()
+
+            HStack(spacing: OikomiSpacing.l) {
+                heroMetric(
+                    title: "所要時間",
+                    value: session.durationSeconds.map(formatDuration) ?? "—"
+                )
+                divider
+                heroMetric(title: "総セット", value: "\(setCount)")
+                divider
+                heroMetric(
+                    title: "ボリューム",
+                    value: totalVolume.formatted(.number.precision(.fractionLength(0))) + " kg"
+                )
+            }
+        }
+        .padding(OikomiSpacing.l)
+        .background(
+            OikomiColor.cardBackground, in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func heroMetric(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+        }
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(OikomiColor.separator)
+            .frame(width: 1, height: 28)
+    }
+
+    @ViewBuilder
+    private var copyButton: some View {
+        Button {
+            if activeSessions.isEmpty {
+                showingCopyConfirmation = true
+            } else {
+                showingActiveBlockedAlert = true
+            }
+        } label: {
+            Label("もう一度実行（コピー）", systemImage: "doc.on.doc.fill")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, OikomiSpacing.m + 2)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(OikomiColor.brandPrimary)
+        .disabled(session.endedAt == nil)
+    }
+
     private func copySession() {
         let repo = WorkoutSessionRepository(context: modelContext)
         do {
             try repo.startSessionByCopying(session)
-            // トレーニングタブで続けてもらう（タブ遷移は呼び出し側が把握）
         } catch {
             errorMessage = "コピーに失敗: \(error.localizedDescription)"
         }
@@ -129,7 +175,7 @@ struct SessionDetailView: View {
     private func formatDuration(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds) / 60
         if minutes < 60 {
-            return "\(minutes)分"
+            return "\(minutes) 分"
         }
         let hours = minutes / 60
         let remaining = minutes % 60

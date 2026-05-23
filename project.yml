@@ -44,8 +44,8 @@ targets:
       properties:
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "1"
-        NSHealthShareUsageDescription: "HRV・睡眠・心拍データを使ってトレーニング負荷を最適化します"
-        NSHealthUpdateUsageDescription: "ワークアウト記録をヘルスケアに保存します"
+        NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。データはオンデバイスでのみ処理され、外部送信はありません。"
+        NSHealthUpdateUsageDescription: "完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。"
         NSMotionUsageDescription: "Apple Watch のセンサーでレップ自動カウントに使用します"
         NSSupportsLiveActivities: true
         UIBackgroundModes:
@@ -61,6 +61,20 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         UIRequiredDeviceCapabilities:
           - arm64
+        CFBundleIcons:
+          CFBundlePrimaryIcon:
+            CFBundleIconName: AppIcon
+          CFBundleAlternateIcons:
+            AppIconProtein:
+              CFBundleIconName: AppIconProtein
+              CFBundleIconFiles:
+                - AppIconProtein
+              UIPrerenderedIcon: false
+            AppIconBarbell:
+              CFBundleIconName: AppIconBarbell
+              CFBundleIconFiles:
+                - AppIconBarbell
+              UIPrerenderedIcon: false
     entitlements:
       path: App/iOS/Oikomi.entitlements
       properties:
@@ -70,12 +84,16 @@ targets:
           - CloudKit
         com.apple.developer.icloud-container-identifiers:
           - iCloud.com.shuhirouchi.oikomi
+        com.apple.security.application-groups:
+          - group.com.shuhirouchi.oikomi
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shuhirouchi.oikomi
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: AppIconProtein AppIconBarbell
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 
   OikomiWidgets:
@@ -94,6 +112,11 @@ targets:
         CFBundleVersion: "1"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: App/Widgets/OikomiWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.shuhirouchi.oikomi
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shuhirouchi.oikomi.widgets
@@ -120,13 +143,15 @@ targets:
         WKRunsIndependentlyOfCompanionApp: true
         WKCompanionAppBundleIdentifier: com.shuhirouchi.oikomi
         WKSupportsLiveActivities: true
-        NSHealthShareUsageDescription: "HRV・睡眠・心拍データを使ってトレーニング負荷を最適化します"
-        NSHealthUpdateUsageDescription: "ワークアウト記録をヘルスケアに保存します"
+        NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。データはオンデバイスでのみ処理され、外部送信はありません。"
+        NSHealthUpdateUsageDescription: "完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。"
     entitlements:
       path: App/Watch/OikomiWatch.entitlements
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        com.apple.security.application-groups:
+          - group.com.shuhirouchi.oikomi
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shuhirouchi.oikomi.watchkitapp
@@ -140,6 +165,7 @@ targets:
     sources:
       - path: App/WatchWidgets
       - path: App/Widgets/StatsWidget.swift
+      - path: App/Widgets/WidgetDesignSystem.swift
     dependencies:
       - package: OikomiKit
         product: OikomiKit
@@ -150,6 +176,11 @@ targets:
         CFBundleVersion: "1"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: App/WatchWidgets/OikomiWatchWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.shuhirouchi.oikomi
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shuhirouchi.oikomi.watchkitapp.widgets
@@ -170,8 +201,8 @@ targets:
       properties:
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "1"
-        NSHealthShareUsageDescription: "HRV・睡眠・心拍データを使ってトレーニング負荷を最適化します"
-        NSHealthUpdateUsageDescription: "ワークアウト記録をヘルスケアに保存します"
+        NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。データはオンデバイスでのみ処理され、外部送信はありません。"
+        NSHealthUpdateUsageDescription: "完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。"
     entitlements:
       path: App/Mac/OikomiMac.entitlements
       properties:
@@ -181,6 +212,8 @@ targets:
           - iCloud.com.shuhirouchi.oikomi
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
+        com.apple.security.application-groups:
+          - group.com.shuhirouchi.oikomi
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shuhirouchi.oikomi.mac

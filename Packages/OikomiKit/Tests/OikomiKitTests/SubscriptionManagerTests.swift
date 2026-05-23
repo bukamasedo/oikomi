@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import OikomiKit
 
 @Suite("Subscription")
@@ -39,11 +40,11 @@ struct SubscriptionManagerTests {
     @Test("ProGate: Free プランの上限定数")
     @MainActor
     func proGateLimits() {
-        #expect(ProGate.freeRoutineLimit == 3)
+        #expect(ProGate.freeRoutineLimit == 5)
         #expect(ProGate.freeCustomExerciseLimit == 5)
     }
 
-    @Test("ProGate: 未購入時は全 Pro 機能が無効")
+    @Test("ProGate: 未購入時でも Live Activity は Free 開放されている")
     @MainActor
     func proGateOffByDefault() {
         // テスト環境では Transaction.currentEntitlements は空のため isProActive == false
@@ -52,7 +53,8 @@ struct SubscriptionManagerTests {
         #expect(ProGate.canCreateUnlimitedCustomExercises == false)
         #expect(ProGate.canReadHealthData == false)
         #expect(ProGate.canUseAICoaching == false)
-        #expect(ProGate.canUseLiveActivity == false)
+        // Live Activity は v0.x で Free 開放済み（Pro 訴求は HRV コーチング側に集約）
+        #expect(ProGate.canUseLiveActivity == true)
         #expect(ProGate.canUseICloudSync == false)
         #expect(ProGate.canSeeAdvancedAnalytics == false)
         #expect(ProGate.canExportData == false)
@@ -61,7 +63,7 @@ struct SubscriptionManagerTests {
     @Test("ProGateError: localizedDescription に Pro 文字列を含む")
     func proGateErrorMessages() {
         let errors: [ProGateError] = [
-            .routineLimitReached(current: 3, limit: 3),
+            .routineLimitReached(current: 5, limit: 5),
             .customExerciseLimitReached(current: 5, limit: 5),
             .healthDataReadRequiresPro,
             .aiCoachingRequiresPro,

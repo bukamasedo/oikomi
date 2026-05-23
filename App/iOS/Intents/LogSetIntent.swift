@@ -1,7 +1,7 @@
 import AppIntents
 import Foundation
-import SwiftData
 import OikomiKit
+import SwiftData
 
 /// Siri / ショートカット / Spotlight から呼べる「セット記録」インテント。
 ///
@@ -54,20 +54,25 @@ struct LogSetIntent: AppIntent {
         let descriptor = FetchDescriptor<Exercise>(sortBy: [.init(\.name)])
         let all = try context.fetch(descriptor)
 
-        if let exact = all.first(where: { $0.name == normalized || $0.nameEn.caseInsensitiveCompare(normalized) == .orderedSame }) {
+        if let exact = all.first(where: {
+            $0.name == normalized || $0.nameEn.caseInsensitiveCompare(normalized) == .orderedSame
+        }) {
             return exact
         }
         if let prefix = all.first(where: { $0.name.hasPrefix(normalized) }) {
             return prefix
         }
-        if let contains = all.first(where: { $0.name.contains(normalized) || $0.nameEn.localizedCaseInsensitiveContains(normalized) }) {
+        if let contains = all.first(where: {
+            $0.name.contains(normalized) || $0.nameEn.localizedCaseInsensitiveContains(normalized)
+        }) {
             return contains
         }
         throw IntentError.exerciseNotFound(query: normalized)
     }
 
     @MainActor
-    private func ensureActiveSession(repo: WorkoutSessionRepository, in context: ModelContext) throws -> WorkoutSession {
+    private func ensureActiveSession(repo: WorkoutSessionRepository, in context: ModelContext) throws -> WorkoutSession
+    {
         let descriptor = FetchDescriptor<WorkoutSession>(
             predicate: #Predicate { $0.endedAt == nil }
         )

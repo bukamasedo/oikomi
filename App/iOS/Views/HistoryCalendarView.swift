@@ -116,18 +116,18 @@ struct HistoryCalendarView: View {
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(textColor(isSelected: isSelected, isToday: isToday))
                 Circle()
-                    .fill(isActive ? Color.accentColor : Color.clear)
+                    .fill(isActive ? OikomiColor.brandPrimary : Color.clear)
                     .frame(width: 5, height: 5)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 36)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
+                    .fill(isSelected ? OikomiColor.brandPrimary.opacity(0.2) : Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(isToday && !isSelected ? Color.accentColor : Color.clear, lineWidth: 1)
+                    .strokeBorder(isToday && !isSelected ? OikomiColor.brandPrimary : Color.clear, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

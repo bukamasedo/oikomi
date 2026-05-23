@@ -1,6 +1,10 @@
 import Foundation
 import SwiftData
 
+#if canImport(WidgetKit)
+    import WidgetKit
+#endif
+
 /// 自己ベスト記録（PersonalRecord）の更新を扱う。
 ///
 /// セット保存時に呼ばれ、推定1RM が既存ベストを超えていれば更新／新規作成する。
@@ -45,6 +49,7 @@ public final class PersonalRecordRepository {
             current.estimated1RM = rm
             current.achievedAt = set.completedAt
             try context.save()
+            reloadStatsWidgetTimelines()
             return current
         }
 
@@ -57,6 +62,13 @@ public final class PersonalRecordRepository {
         )
         context.insert(record)
         try context.save()
+        reloadStatsWidgetTimelines()
         return record
+    }
+
+    private func reloadStatsWidgetTimelines() {
+        #if canImport(WidgetKit)
+            WidgetCenter.shared.reloadTimelines(ofKind: "OikomiStatsWidget")
+        #endif
     }
 }

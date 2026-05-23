@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import OikomiKit
+import SwiftData
+import SwiftUI
 
 @main
 struct OikomiApp: App {
@@ -22,6 +22,7 @@ struct OikomiApp: App {
             Task { @MainActor in
                 let repo = ExerciseRepository(context: container.mainContext)
                 do {
+                    try repo.migrateToFullLibraryV1IfNeeded()
                     try repo.ensureSeedExercisesPresent()
                 } catch {
                     print("シード投入失敗: \(error)")

@@ -1,8 +1,10 @@
 import Charts
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
 
+/// 種目別の詳細画面。
+/// Hero header + 推移グラフカード + StatTile + 直近セット feed。
 struct ExerciseDetailView: View {
 
     let exercise: Exercise
@@ -18,7 +20,8 @@ struct ExerciseDetailView: View {
 
     private var allSetsForExercise: [SetRecord] {
         let id = exercise.id
-        return completedSessions
+        return
+            completedSessions
             .flatMap { $0.sets ?? [] }
             .filter { $0.exercise?.id == id }
     }
@@ -34,7 +37,8 @@ struct ExerciseDetailView: View {
 
     private var totalSessions: Int {
         let id = exercise.id
-        return completedSessions
+        return
+            completedSessions
             .filter { session in (session.sets ?? []).contains { $0.exercise?.id == id } }
             .count
     }
@@ -55,139 +59,214 @@ struct ExerciseDetailView: View {
     }
 
     var body: some View {
-        List {
-            metaSection
-            prSection
-            trendSection
-            statsSection
-            recentSetsSection
+        ScrollView {
+            VStack(spacing: OikomiSpacing.l) {
+                metaCard
+
+                if let pr {
+                    prCard(pr)
+                }
+
+                statsTiles
+
+                trendCard
+
+                recentSetsCard
+            }
+            .padding(.horizontal, OikomiSpacing.l)
+            .padding(.bottom, OikomiSpacing.xxl)
         }
+        .background(OikomiColor.appBackground)
         .navigationTitle(exercise.name)
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    @ViewBuilder
-    private var metaSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 8) {
-                if !exercise.nameEn.isEmpty {
-                    Text(exercise.nameEn)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                HStack(spacing: 6) {
-                    ForEach(exercise.muscleGroups, id: \.self) { group in
-                        Text(group.displayName)
-                            .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.accentColor.opacity(0.15))
-                            .clipShape(Capsule())
-                    }
-                }
-            }
-            .padding(.vertical, 2)
-        }
-    }
+    // MARK: - Meta
 
     @ViewBuilder
-    private var prSection: some View {
-        Section("自己ベスト") {
-            if let pr {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("\(pr.weight.formatted())kg × \(pr.reps)")
-                            .font(.title2.weight(.semibold))
-                            .monospacedDigit()
-                        Text(pr.achievedAt, style: .date)
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    Spacer()
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("推定1RM")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        Text("\(pr.estimated1RM.formatted(.number.precision(.fractionLength(1))))kg")
-                            .font(.title3.weight(.semibold))
-                            .monospacedDigit()
-                            .foregroundStyle(.tint)
-                    }
-                }
-            } else {
-                Text("まだ PR がありません")
+    private var metaCard: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            if !exercise.nameEn.isEmpty {
+                Text(exercise.nameEn)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                    .font(.callout)
             }
+            HStack(spacing: 6) {
+                ForEach(exercise.muscleGroups, id: \.self) { group in
+                    Text(group.displayName)
+                        .font(.caption.weight(.medium))
+                        .padding(.horizontal, OikomiSpacing.s)
+                        .padding(.vertical, 4)
+                        .background(OikomiColor.brandPrimary.opacity(0.14), in: Capsule())
+                        .foregroundStyle(OikomiColor.brandPrimary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(OikomiSpacing.l)
+        .background(
+            OikomiColor.cardBackground, in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+    }
+
+    // MARK: - PR
+
+    @ViewBuilder
+    private func prCard(_ pr: PersonalRecord) -> some View {
+        HStack(alignment: .top, spacing: OikomiSpacing.m) {
+            ZStack {
+                RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous)
+                    .fill(OikomiColor.brandSecondary.opacity(0.18))
+                Image(systemName: "trophy.fill")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(OikomiColor.brandSecondary)
+            }
+            .frame(width: 52, height: 52)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("自己ベスト")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text("\(pr.weight.formatted()) kg × \(pr.reps)")
+                    .font(.title2.weight(.semibold).monospacedDigit())
+                Text(
+                    "推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1)))) kg・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))"
+                )
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(OikomiSpacing.l)
+        .background(
+            OikomiColor.cardBackground, in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+    }
+
+    // MARK: - Stats Tiles
+
+    @ViewBuilder
+    private var statsTiles: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            SectionHeader(title: "累計")
+            HStack(spacing: OikomiSpacing.m) {
+                StatTile(
+                    title: "セッション",
+                    value: "\(totalSessions)",
+                    unit: "回",
+                    systemImage: "figure.strengthtraining.traditional",
+                    tint: OikomiColor.brandPrimary
+                )
+                StatTile(
+                    title: "ワーキングセット",
+                    value: "\(workingSets.count)",
+                    unit: "",
+                    systemImage: "list.bullet",
+                    tint: OikomiColor.statBlue
+                )
+            }
+            StatTile(
+                title: "総ボリューム",
+                value: totalVolume.formatted(.number.precision(.fractionLength(0))),
+                unit: "kg",
+                systemImage: "scalemass.fill",
+                tint: OikomiColor.statIndigo
+            )
         }
     }
 
+    // MARK: - Trend
+
     @ViewBuilder
-    private var trendSection: some View {
-        Section("最大重量の推移") {
+    private var trendCard: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            SectionHeader(title: "最大重量の推移", subtitle: weightTrend.isEmpty ? nil : "ワーキングセットの最大値")
+
             if weightTrend.count < 2 {
                 Text("推移を表示するには 2 回以上の記録が必要です")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .font(.callout)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(OikomiSpacing.l)
+                    .background(
+                        OikomiColor.cardBackground,
+                        in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
             } else {
                 Chart(weightTrend) { point in
                     LineMark(
                         x: .value("日付", point.date),
                         y: .value("重量 (kg)", point.weight)
                     )
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(OikomiColor.brandPrimary)
                     .interpolationMethod(.catmullRom)
 
                     PointMark(
                         x: .value("日付", point.date),
                         y: .value("重量 (kg)", point.weight)
                     )
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(OikomiColor.brandPrimary)
                 }
                 .frame(height: 200)
-                .padding(.vertical, 8)
+                .padding(OikomiSpacing.l)
+                .background(
+                    OikomiColor.cardBackground,
+                    in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+            }
+        }
+    }
+
+    // MARK: - Recent sets
+
+    @ViewBuilder
+    private var recentSetsCard: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            SectionHeader(title: "直近の記録")
+
+            if recentSets.isEmpty {
+                Text("まだ記録がありません")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(OikomiSpacing.l)
+                    .background(
+                        OikomiColor.cardBackground,
+                        in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(recentSets.enumerated()), id: \.element.id) { idx, set in
+                        recentSetRow(set)
+                            .padding(.horizontal, OikomiSpacing.l)
+                            .padding(.vertical, OikomiSpacing.s)
+                        if idx < recentSets.count - 1 {
+                            Divider().padding(.horizontal, OikomiSpacing.l)
+                        }
+                    }
+                }
+                .background(
+                    OikomiColor.cardBackground,
+                    in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
             }
         }
     }
 
     @ViewBuilder
-    private var statsSection: some View {
-        Section("累計") {
-            LabeledContent("セッション数", value: "\(totalSessions)")
-            LabeledContent("ワーキングセット数", value: "\(workingSets.count)")
-            LabeledContent("総ボリューム (kg)", value: totalVolume.formatted(.number.precision(.fractionLength(0))))
-        }
-    }
-
-    @ViewBuilder
-    private var recentSetsSection: some View {
-        Section("直近の記録") {
-            if recentSets.isEmpty {
-                Text("まだ記録なし")
-                    .foregroundStyle(.secondary)
-                    .font(.callout)
-            } else {
-                ForEach(recentSets) { set in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(set.completedAt, style: .date)
-                                .font(.subheadline)
-                            if set.isWarmup {
-                                Text("ウォームアップ")
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                        Spacer()
-                        if let weight = set.weight, let reps = set.reps {
-                            Text("\(weight.formatted())kg × \(reps)")
-                                .font(.body.monospacedDigit())
-                        } else if let reps = set.reps {
-                            Text("\(reps)レップ")
-                                .font(.body.monospacedDigit())
-                        }
-                    }
+    private func recentSetRow(_ set: SetRecord) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(set.completedAt, format: .dateTime.month(.abbreviated).day().year())
+                    .font(.subheadline)
+                if set.isWarmup {
+                    Text("ウォームアップ")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
                 }
+            }
+            Spacer()
+            if let weight = set.weight, let reps = set.reps {
+                Text("\(weight.formatted()) kg × \(reps)")
+                    .font(.body.monospacedDigit())
+            } else if let reps = set.reps {
+                Text("\(reps) レップ")
+                    .font(.body.monospacedDigit())
             }
         }
     }

@@ -1,6 +1,6 @@
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
 
 /// 検索 + 部位フィルタつきの種目選択シート。
 ///
@@ -62,24 +62,27 @@ struct ExercisePickerSheet: View {
                     .padding(.vertical, 8)
                     .background(Color(uiColor: .systemBackground))
 
-                List {
+                Group {
                     if filtered.isEmpty {
-                        ContentUnavailableView(
-                            "種目が見つかりません",
+                        OikomiEmptyState(
+                            title: "種目が見つかりません",
+                            message: "検索ワードやフィルタを調整してください",
                             systemImage: "magnifyingglass",
-                            description: Text("検索ワードやフィルタを調整してください")
+                            tint: OikomiColor.brandPrimary
                         )
                     } else {
-                        if !favorites.isEmpty {
-                            Section("お気に入り") {
-                                ForEach(favorites) { exercise in
-                                    exerciseRowButton(exercise)
+                        List {
+                            if !favorites.isEmpty {
+                                Section("お気に入り") {
+                                    ForEach(favorites) { exercise in
+                                        exerciseRowButton(exercise)
+                                    }
                                 }
                             }
-                        }
-                        Section(favorites.isEmpty ? "" : "すべての種目") {
-                            ForEach(nonFavorites) { exercise in
-                                exerciseRowButton(exercise)
+                            Section(favorites.isEmpty ? "" : "すべての種目") {
+                                ForEach(nonFavorites) { exercise in
+                                    exerciseRowButton(exercise)
+                                }
                             }
                         }
                     }

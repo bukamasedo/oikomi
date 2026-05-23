@@ -1,0 +1,52 @@
+{
+  "fill" : {
+    "automatic-gradient" : "display-p3:0.90980,0.36471,0.01569,1.00000"
+  },
+  "groups" : [
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "glass" : false,
+          "hidden" : true,
+          "image-name" : "protein-hiyoko.png",
+          "name" : "protein-hiyoko",
+          "position" : {
+            "scale" : 0.55,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "danberu-hiyoko.png",
+          "name" : "danberu-hiyoko",
+          "position" : {
+            "scale" : 0.6900000000000002,
+            "translation-in-points" : [
+              -0.3450000000000273,
+              -32.42999999999995
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

@@ -1,5 +1,5 @@
-import SwiftUI
 import OikomiKit
+import SwiftUI
 
 struct OnboardingView: View {
 
@@ -62,13 +62,18 @@ private struct WelcomeStep: View {
     let onContinue: () -> Void
 
     var body: some View {
-        VStack(spacing: 28) {
+        VStack(spacing: OikomiSpacing.xxl) {
             Spacer()
 
-            VStack(spacing: 12) {
-                Image(systemName: "figure.strengthtraining.traditional")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.tint)
+            VStack(spacing: OikomiSpacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(OikomiColor.brandPrimary.opacity(0.18))
+                        .frame(width: 120, height: 120)
+                    Image(systemName: "figure.strengthtraining.traditional")
+                        .font(.system(size: 56, weight: .semibold))
+                        .foregroundStyle(OikomiColor.brandPrimary)
+                }
                 Text("Oikomi へようこそ")
                     .font(.largeTitle.weight(.bold))
                 Text("Apple Watch で完結する筋トレ記録")
@@ -76,7 +81,7 @@ private struct WelcomeStep: View {
                     .foregroundStyle(.secondary)
             }
 
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: OikomiSpacing.xl) {
                 ValueRow(
                     icon: "applewatch",
                     title: "手首だけで完結",
@@ -93,7 +98,7 @@ private struct WelcomeStep: View {
                     description: "UI・種目名・コーチング文言すべて自然な日本語"
                 )
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, OikomiSpacing.xxl)
 
             Spacer()
 
@@ -103,12 +108,14 @@ private struct WelcomeStep: View {
                 Text("はじめる")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+                    .padding(.vertical, OikomiSpacing.m + 2)
             }
             .buttonStyle(.borderedProminent)
-            .padding(.horizontal, 24)
-            .padding(.bottom, 32)
+            .tint(OikomiColor.brandPrimary)
+            .padding(.horizontal, OikomiSpacing.xxl)
+            .padding(.bottom, OikomiSpacing.xxxl)
         }
+        .background(OikomiColor.appBackground)
     }
 }
 
@@ -118,11 +125,15 @@ private struct ValueRow: View {
     let description: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(.tint)
-                .frame(width: 36)
+        HStack(alignment: .top, spacing: OikomiSpacing.m) {
+            ZStack {
+                RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous)
+                    .fill(OikomiColor.brandPrimary.opacity(0.14))
+                Image(systemName: icon)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(OikomiColor.brandPrimary)
+            }
+            .frame(width: 40, height: 40)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
@@ -179,6 +190,7 @@ private struct HealthKitStep: View {
                             .padding(.vertical, 14)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(OikomiColor.brandPrimary)
                 } else {
                     Button {
                         onRequest()
@@ -189,6 +201,7 @@ private struct HealthKitStep: View {
                             .padding(.vertical, 14)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(OikomiColor.brandPrimary)
 
                     Button {
                         onContinue()
@@ -260,6 +273,7 @@ private struct RoutinePromptStep: View {
                         .padding(.vertical, 14)
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(OikomiColor.brandPrimary)
 
                 Text("ルーティンはトレーニングタブで後から作成できます")
                     .font(.caption2)

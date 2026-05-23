@@ -1,7 +1,13 @@
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
+import UniformTypeIdentifiers
 
+/// ルーティン作成・編集画面。
+///
+/// 進行中セッション (`WorkoutTabView.activeSessionView`) と同じ
+/// カードベースのデザイン言語に合わせ、ScrollView に種目カードを縦に積む。
+/// 各カード内に「重量 / レップ / セット数」の値行を持ち、タップで NumericStepperField シートが開く。
 struct RoutineEditorView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -11,45 +17,44 @@ struct RoutineEditorView: View {
     let existingRoutine: Routine?
 
     @State private var name: String = ""
-    @State private var selectedExercises: [Exercise] = []
+    @State private var drafts: [RoutineExerciseDraft] = []
     @State private var showingPicker = false
+    @State private var editingField: EditingField?
+    @State private var draggedID: UUID?
     @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("ルーティン名") {
-                    TextField("例: プッシュデー", text: $name)
-                        .textInputAutocapitalization(.never)
-                }
+            ScrollView {
+                VStack(spacing: OikomiSpacing.l) {
+                    nameCard
 
-                Section("種目") {
-                    if selectedExercises.isEmpty {
-                        Text("種目を追加してください")
-                            .foregroundStyle(.secondary)
+                    if drafts.isEmpty {
+                        emptyStateCard
                     } else {
-                        ForEach(selectedExercises) { exercise in
-                            HStack {
-                                Image(systemName: "line.3.horizontal")
-                                    .foregroundStyle(.tertiary)
-                                Text(exercise.name)
-                            }
-                        }
-                        .onMove { from, to in
-                            selectedExercises.move(fromOffsets: from, toOffset: to)
-                        }
-                        .onDelete { offsets in
-                            selectedExercises.remove(atOffsets: offsets)
+                        ForEach($drafts) { $draft in
+                            RoutineExerciseDraftCard(
+                                draft: $draft,
+                                draggedID: $draggedID,
+                                allDrafts: $drafts,
+                                onEditField: { field in
+                                    editingField = EditingField(
+                                        draftId: draft.id, field: field)
+                                },
+                                onDelete: {
+                                    drafts.removeAll { $0.id == draft.id }
+                                }
+                            )
                         }
                     }
 
-                    Button {
-                        showingPicker = true
-                    } label: {
-                        Label("種目を追加", systemImage: "plus.circle")
-                    }
+                    addExerciseCard
                 }
+                .padding(.horizontal, OikomiSpacing.l)
+                .padding(.top, OikomiSpacing.s)
+                .padding(.bottom, OikomiSpacing.xxl)
             }
+            .background(OikomiColor.appBackground)
             .navigationTitle(existingRoutine == nil ? "新規ルーティン" : "ルーティン編集")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -60,15 +65,17 @@ struct RoutineEditorView: View {
                     Button("保存") { save() }
                         .disabled(!canSave)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if !selectedExercises.isEmpty {
-                        EditButton()
-                    }
-                }
             }
             .sheet(isPresented: $showingPicker) {
-                ExercisePickerSheet(excluding: selectedExercises) { picked in
-                    selectedExercises.append(picked)
+                ExercisePickerSheet(excluding: drafts.map(\.exercise)) { picked in
+                    appendDraft(for: picked)
+                }
+            }
+            .sheet(item: $editingField) { field in
+                if let idx = drafts.firstIndex(where: { $0.id == field.draftId }) {
+                    SingleValueSheet(draft: $drafts[idx], field: field.field)
+                        .presentationDetents([.height(360)])
+                        .presentationDragIndicator(.visible)
                 }
             }
             .alert("エラー", isPresented: .constant(errorMessage != nil)) {
@@ -80,30 +87,141 @@ struct RoutineEditorView: View {
         }
     }
 
+    // MARK: - Cards
+
+    @ViewBuilder
+    private var nameCard: some View {
+        HStack(spacing: OikomiSpacing.m) {
+            ZStack {
+                RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous)
+                    .fill(OikomiColor.brandPrimary.opacity(0.14))
+                Image(systemName: "list.bullet.clipboard")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(OikomiColor.brandPrimary)
+            }
+            .frame(width: 44, height: 44)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("ルーティン名")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                TextField("例: プッシュデー", text: $name)
+                    .font(.headline)
+                    .textInputAutocapitalization(.never)
+            }
+        }
+        .padding(OikomiSpacing.l)
+        .background(
+            OikomiColor.cardBackground,
+            in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var emptyStateCard: some View {
+        VStack(spacing: OikomiSpacing.s) {
+            Image(systemName: "figure.strengthtraining.traditional")
+                .font(.system(size: 36))
+                .foregroundStyle(.tertiary)
+            Text("種目がまだありません")
+                .font(.subheadline.weight(.semibold))
+            Text("下の「種目を追加」から種目を選んで構成しましょう")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(OikomiSpacing.xl)
+        .background(
+            OikomiColor.cardBackground,
+            in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var addExerciseCard: some View {
+        Button {
+            showingPicker = true
+        } label: {
+            HStack(spacing: OikomiSpacing.s) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(OikomiColor.brandPrimary)
+                Text("種目を追加")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
+            .padding(OikomiSpacing.l)
+            .background(
+                RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                    .strokeBorder(
+                        OikomiColor.brandPrimary.opacity(0.35),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [5]))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Logic
+
     private var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty && !selectedExercises.isEmpty
+        !name.trimmingCharacters(in: .whitespaces).isEmpty && !drafts.isEmpty
     }
 
     private func loadExisting() {
         guard let routine = existingRoutine else { return }
+        // 既存値があるなら一度だけロード (シート再表示で上書きしない)
+        if !name.isEmpty || !drafts.isEmpty { return }
         name = routine.name
-        selectedExercises = routine.orderedExercises.compactMap(\.exercise)
+        drafts = routine.orderedExercises.compactMap { entry in
+            guard let exercise = entry.exercise else { return nil }
+            return RoutineExerciseDraft(
+                id: UUID(),
+                exercise: exercise,
+                plannedSets: entry.plannedSets,
+                plannedReps: entry.plannedReps,
+                plannedWeight: entry.plannedWeight.map(quantize)
+            )
+        }
+    }
+
+    private func appendDraft(for exercise: Exercise) {
+        let repo = WorkoutSessionRepository(context: modelContext)
+        let lastSet = try? repo.lastCompletedSet(for: exercise)
+        let isBodyweight = exercise.measurementType == .bodyweightReps
+        drafts.append(
+            RoutineExerciseDraft(
+                id: UUID(),
+                exercise: exercise,
+                plannedSets: 3,
+                plannedReps: lastSet?.reps ?? 8,
+                plannedWeight: isBodyweight ? nil : quantize(lastSet?.weight ?? 20)
+            )
+        )
     }
 
     private func save() {
         let repo = RoutineRepository(context: modelContext)
         do {
-            if let routine = existingRoutine {
-                try repo.renameRoutine(routine, to: name)
-                // 種目を一度全削除して再構築（順序維持の簡単な方法）
-                for entry in routine.orderedExercises {
+            let routine: Routine
+            if let existing = existingRoutine {
+                try repo.renameRoutine(existing, to: name)
+                // 既存パターン: 全削除 → 再構築で順序を簡単に維持
+                for entry in existing.orderedExercises {
                     try repo.removeExercise(entry)
                 }
-                for exercise in selectedExercises {
-                    try repo.addExercise(to: routine, exercise: exercise)
-                }
+                routine = existing
             } else {
-                try repo.createRoutine(name: name, exercises: selectedExercises)
+                routine = try repo.createRoutine(name: name, exercises: [])
+            }
+            for draft in drafts {
+                let isBodyweight = draft.exercise.measurementType == .bodyweightReps
+                try repo.addExercise(
+                    to: routine,
+                    exercise: draft.exercise,
+                    plannedSets: draft.plannedSets,
+                    plannedReps: draft.plannedReps,
+                    plannedWeight: isBodyweight ? nil : draft.plannedWeight
+                )
             }
             dismiss()
         } catch {
@@ -112,3 +230,264 @@ struct RoutineEditorView: View {
     }
 }
 
+// MARK: - Routine Exercise Draft Card
+
+/// 進行中セッションの ExerciseInSessionCard と同じデザイン言語の、ルーティン編集中種目カード。
+/// 行内編集スタイル (タップで SingleValueSheet) と長押しメニュー削除を持つ。
+private struct RoutineExerciseDraftCard: View {
+
+    @Binding var draft: RoutineExerciseDraft
+    @Binding var draggedID: UUID?
+    @Binding var allDrafts: [RoutineExerciseDraft]
+    var onEditField: (ValueField) -> Void
+    var onDelete: () -> Void
+
+    private var isBodyweight: Bool {
+        draft.exercise.measurementType == .bodyweightReps
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+                .padding(.horizontal, OikomiSpacing.l)
+                .padding(.top, OikomiSpacing.l)
+                .padding(.bottom, OikomiSpacing.s)
+
+            Divider().padding(.horizontal, OikomiSpacing.l)
+
+            if !isBodyweight {
+                valueRow(
+                    label: "重量",
+                    valueText:
+                        "\((draft.plannedWeight ?? 20).formatted(.number.precision(.fractionLength(0...1)))) kg"
+                ) { onEditField(.weight) }
+                Divider().padding(.leading, OikomiSpacing.l * 2)
+            }
+
+            valueRow(
+                label: "レップ",
+                valueText: "\(draft.plannedReps) 回"
+            ) { onEditField(.reps) }
+            Divider().padding(.leading, OikomiSpacing.l * 2)
+
+            valueRow(
+                label: "セット数",
+                valueText: "\(draft.plannedSets) セット"
+            ) { onEditField(.sets) }
+        }
+        .background(
+            OikomiColor.cardBackground,
+            in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+        )
+        .contextMenu {
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
+                Label("削除", systemImage: "trash")
+            }
+        }
+        // カード全体を長押しドラッグで並べ替え対象にする。ハンドルアイコンは省略。
+        .onDrag {
+            draggedID = draft.id
+            return NSItemProvider(object: draft.id.uuidString as NSString)
+        }
+        .onDrop(
+            of: [UTType.text],
+            delegate: ReorderDropDelegate(
+                destinationID: draft.id,
+                drafts: $allDrafts,
+                draggedID: $draggedID
+            )
+        )
+    }
+
+    @ViewBuilder
+    private var header: some View {
+        HStack(spacing: OikomiSpacing.s) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(draft.exercise.name)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                if draft.exercise.defaultRestSeconds > 0 {
+                    Text("レスト \(draft.exercise.defaultRestSeconds) 秒")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
+            Spacer(minLength: OikomiSpacing.s)
+
+            Text("\(draft.plannedSets) セット")
+                .font(.caption.weight(.semibold).monospacedDigit())
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .padding(.horizontal, OikomiSpacing.s)
+                .padding(.vertical, 4)
+                .background(Color.secondary.opacity(0.14), in: Capsule())
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private func valueRow(
+        label: String, valueText: String, onTap: @escaping () -> Void
+    ) -> some View {
+        Button(action: onTap) {
+            HStack {
+                Text(label)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(valueText)
+                    .font(.body.monospacedDigit())
+                    .foregroundStyle(.primary)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, OikomiSpacing.l)
+            .padding(.vertical, OikomiSpacing.m)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Helpers (unchanged)
+
+/// `.sheet(item:)` 用。タップごとに新 UUID を発行してシート再提示を確実にする。
+private struct EditingField: Identifiable {
+    let id = UUID()
+    let draftId: UUID
+    let field: ValueField
+}
+
+/// 種目行の並べ替え用ドロップ delegate。
+/// ドラッグ中の `draggedID` を見て、ホバーした行が異なる種目なら入れ替える（ライブ並べ替え）。
+private struct ReorderDropDelegate: DropDelegate {
+    let destinationID: UUID
+    @Binding var drafts: [RoutineExerciseDraft]
+    @Binding var draggedID: UUID?
+
+    func dropEntered(info: DropInfo) {
+        guard let dragged = draggedID,
+            dragged != destinationID,
+            let fromIdx = drafts.firstIndex(where: { $0.id == dragged }),
+            let toIdx = drafts.firstIndex(where: { $0.id == destinationID })
+        else { return }
+        if drafts[toIdx].id != dragged {
+            withAnimation {
+                let item = drafts.remove(at: fromIdx)
+                drafts.insert(item, at: toIdx)
+            }
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggedID = nil
+        return true
+    }
+}
+
+private enum ValueField {
+    case weight, reps, sets
+    var title: String {
+        switch self {
+        case .weight: "重量"
+        case .reps: "レップ"
+        case .sets: "セット"
+        }
+    }
+}
+
+/// ルーティン編集時の一時的な編集状態。
+/// SwiftData @Model ではなく Identifiable な struct として、保存タイミングまで context.insert を遅延させる。
+private struct RoutineExerciseDraft: Identifiable {
+    let id: UUID
+    let exercise: Exercise
+    var plannedSets: Int
+    var plannedReps: Int
+    var plannedWeight: Double?
+}
+
+/// 1 つの値だけを ±入力で編集する bottom sheet。`NumericStepperField` で一貫性確保。
+private struct SingleValueSheet: View {
+    @Binding var draft: RoutineExerciseDraft
+    let field: ValueField
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: OikomiSpacing.l) {
+                Text(draft.exercise.name)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, OikomiSpacing.s)
+
+                stepperView
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, OikomiSpacing.l)
+            .background(OikomiColor.appBackground)
+            .navigationTitle(field.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完了") { dismiss() }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var stepperView: some View {
+        switch field {
+        case .weight:
+            NumericStepperField(
+                title: "重量",
+                value: Binding(
+                    get: { quantize(draft.plannedWeight ?? 20) },
+                    set: { draft.plannedWeight = $0 }
+                ),
+                range: 0...500,
+                step: 2.5,
+                formatter: { $0.formatted(.number.precision(.fractionLength(0...1))) },
+                unit: "kg"
+            )
+        case .reps:
+            NumericStepperField(
+                title: "レップ",
+                value: Binding(
+                    get: { Double(draft.plannedReps) },
+                    set: { draft.plannedReps = Int($0) }
+                ),
+                range: 1...100,
+                step: 1,
+                formatter: { "\(Int($0))" },
+                unit: "回"
+            )
+        case .sets:
+            NumericStepperField(
+                title: "セット",
+                value: Binding(
+                    get: { Double(draft.plannedSets) },
+                    set: { draft.plannedSets = Int($0) }
+                ),
+                range: 1...20,
+                step: 1,
+                formatter: { "\(Int($0))" },
+                unit: "セット"
+            )
+        }
+    }
+}
+
+/// Wheel ピッカーの tag に一致させるため 2.5 の倍数に丸める。
+private func quantize(_ v: Double) -> Double {
+    (v / 2.5).rounded() * 2.5
+}

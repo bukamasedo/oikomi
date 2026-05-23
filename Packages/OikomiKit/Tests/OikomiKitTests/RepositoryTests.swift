@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
+
 @testable import OikomiKit
 
 @Suite("Repositories")
@@ -55,9 +56,9 @@ struct RepositoryTests {
 
         let exercises = try context.fetch(FetchDescriptor<Exercise>())
         #expect(exercises.count == SeedData.starterExercises.count)
-        #expect(exercises.count >= 120)  // v1.0.x で 120 種に拡充
-        #expect(exercises.contains { $0.nameEn == "Hamstring Stretch" })  // mobility 追加分
-        #expect(exercises.contains { $0.nameEn == "Stair Climber" })       // cardio 追加分
+        #expect(exercises.count >= 800)  // free-exercise-db v1 取り込みで 873 種に拡充
+        #expect(exercises.contains { $0.nameEn == "Hamstring Stretch" })  // stretching 追加分
+        #expect(exercises.contains { $0.nameEn == "Stairmaster" })  // cardio 追加分
     }
 
     @Test("ensureSeedExercisesPresent: 2回呼んでも重複追加しない（冪等）")

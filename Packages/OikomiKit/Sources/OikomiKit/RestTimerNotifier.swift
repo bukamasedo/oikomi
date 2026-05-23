@@ -1,11 +1,11 @@
 import Foundation
 
 #if canImport(UserNotifications)
-import UserNotifications
+    import UserNotifications
 #endif
 
 #if canImport(WatchKit)
-import WatchKit
+    import WatchKit
 #endif
 
 /// レストタイマー終了の通知・ハプティクスを抽象化するエントリポイント。
@@ -23,12 +23,12 @@ public enum RestTimerNotifier {
     /// アプリ起動後 1 度だけ呼ぶ。許可が拒否されてもクラッシュさせない。
     public static func requestAuthorization() async {
         #if canImport(UserNotifications)
-        let center = UNUserNotificationCenter.current()
-        do {
-            _ = try await center.requestAuthorization(options: [.alert, .sound])
-        } catch {
-            print("[Oikomi.rest] notification authorization request failed: \(error)")
-        }
+            let center = UNUserNotificationCenter.current()
+            do {
+                _ = try await center.requestAuthorization(options: [.alert, .sound])
+            } catch {
+                print("[Oikomi.rest] notification authorization request failed: \(error)")
+            }
         #endif
     }
 
@@ -36,39 +36,57 @@ public enum RestTimerNotifier {
     /// 同一 identifier の既存通知があれば差し替える（連続セット完了時の上書きをサポート）。
     public static func scheduleRestEnd(at endAt: Date, identifier: String = defaultIdentifier) {
         #if canImport(UserNotifications)
-        let interval = endAt.timeIntervalSinceNow
-        guard interval > 0.1 else { return }
+            // SwiftPM 単体テスト等 host-app 不在の環境では UNUserNotificationCenter.current() が
+            // `bundleProxyForCurrentProcess is nil` で Objective-C 例外を投げる。
+            // 通知はホストアプリ前提機能なので、そのような環境では no-op で十分。
+            guard !isHostlessEnvironment else { return }
 
-        let content = UNMutableNotificationContent()
-        content.title = "レスト終了"
-        content.body = "次のセットへ"
-        content.sound = .default
+            let interval = endAt.timeIntervalSinceNow
+            guard interval > 0.1 else { return }
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
-        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+            let content = UNMutableNotificationContent()
+            content.title = "レスト終了"
+            content.body = "次のセットへ"
+            content.sound = .default
 
-        let center = UNUserNotificationCenter.current()
-        // 同一 identifier は自動で置き換わる仕様だが、念のため事前削除
-        center.removePendingNotificationRequests(withIdentifiers: [identifier])
-        center.add(request) { error in
-            if let error {
-                print("[Oikomi.rest] notification schedule failed: \(error)")
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
+            let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+            let center = UNUserNotificationCenter.current()
+            // 同一 identifier は自動で置き換わる仕様だが、念のため事前削除
+            center.removePendingNotificationRequests(withIdentifiers: [identifier])
+            center.add(request) { error in
+                if let error {
+                    print("[Oikomi.rest] notification schedule failed: \(error)")
+                }
             }
-        }
         #endif
     }
 
     /// 「スキップ」等で予定済み通知を取り消す。
+    /// pending（未配信）と delivered（配信済み・Notification Center に残っている）の両方を消す。
+    /// スキップ操作とタイマー発火がほぼ同時に起きる稀ケースで「配信されてしまった通知」が
+    /// 残らないようにするため delivered 側もまとめて削除する。
     public static func cancel(identifier: String = defaultIdentifier) {
         #if canImport(UserNotifications)
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: [identifier])
+            center.removeDeliveredNotifications(withIdentifiers: [identifier])
         #endif
+    }
+
+    /// SwiftPM 単体テストランナー（XCTest 経由含む）などホストアプリ不在で実行された場合に true。
+    /// `UNUserNotificationCenter.current()` の Objective-C 例外を避けるためのガード判定に使う。
+    private static var isHostlessEnvironment: Bool {
+        if Bundle.main.bundleIdentifier == nil { return true }
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return true }
+        return false
     }
 
     /// 即座にハプティクスを発火する。Watch のカウントダウン UI が 0 到達時に呼ぶ。
     public static func playEndHaptic() {
         #if canImport(WatchKit) && os(watchOS)
-        WKInterfaceDevice.current().play(.notification)
+            WKInterfaceDevice.current().play(.notification)
         #endif
     }
 }

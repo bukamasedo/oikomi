@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import OikomiKit
+import SwiftData
+import SwiftUI
 
 @main
 struct OikomiWatchApp: App {
@@ -17,6 +17,7 @@ struct OikomiWatchApp: App {
             Task { @MainActor in
                 let exerciseRepo = ExerciseRepository(context: container.mainContext)
                 do {
+                    try exerciseRepo.migrateToFullLibraryV1IfNeeded()
                     try exerciseRepo.ensureSeedExercisesPresent()
                 } catch {
                     print("[Oikomi.seed] Watch seed failed: \(error)")

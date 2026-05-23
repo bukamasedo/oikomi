@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import OikomiKit
+import SwiftData
+import SwiftUI
 
 @main
 struct OikomiMacApp: App {

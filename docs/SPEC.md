@@ -466,7 +466,7 @@ final class PersonalRecord {
 - Apple Watch スタンドアロン記録
 - Live Activity / Dynamic Island
 - 種目ライブラリ 100種（ジム中心）
-- ルーティン管理（Free は 3つまで、Pro は無制限）
+- ルーティン管理（Free は 5つまで、Pro は無制限）
 - インターバルタイマー
 
 **Tier 2: Apple 特化（Pro 限定）**
@@ -556,20 +556,21 @@ final class PersonalRecord {
 
 | プラン | 価格 | 内容 |
 |---|---|---|
-| **Free** | 無料・広告なし | 基本記録機能、履歴閲覧無制限、Apple Watch記録、HealthKit書き込み、ルーティン3つまで、カスタム種目5つまで |
+| **Free** | 無料・広告なし | 基本記録機能、履歴閲覧無制限、Apple Watch記録、HealthKit書き込み、ルーティン5つまで、カスタム種目5つまで、Live Activity / Dynamic Island |
 | **Pro 月額** | ¥780/月 | 全機能アンロック |
 | **Pro 年額** | ¥5,800/年 | 全機能アンロック（実質 ¥483/月、月額比 38%オフ） |
 
 ### Pro 限定機能
 
 - HealthKit 双方向連携（HRV・睡眠・安静時心拍数の読み込み）
-- AIコーチング（Apple Intelligence によるディロード提案・PR予測・自然言語サマリ）
-- Live Activity / Dynamic Island 表示
+- AIコーチング 3種（HRV 連動ディロード提案・線形回帰 PR 予測・部位別ボリューム警告）
 - 高度な分析グラフ（ボリューム推移・部位別・推定1RM・PR履歴）
 - ルーティン・カスタム種目 無制限
 - iCloud 同期（マルチデバイス）
 - Family Sharing（最大6名）
 - データエクスポート（CSV / JSON）
+
+> Live Activity / Dynamic Island は v0.x で Free 開放に方針変更。一番尖った差別化を全ユーザーに体験させ、Pro 訴求は HRV × AI コーチングへ集約する。
 
 ### トライアル・割引戦略
 

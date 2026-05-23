@@ -1,7 +1,8 @@
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
 
+/// 履歴タブ。Apple Fitness History + ヘルスケアの期間セグメントに着想を得た構成。
 struct HistoryView: View {
 
     @Query(
@@ -11,6 +12,7 @@ struct HistoryView: View {
     )
     private var sessions: [WorkoutSession]
 
+    @State private var period: PeriodSegment.Period = .week
     @State private var selectedDate: Date?
 
     private let calendar = Calendar.current
@@ -19,54 +21,93 @@ struct HistoryView: View {
         Set(sessions.map { calendar.startOfDay(for: $0.startedAt) })
     }
 
-    private var filteredSessions: [WorkoutSession] {
-        guard let selectedDate else { return sessions }
-        let day = calendar.startOfDay(for: selectedDate)
-        return sessions.filter { calendar.isDate($0.startedAt, inSameDayAs: day) }
+    private var periodSessions: [WorkoutSession] {
+        if let selectedDate {
+            return sessions.filter { calendar.isDate($0.startedAt, inSameDayAs: selectedDate) }
+        }
+        guard let interval = periodInterval else { return sessions }
+        return sessions.filter { interval.contains($0.startedAt) }
+    }
+
+    private var periodInterval: DateInterval? {
+        let now = Date()
+        switch period {
+        case .day:
+            return calendar.dateInterval(of: .day, for: now)
+        case .week:
+            return calendar.dateInterval(of: .weekOfYear, for: now)
+        case .month:
+            return calendar.dateInterval(of: .month, for: now)
+        case .year:
+            return calendar.dateInterval(of: .year, for: now)
+        case .all:
+            return nil
+        }
+    }
+
+    private var totalSets: Int {
+        periodSessions.reduce(0) { $0 + ($1.sets?.count ?? 0) }
+    }
+
+    private var totalVolume: Double {
+        periodSessions
+            .flatMap { $0.sets ?? [] }
+            .filter(\.isCompleted)
+            .reduce(0) { acc, s in
+                guard let w = s.weight, let r = s.reps else { return acc }
+                return acc + w * Double(r)
+            }
     }
 
     var body: some View {
         NavigationStack {
-            Group {
-                if sessions.isEmpty {
-                    ContentUnavailableView(
-                        "履歴がありません",
-                        systemImage: "calendar",
-                        description: Text("ワークアウトを完了すると、ここに記録が残ります。")
-                    )
-                } else {
-                    List {
-                        Section {
-                            HistoryCalendarView(activeDates: activeDates, selectedDate: $selectedDate)
-                                .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
-                        }
+            ScrollView {
+                VStack(spacing: OikomiSpacing.l) {
+                    PeriodSegment(selection: $period)
 
-                        Section(sessionsSectionTitle) {
-                            if filteredSessions.isEmpty {
-                                Text("この日の記録はありません")
-                                    .foregroundStyle(.secondary)
-                                    .font(.callout)
-                            } else {
-                                ForEach(filteredSessions) { session in
-                                    NavigationLink(value: session) {
-                                        sessionRow(session)
+                    summaryCard
+
+                    HistoryCalendarView(activeDates: activeDates, selectedDate: $selectedDate)
+                        .padding(OikomiSpacing.l)
+                        .background(
+                            OikomiColor.cardBackground,
+                            in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+
+                    if periodSessions.isEmpty {
+                        OikomiEmptyState(
+                            title: "この期間の記録はありません",
+                            message: "期間を切り替えるか、カレンダーで別の日付を選んでください。",
+                            systemImage: "calendar.badge.exclamationmark",
+                            tint: OikomiColor.brandPrimary
+                        )
+                        .frame(minHeight: 200)
+                    } else {
+                        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+                            SectionHeader(
+                                title: sessionsSectionTitle,
+                                trailing: {
+                                    if selectedDate != nil {
+                                        Button("すべて") { selectedDate = nil }
+                                            .font(.subheadline.weight(.medium))
                                     }
+                                }
+                            )
+                            VStack(spacing: OikomiSpacing.m) {
+                                ForEach(periodSessions) { session in
+                                    NavigationLink(value: session) {
+                                        WorkoutHistoryCard(session: session)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
                     }
                 }
+                .padding(.horizontal, OikomiSpacing.l)
+                .padding(.bottom, OikomiSpacing.xxl)
             }
+            .background(OikomiColor.appBackground)
             .navigationTitle("履歴")
-            .toolbar {
-                if selectedDate != nil {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("すべて表示") {
-                            selectedDate = nil
-                        }
-                    }
-                }
-            }
             .navigationDestination(for: WorkoutSession.self) { session in
                 SessionDetailView(session: session)
             }
@@ -75,52 +116,97 @@ struct HistoryView: View {
 
     private var sessionsSectionTitle: String {
         if let selectedDate {
-            return selectedDate.formatted(date: .long, time: .omitted) + " のセッション"
+            return selectedDate.formatted(.dateTime.year().month(.abbreviated).day()) + " のセッション"
         }
-        return "全セッション (\(sessions.count))"
+        switch period {
+        case .day: return "今日のセッション"
+        case .week: return "今週のセッション (\(periodSessions.count))"
+        case .month: return "今月のセッション (\(periodSessions.count))"
+        case .year: return "今年のセッション (\(periodSessions.count))"
+        case .all: return "全セッション (\(periodSessions.count))"
+        }
     }
 
     @ViewBuilder
-    private func sessionRow(_ session: WorkoutSession) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(session.startedAt, style: .date)
-                    .font(.headline)
-                Spacer()
-                Text(session.startedAt, style: .time)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 12) {
-                Label("\(session.sets?.count ?? 0) セット", systemImage: "list.bullet")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                if let duration = session.durationSeconds {
-                    Label(formatDuration(duration), systemImage: "clock")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                if let routine = session.routine {
-                    Label(routine.name, systemImage: "list.bullet.clipboard")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
+    private var summaryCard: some View {
+        HStack(spacing: OikomiSpacing.m) {
+            summaryTile(
+                title: "セッション",
+                value: "\(periodSessions.count)",
+                unit: "回",
+                systemImage: "figure.strengthtraining.traditional",
+                tint: OikomiColor.brandPrimary
+            )
+            divider
+            summaryTile(
+                title: "セット",
+                value: "\(totalSets)",
+                unit: "",
+                systemImage: "list.bullet",
+                tint: OikomiColor.statBlue
+            )
+            divider
+            summaryTile(
+                title: "ボリューム",
+                value: totalVolume.formatted(.number.precision(.fractionLength(0))),
+                unit: "kg",
+                systemImage: "scalemass.fill",
+                tint: OikomiColor.statIndigo
+            )
         }
-        .padding(.vertical, 4)
+        .padding(OikomiSpacing.l)
+        .background(
+            OikomiColor.cardBackground, in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
     }
 
-    private func formatDuration(_ seconds: TimeInterval) -> String {
-        let minutes = Int(seconds) / 60
-        if minutes < 60 {
-            return "\(minutes)分"
+    @ViewBuilder
+    private func summaryTile(
+        title: String, value: String, unit: String, systemImage: String, tint: Color
+    ) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: systemImage)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(tint)
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(OikomiFont.statValueCompact)
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(OikomiFont.metricUnit)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Text(title)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
         }
-        let hours = minutes / 60
-        let remaining = minutes % 60
-        return "\(hours)時間\(remaining)分"
+        .frame(maxWidth: .infinity)
     }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(OikomiColor.separator)
+            .frame(width: 1)
+            .padding(.vertical, OikomiSpacing.xs)
+    }
+}
+
+#Preview("Light") {
+    HistoryView()
+        .modelContainer(
+            for: [
+                WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
+                RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
+            ], inMemory: true)
+}
+
+#Preview("Dark") {
+    HistoryView()
+        .modelContainer(
+            for: [
+                WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
+                RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
+            ], inMemory: true
+        )
+        .preferredColorScheme(.dark)
 }

@@ -10,7 +10,9 @@ public enum ProGate {
     // MARK: - Free 上限
 
     /// Free プランで作成できるルーティンの最大数（仕様書 §10）
-    public static let freeRoutineLimit = 3
+    ///
+    /// 4〜6 分割法を使うトレーニーが Free でも回せるよう、v0.x で 3→5 に緩和。
+    public static let freeRoutineLimit = 5
 
     /// Free プランで作成できるカスタム種目の最大数（仕様書 §10）
     public static let freeCustomExerciseLimit = 5
@@ -37,7 +39,11 @@ public enum ProGate {
     public static var canUseAICoaching: Bool { isProActive }
 
     /// Live Activity / Dynamic Island を起動できるか
-    public static var canUseLiveActivity: Bool { isProActive }
+    ///
+    /// v0.x で Free 開放。一番尖った差別化を全ユーザーに体験させ、Pro 訴求の中心を
+    /// HRV × AI コーチングへ寄せる方針。ゲート参照箇所はプロパティ自体は残してあるため、
+    /// 将来再ゲートする場合は本プロパティを `isProActive` に戻すだけで巻き戻し可能。
+    public static var canUseLiveActivity: Bool { true }
 
     /// iCloud / CloudKit 同期を有効にできるか
     public static var canUseICloudSync: Bool { isProActive }

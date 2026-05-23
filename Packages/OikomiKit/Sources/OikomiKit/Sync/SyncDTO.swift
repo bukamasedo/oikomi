@@ -78,25 +78,55 @@ public struct ExerciseFavoriteDTO: Codable, Sendable, Hashable {
     }
 }
 
+/// ルーティン内の種目エントリを表す DTO。`RoutineDTO.exercises` で送られる。
+///
+/// `RoutineExercise.id` は端末ごとに異なるため持たない（受信側は order でマッチング）。
+public struct RoutineExerciseDTO: Codable, Sendable, Hashable {
+    public let exerciseName: String  // 識別キー（端末間で UUID が異なるため name で参照）
+    public let order: Int
+    public let plannedSets: Int
+    public let plannedReps: Int
+    public let plannedWeight: Double?
+
+    public init(
+        exerciseName: String,
+        order: Int,
+        plannedSets: Int,
+        plannedReps: Int,
+        plannedWeight: Double? = nil
+    ) {
+        self.exerciseName = exerciseName
+        self.order = order
+        self.plannedSets = plannedSets
+        self.plannedReps = plannedReps
+        self.plannedWeight = plannedWeight
+    }
+}
+
 public struct RoutineDTO: Codable, Sendable, Hashable {
     public let id: UUID
     public let name: String
     public let createdAt: Date
     public let lastUsedAt: Date?
-    public let exerciseNames: [String]  // 順序保持で種目名を並べる
+    /// 旧バイナリとの後方互換のため残す（順序保持で種目名のみ）。新バイナリは `exercises` を優先使用する。
+    public let exerciseNames: [String]
+    /// 種目の計画値（plannedSets/Reps/Weight）を含む新形式。古い JSON から decode すると nil。
+    public let exercises: [RoutineExerciseDTO]?
 
     public init(
         id: UUID,
         name: String,
         createdAt: Date,
         lastUsedAt: Date? = nil,
-        exerciseNames: [String]
+        exerciseNames: [String],
+        exercises: [RoutineExerciseDTO]? = nil
     ) {
         self.id = id
         self.name = name
         self.createdAt = createdAt
         self.lastUsedAt = lastUsedAt
         self.exerciseNames = exerciseNames
+        self.exercises = exercises
     }
 }
 
@@ -105,13 +135,17 @@ public struct RoutineDTO: Codable, Sendable, Hashable {
 public struct SyncEnvelope: Codable, Sendable {
 
     public enum Kind: String, Codable, Sendable {
-        case sessionUpsert        // セッション開始・終了・更新
-        case setUpsert            // セット記録
-        case routineUpsert        // ルーティン作成・編集
-        case routineDeleted       // ルーティン削除
-        case fullSyncRequest      // 受信側から「全部送って」依頼
-        case fullSyncResponse     // 上記の応答
+        case sessionUpsert  // セッション開始・終了・更新
+        case setUpsert  // セット記録
+        case routineUpsert  // ルーティン作成・編集
+        case routineDeleted  // ルーティン削除
+        case fullSyncRequest  // 受信側から「全部送って」依頼
+        case fullSyncResponse  // 上記の応答
         case exerciseFavoriteUpdate  // 種目のお気に入りトグル
+        case bulkDelete  // 全データ削除（設定 → すべてのデータを削除）
+        case restTimerCancel  // 片方の端末でレストをスキップ → 相手端末のローカル通知もキャンセル
+        case restTimerStart  // 片方の端末でセット完了 → 相手端末のレストタイマーも起動
+        case iconChange  // iPhone 設定でアプリアイコン変更 → Watch も追従
     }
 
     public let kind: Kind
@@ -122,6 +156,12 @@ public struct SyncEnvelope: Codable, Sendable {
     public let deletedRoutineIds: [UUID]
     /// 後方互換のため Optional。古いバイナリは未送信なので nil で受信される。
     public let exerciseFavorites: [ExerciseFavoriteDTO]?
+    /// restTimerStart のみ使用。レスト終了時刻。
+    public let restEndAt: Date?
+    /// restTimerStart のみ使用。UI 表示用の総秒数（受信側で defaultRestSeconds を再計算しない）。
+    public let restTotalSeconds: Int?
+    /// iconChange のみ使用。`nil` = primary（デフォルト）に戻す。
+    public let iconName: String?
 
     public init(
         kind: Kind,
@@ -130,7 +170,10 @@ public struct SyncEnvelope: Codable, Sendable {
         sets: [SetRecordDTO] = [],
         routines: [RoutineDTO] = [],
         deletedRoutineIds: [UUID] = [],
-        exerciseFavorites: [ExerciseFavoriteDTO]? = nil
+        exerciseFavorites: [ExerciseFavoriteDTO]? = nil,
+        restEndAt: Date? = nil,
+        restTotalSeconds: Int? = nil,
+        iconName: String? = nil
     ) {
         self.kind = kind
         self.timestamp = timestamp
@@ -139,6 +182,9 @@ public struct SyncEnvelope: Codable, Sendable {
         self.routines = routines
         self.deletedRoutineIds = deletedRoutineIds
         self.exerciseFavorites = exerciseFavorites
+        self.restEndAt = restEndAt
+        self.restTotalSeconds = restTotalSeconds
+        self.iconName = iconName
     }
 }
 
@@ -178,12 +224,23 @@ extension SetRecord {
 
 extension Routine {
     public func makeDTO() -> RoutineDTO {
-        RoutineDTO(
+        let entries: [RoutineExerciseDTO] = orderedExercises.compactMap { routineEx in
+            guard let name = routineEx.exercise?.name else { return nil }
+            return RoutineExerciseDTO(
+                exerciseName: name,
+                order: routineEx.order,
+                plannedSets: routineEx.plannedSets,
+                plannedReps: routineEx.plannedReps,
+                plannedWeight: routineEx.plannedWeight
+            )
+        }
+        return RoutineDTO(
             id: id,
             name: name,
             createdAt: createdAt,
             lastUsedAt: lastUsedAt,
-            exerciseNames: orderedExercises.compactMap { $0.exercise?.name }
+            exerciseNames: entries.map(\.exerciseName),
+            exercises: entries
         )
     }
 }
