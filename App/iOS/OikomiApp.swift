@@ -40,6 +40,10 @@ struct OikomiApp: App {
                 }
                 // StoreKit 2: products ロード + Transaction listener 開始 + 現在の権利確認
                 await SubscriptionManager.shared.start()
+
+                // Sign in with Apple のセッションが revoke / transferred されていないか確認。
+                // revoke 検出時は AppleAuthManager 内で signOut される。
+                await AppleAuthManager.shared.verifyCredentialState()
             }
         } catch {
             fatalError("ModelContainer 初期化失敗: \(error)")

@@ -1,3 +1,4 @@
+import AuthenticationServices
 import OikomiKit
 import SwiftUI
 
@@ -10,6 +11,7 @@ struct OnboardingView: View {
 
     enum Step: Int {
         case welcome
+        case signInWithApple
         case healthKit
         case routinePrompt
     }
@@ -18,7 +20,9 @@ struct OnboardingView: View {
         VStack {
             switch step {
             case .welcome:
-                WelcomeStep(onContinue: { step = .healthKit })
+                WelcomeStep(onContinue: { step = .signInWithApple })
+            case .signInWithApple:
+                SignInWithAppleStep(onAdvance: { step = .healthKit })
             case .healthKit:
                 HealthKitStep(
                     isDone: healthAuthorizationDone,
@@ -142,6 +146,80 @@ private struct ValueRow: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+// MARK: - Sign in with Apple
+
+private struct SignInWithAppleStep: View {
+    let onAdvance: () -> Void
+
+    @State private var lastError: String?
+
+    var body: some View {
+        VStack(spacing: OikomiSpacing.xl) {
+            Spacer()
+
+            VStack(spacing: OikomiSpacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(Color.primary.opacity(0.06))
+                        .frame(width: 96, height: 96)
+                    Image(systemName: "person.crop.circle.badge.checkmark")
+                        .font(.system(size: 44, weight: .semibold))
+                        .foregroundStyle(.primary)
+                }
+                Text("Apple でサインイン")
+                    .font(.title.weight(.bold))
+                Text("匿名化された識別子と表示名のみを取得します。メールアドレスは取得しません。サインインしなくても全機能を利用できます。")
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, OikomiSpacing.xxl)
+            }
+
+            Spacer()
+
+            VStack(spacing: OikomiSpacing.m) {
+                SignInWithAppleButton(.signIn) { request in
+                    request.requestedScopes = [.fullName]
+                } onCompletion: { result in
+                    switch result {
+                    case .success(let authorization):
+                        AppleAuthManager.shared.handle(authorization: authorization)
+                        WCSyncBridge.shared.sendAuthStateChange(
+                            userID: AppleAuthManager.shared.signedInUserID,
+                            displayName: AppleAuthManager.shared.displayName
+                        )
+                        onAdvance()
+                    case .failure(let error):
+                        // .canceled はユーザーが閉じただけなのでエラー扱いしない。
+                        if (error as? ASAuthorizationError)?.code != .canceled {
+                            lastError = error.localizedDescription
+                        }
+                    }
+                }
+                .signInWithAppleButtonStyle(.black)
+                .frame(height: 50)
+                .padding(.horizontal, OikomiSpacing.xxl)
+
+                if let lastError {
+                    Text(lastError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.horizontal, OikomiSpacing.xxl)
+                }
+
+                Button {
+                    onAdvance()
+                } label: {
+                    Text("今はスキップ")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.bottom, OikomiSpacing.xxxl)
+        }
+        .background(OikomiColor.appBackground)
     }
 }
 

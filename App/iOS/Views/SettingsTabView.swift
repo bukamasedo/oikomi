@@ -1,3 +1,4 @@
+import AuthenticationServices
 import OikomiKit
 import StoreKit
 import SwiftData
@@ -21,6 +22,8 @@ struct SettingsTabView: View {
     @State private var errorMessage: String?
     @State private var showCloudKitChangeAlert = false
     @State private var exportedURL: URL?
+    @State private var authManager = AppleAuthManager.shared
+    @State private var signInError: String?
 
     #if DEBUG
         @State private var mockIsRunning = false
@@ -38,6 +41,7 @@ struct SettingsTabView: View {
                             trailing: OikomiSpacing.l)
                     )
                     .listRowBackground(Color.clear)
+                accountSection
                 preferenceSection
                 iCloudSection
                 healthKitSection
@@ -121,6 +125,62 @@ struct SettingsTabView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var accountSection: some View {
+        Section("アカウント") {
+            if authManager.isSignedIn {
+                HStack(spacing: OikomiSpacing.m) {
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(authManager.displayName ?? "Apple ID")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Apple でサインイン中")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Button(role: .destructive) {
+                    authManager.signOut()
+                    WCSyncBridge.shared.sendAuthStateChange(userID: nil, displayName: nil)
+                } label: {
+                    Label("サインアウト", systemImage: "rectangle.portrait.and.arrow.right")
+                }
+            } else {
+                VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+                    Text("サインインは任意です。匿名識別子と表示名のみ取得し、メアドは取得しません。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    SignInWithAppleButton(.signIn) { request in
+                        request.requestedScopes = [.fullName]
+                    } onCompletion: { result in
+                        switch result {
+                        case .success(let authorization):
+                            authManager.handle(authorization: authorization)
+                            WCSyncBridge.shared.sendAuthStateChange(
+                                userID: authManager.signedInUserID,
+                                displayName: authManager.displayName
+                            )
+                            signInError = nil
+                        case .failure(let error):
+                            if (error as? ASAuthorizationError)?.code != .canceled {
+                                signInError = error.localizedDescription
+                            }
+                        }
+                    }
+                    .signInWithAppleButtonStyle(.black)
+                    .frame(height: 44)
+                    if let signInError {
+                        Text(signInError)
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+        }
     }
 
     @ViewBuilder

@@ -212,6 +212,20 @@ public final class WCSyncBridge {
         dispatch(envelope, guaranteedDelivery: true)
     }
 
+    /// iPhone で Sign in with Apple のサインイン / サインアウト状態が変わった時に Watch へ通知する。
+    /// Watch には SIWA UI が無いため、iPhone 由来の状態を表示専用に同期する。
+    /// `userID` が nil ならサインアウト扱い。
+    public func sendAuthStateChange(userID: String?, displayName: String?) {
+        if applyingRemoteUpdate { return }
+        let envelope = SyncEnvelope(
+            kind: .authStateChange,
+            authUserID: userID,
+            authDisplayName: displayName
+        )
+        print("[Oikomi.sync] sendAuthStateChange dispatched signedIn=\(userID != nil)")
+        dispatch(envelope, guaranteedDelivery: true)
+    }
+
     /// レストタイマーをスキップしたことを相手デバイスに伝え、相手のローカル通知も止める。
     /// iPhone でも Watch でも skip ハンドラから呼ぶ。
     /// guaranteedDelivery=true で sendMessage + transferUserInfo に並行配送し、reachable の
@@ -318,6 +332,11 @@ public final class WCSyncBridge {
             restEndAtForNotification = applyRestTimerStart(envelope)
         case .iconChange:
             applyIconChange(iconName: envelope.iconName)
+        case .authStateChange:
+            applyAuthStateChange(
+                userID: envelope.authUserID,
+                displayName: envelope.authDisplayName
+            )
         }
 
         var userInfo: [String: Any] = ["kind": envelope.kind.rawValue]
@@ -370,6 +389,15 @@ public final class WCSyncBridge {
         print(
             "[Oikomi.sync] iconChange received name=\(iconName ?? "<primary>") (no-op: alternate icons unsupported on watchOS)"
         )
+    }
+
+    /// 相手デバイス (主に Watch) から authStateChange を受け取った時の処理。
+    /// AppleAuthManager に反映して UserDefaults にも書き戻す。
+    private func applyAuthStateChange(userID: String?, displayName: String?) {
+        print("[Oikomi.sync] authStateChange received signedIn=\(userID != nil)")
+        applyingRemoteUpdate = true
+        defer { applyingRemoteUpdate = false }
+        AppleAuthManager.shared.applyRemoteState(userID: userID, displayName: displayName)
     }
 
     /// 相手デバイスから restTimerCancel を受け取ったときの処理。
