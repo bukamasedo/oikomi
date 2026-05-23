@@ -146,6 +146,7 @@ public struct SyncEnvelope: Codable, Sendable {
         case restTimerCancel  // 片方の端末でレストをスキップ → 相手端末のローカル通知もキャンセル
         case restTimerStart  // 片方の端末でセット完了 → 相手端末のレストタイマーも起動
         case iconChange  // iPhone 設定でアプリアイコン変更 → Watch も追従
+        case authStateChange  // iPhone での Sign in with Apple サインイン / サインアウト
     }
 
     public let kind: Kind
@@ -162,6 +163,9 @@ public struct SyncEnvelope: Codable, Sendable {
     public let restTotalSeconds: Int?
     /// iconChange のみ使用。`nil` = primary（デフォルト）に戻す。
     public let iconName: String?
+    /// authStateChange のみ使用。サインアウト時は nil。
+    public let authUserID: String?
+    public let authDisplayName: String?
 
     public init(
         kind: Kind,
@@ -173,7 +177,9 @@ public struct SyncEnvelope: Codable, Sendable {
         exerciseFavorites: [ExerciseFavoriteDTO]? = nil,
         restEndAt: Date? = nil,
         restTotalSeconds: Int? = nil,
-        iconName: String? = nil
+        iconName: String? = nil,
+        authUserID: String? = nil,
+        authDisplayName: String? = nil
     ) {
         self.kind = kind
         self.timestamp = timestamp
@@ -185,6 +191,8 @@ public struct SyncEnvelope: Codable, Sendable {
         self.restEndAt = restEndAt
         self.restTotalSeconds = restTotalSeconds
         self.iconName = iconName
+        self.authUserID = authUserID
+        self.authDisplayName = authDisplayName
     }
 }
 
