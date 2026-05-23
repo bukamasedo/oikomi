@@ -18,13 +18,30 @@ public enum SharedModelContainer {
     /// デフォルトは true（ユーザーが既に Apple Developer Program に加入し iCloud 容器を作成済みの想定）。
     public static let cloudKitEnabledKey = "OikomiCloudKitEnabled"
 
+    /// アプリ本体とウィジェットエクステンションで SwiftData ストアを共有するための App Group ID。
+    /// entitlements に `com.apple.security.application-groups` で同 ID を登録している前提。
+    /// これが無いとウィジェットは別サンドボックスの空 store を見てしまう。
+    public static let appGroupID = "group.com.shuhirouchi.oikomi"
+
+    /// App Group コンテナ内に置く SwiftData ストアファイルの URL。
+    /// 取得できない場合（App Group が entitlements に無い等）は nil を返す。
+    public static func storeURL() -> URL? {
+        let fm = FileManager.default
+        guard let container = fm.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) else {
+            return nil
+        }
+        let supportDir = container.appendingPathComponent("Library/Application Support", isDirectory: true)
+        try? fm.createDirectory(at: supportDir, withIntermediateDirectories: true)
+        return supportDir.appendingPathComponent("default.store")
+    }
+
     /// 初期化を試みた最終モード。UI 側でユーザーに現状を表示するため。
     public static private(set) var activeCloudKitMode: CloudKitMode = .disabled
 
     public enum CloudKitMode: String, Sendable {
-        case enabled       // .automatic で起動成功
-        case disabled      // ユーザー設定 or フォールバックで .none で起動
-        case fallback      // CloudKit 起動失敗 → .none にフォールバック
+        case enabled  // .automatic で起動成功
+        case disabled  // ユーザー設定 or フォールバックで .none で起動
+        case fallback  // CloudKit 起動失敗 → .none にフォールバック
     }
 
     /// アプリ起動時に呼び出して初期化する。複数回呼ばれても初回のみ作成。
@@ -42,9 +59,9 @@ public enum SharedModelContainer {
         // Watch は WCSession 経由で iPhone と即時同期し、iPhone が CloudKit へ
         // 書き込むことで他デバイスへ伝播する分業構成にする。
         #if os(watchOS)
-        let defaultEnabled = false
+            let defaultEnabled = false
         #else
-        let defaultEnabled = true
+            let defaultEnabled = true
         #endif
         let userWantsCloudKit = UserDefaults.standard.object(forKey: cloudKitEnabledKey) as? Bool ?? defaultEnabled
 
@@ -54,14 +71,27 @@ public enum SharedModelContainer {
         let cachedProActive = UserDefaults.standard.bool(forKey: SubscriptionManager.lastKnownProActiveKey)
         let wantCloudKit = userWantsCloudKit && cachedProActive
 
+        // App Group コンテナ内の URL を取得。
+        // テスト (isStoredInMemoryOnly) や entitlements 未付与環境では nil → SwiftData デフォルト URL にフォールバック。
+        let sharedURL = isStoredInMemoryOnly ? nil : storeURL()
+
         if wantCloudKit && !isStoredInMemoryOnly {
             // まず CloudKit 有効で試す
             do {
-                let configuration = ModelConfiguration(
-                    schema: schema,
-                    isStoredInMemoryOnly: false,
-                    cloudKitDatabase: .automatic
-                )
+                let configuration: ModelConfiguration
+                if let sharedURL {
+                    configuration = ModelConfiguration(
+                        schema: schema,
+                        url: sharedURL,
+                        cloudKitDatabase: .automatic
+                    )
+                } else {
+                    configuration = ModelConfiguration(
+                        schema: schema,
+                        isStoredInMemoryOnly: false,
+                        cloudKitDatabase: .automatic
+                    )
+                }
                 let new = try ModelContainer(for: schema, configurations: [configuration])
                 container = new
                 activeCloudKitMode = .enabled
@@ -75,11 +105,20 @@ public enum SharedModelContainer {
             activeCloudKitMode = .disabled
         }
 
-        let configuration = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: isStoredInMemoryOnly,
-            cloudKitDatabase: .none
-        )
+        let configuration: ModelConfiguration
+        if let sharedURL {
+            configuration = ModelConfiguration(
+                schema: schema,
+                url: sharedURL,
+                cloudKitDatabase: .none
+            )
+        } else {
+            configuration = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: isStoredInMemoryOnly,
+                cloudKitDatabase: .none
+            )
+        }
         let new = try ModelContainer(for: schema, configurations: [configuration])
         container = new
         return new
