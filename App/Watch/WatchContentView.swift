@@ -1,6 +1,6 @@
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
 
 struct WatchContentView: View {
 
@@ -19,6 +19,7 @@ struct WatchContentView: View {
                 }
             }
         }
+        .tint(WatchColor.brand)
         .task {
             // Watch 起動時に iPhone へ「進行中セッション + 全ルーティンを送って」を依頼
             WCSyncBridge.shared.requestFullSync()

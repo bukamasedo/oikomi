@@ -118,8 +118,8 @@ public final class SubscriptionManager {
         for await result in Transaction.currentEntitlements {
             guard case .verified(let transaction) = result else { continue }
             if ProductIDs.all.contains(transaction.productID),
-               transaction.revocationDate == nil,
-               (transaction.expirationDate ?? .distantFuture) > Date()
+                transaction.revocationDate == nil,
+                (transaction.expirationDate ?? .distantFuture) > Date()
             {
                 active = true
                 break
