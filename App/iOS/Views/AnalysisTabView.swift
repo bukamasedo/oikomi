@@ -1,8 +1,10 @@
 import Charts
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
 
+/// 分析タブ。Apple ヘルスケアの Browse + Highlights 風。
+/// 4 カテゴリ (推移 / コンディション / ボディ / 部位別) を segmented picker で切り替える。
 struct AnalysisTabView: View {
 
     @Query(
@@ -19,7 +21,21 @@ struct AnalysisTabView: View {
 
     @State private var selectedExercise: Exercise?
     @State private var showingExercisePicker = false
-    @State private var showingProSheet = false
+    @State private var category: Category = .trend
+
+    enum Category: String, CaseIterable, Identifiable {
+        case trend, condition, body, muscle
+
+        var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .trend: return "推移"
+            case .condition: return "コンディション"
+            case .body: return "ボディ"
+            case .muscle: return "部位別"
+            }
+        }
+    }
 
     private var allSets: [SetRecord] {
         completedSessions.flatMap { $0.sets ?? [] }
@@ -40,25 +56,27 @@ struct AnalysisTabView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if !hasAnyData {
-                    ContentUnavailableView(
-                        "分析データなし",
-                        systemImage: "chart.bar.xaxis",
-                        description: Text("ワークアウトを完了すると、ここに推移が表示されます。")
-                    )
-                } else {
-                    List {
-                        if ProGate.canSeeAdvancedAnalytics {
-                            weeklyVolumeSection
-                            exerciseTrendSection
-                        } else {
-                            advancedAnalyticsLockedSection
+            ScrollView {
+                VStack(spacing: OikomiSpacing.l) {
+                    categoryPicker
+
+                    Group {
+                        switch category {
+                        case .trend:
+                            trendContent
+                        case .condition:
+                            conditionContent
+                        case .body:
+                            bodyContent
+                        case .muscle:
+                            muscleContent
                         }
-                        prsSection
                     }
                 }
+                .padding(.horizontal, OikomiSpacing.l)
+                .padding(.bottom, OikomiSpacing.xxl)
             }
+            .background(OikomiColor.appBackground)
             .navigationTitle("分析")
             .sheet(isPresented: $showingExercisePicker) {
                 ExercisePickerSheet { picked in
@@ -71,73 +89,161 @@ struct AnalysisTabView: View {
         }
     }
 
-    // MARK: - Pro Lock
+    @ViewBuilder
+    private var categoryPicker: some View {
+        Picker("カテゴリ", selection: $category) {
+            ForEach(Category.allCases) { c in
+                Text(c.title).tag(c)
+            }
+        }
+        .pickerStyle(.segmented)
+    }
+
+    // MARK: - .trend
 
     @ViewBuilder
-    private var advancedAnalyticsLockedSection: some View {
-        Section("詳細分析") {
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Pro 限定", systemImage: "lock.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.tint)
-                Text("週次総ボリュームと種目別の最大重量推移は Pro プランで閲覧できます。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+    private var trendContent: some View {
+        if !hasAnyData {
+            OikomiEmptyState(
+                title: "分析データがありません",
+                message: "ワークアウトを完了すると、ここに推移が表示されます。",
+                systemImage: "chart.bar.xaxis",
+                tint: OikomiColor.brandPrimary
+            )
+            .frame(minHeight: 320)
+        } else {
+            if ProGate.canSeeAdvancedAnalytics {
+                weeklyVolumeCard
+                exerciseTrendCard
+            } else {
+                ProLockTile(
+                    title: "詳細な推移グラフ",
+                    message: "週次総ボリュームと種目別の最大重量推移は Pro プランで閲覧できます。"
+                )
             }
-            .padding(.vertical, 4)
+            prsCard
+        }
+    }
+
+    // MARK: - .condition
+
+    @ViewBuilder
+    private var conditionContent: some View {
+        if ProGate.canReadHealthData {
+            ConditionAnalysisSection()
+        } else {
+            ProLockTile(
+                title: "コンディション分析",
+                message: "HRV・安静時心拍・睡眠時間の推移は Pro プランで閲覧できます。",
+                systemImage: "heart.text.square.fill"
+            )
+        }
+    }
+
+    // MARK: - .body
+
+    @ViewBuilder
+    private var bodyContent: some View {
+        if ProGate.canReadHealthData {
+            BodyAnalysisSection()
+        } else {
+            ProLockTile(
+                title: "ボディ分析",
+                message: "体重・体脂肪率・除脂肪体重の推移は Pro プランで閲覧できます。",
+                systemImage: "scalemass.fill"
+            )
+        }
+    }
+
+    // MARK: - .muscle
+
+    @ViewBuilder
+    private var muscleContent: some View {
+        if ProGate.canSeeAdvancedAnalytics {
+            MuscleGroupAnalysisSection(sets: allSets)
+        } else {
+            ProLockTile(
+                title: "部位別分析",
+                message: "週セット数と週ボリューム kg を部位別に可視化します。",
+                systemImage: "rectangle.split.3x1.fill"
+            )
         }
     }
 
     // MARK: - Weekly Volume
 
     @ViewBuilder
-    private var weeklyVolumeSection: some View {
-        Section("週次総ボリューム（直近8週）") {
+    private var weeklyVolumeCard: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.m) {
+            HStack {
+                Label("週次総ボリューム", systemImage: "chart.bar.fill")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text("直近 8 週")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
             let nonZero = weeklySeries.filter { $0.total > 0 }
             if nonZero.isEmpty {
-                Text("まだ記録なし")
-                    .foregroundStyle(.secondary)
+                Text("まだ記録がありません")
                     .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, OikomiSpacing.s)
             } else {
                 Chart(weeklySeries) { point in
                     BarMark(
                         x: .value("週", point.weekStart, unit: .weekOfYear),
                         y: .value("総ボリューム (kg)", point.total)
                     )
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(OikomiColor.brandPrimary)
                     .cornerRadius(4)
                 }
                 .frame(height: 200)
                 .chartXAxis {
-                    AxisMarks(values: .stride(by: .weekOfYear)) { value in
+                    AxisMarks(values: .stride(by: .weekOfYear)) { _ in
                         AxisGridLine()
                         AxisValueLabel(format: .dateTime.month(.abbreviated).day(), centered: true)
                     }
                 }
-                .padding(.vertical, 8)
             }
         }
+        .padding(OikomiSpacing.l)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            OikomiColor.cardBackground, in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
     }
 
     // MARK: - Exercise Trend
 
     @ViewBuilder
-    private var exerciseTrendSection: some View {
-        Section("種目別の最大重量推移") {
+    private var exerciseTrendCard: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.m) {
+            HStack {
+                Label("種目別の最大重量推移", systemImage: "chart.line.uptrend.xyaxis")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+            }
+
             Button {
                 showingExercisePicker = true
             } label: {
                 HStack {
                     Text(selectedExercise?.name ?? "種目を選択")
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(selectedExercise == nil ? .secondary : .primary)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.tertiary)
                 }
+                .padding(OikomiSpacing.m)
+                .background(
+                    OikomiColor.elevatedBackground,
+                    in: RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous))
             }
+            .buttonStyle(.plain)
 
-            if let _ = selectedExercise {
+            if selectedExercise != nil {
                 let series = selectedExerciseSeries
                 if series.isEmpty {
                     Text("この種目の記録がまだありません")
@@ -149,48 +255,59 @@ struct AnalysisTabView: View {
                             x: .value("日付", point.date),
                             y: .value("重量 (kg)", point.weight)
                         )
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(OikomiColor.brandPrimary)
                         .interpolationMethod(.catmullRom)
 
                         PointMark(
                             x: .value("日付", point.date),
                             y: .value("重量 (kg)", point.weight)
                         )
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(OikomiColor.brandPrimary)
                     }
                     .frame(height: 200)
-                    .padding(.vertical, 8)
                 }
             }
         }
+        .padding(OikomiSpacing.l)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            OikomiColor.cardBackground, in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
     }
 
     // MARK: - PRs
 
     @ViewBuilder
-    private var prsSection: some View {
-        Section("自己ベスト一覧") {
+    private var prsCard: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            SectionHeader(title: "自己ベスト一覧")
             if personalRecords.isEmpty {
                 Text("まだ PR がありません")
-                    .foregroundStyle(.secondary)
                     .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(OikomiSpacing.l)
+                    .background(
+                        OikomiColor.cardBackground,
+                        in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
             } else {
-                ForEach(personalRecords) { pr in
-                    if let exercise = pr.exercise {
-                        NavigationLink(value: exercise) {
-                            prRow(pr)
-                        }
-                    } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(personalRecords.enumerated()), id: \.element.id) { idx, pr in
                         prRow(pr)
+                        if idx < personalRecords.count - 1 {
+                            Divider().padding(.leading, OikomiSpacing.l)
+                        }
                     }
                 }
+                .background(
+                    OikomiColor.cardBackground,
+                    in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
             }
         }
     }
 
     @ViewBuilder
     private func prRow(_ pr: PersonalRecord) -> some View {
-        HStack {
+        let content = HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(pr.exercise?.name ?? "（種目不明）")
                     .font(.body)
@@ -200,16 +317,47 @@ struct AnalysisTabView: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(pr.weight.formatted())kg × \(pr.reps)")
+                Text("\(pr.weight.formatted()) kg × \(pr.reps)")
                     .font(.body.monospacedDigit())
-                Text("推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1))))kg")
+                Text("推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1)))) kg")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.tertiary)
             }
+            if pr.exercise != nil {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.horizontal, OikomiSpacing.l)
+        .padding(.vertical, OikomiSpacing.m)
+        .contentShape(Rectangle())
+
+        if let exercise = pr.exercise {
+            NavigationLink(value: exercise) { content }
+                .buttonStyle(.plain)
+        } else {
+            content
         }
     }
 }
 
-#Preview {
+#Preview("Light") {
     AnalysisTabView()
+        .modelContainer(
+            for: [
+                WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
+                RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
+            ], inMemory: true)
+}
+
+#Preview("Dark") {
+    AnalysisTabView()
+        .modelContainer(
+            for: [
+                WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
+                RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
+            ], inMemory: true
+        )
+        .preferredColorScheme(.dark)
 }

@@ -1,7 +1,10 @@
+import Charts
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
 
+/// Apple Fitness Summary + Health Summary に着想を得たホーム画面。
+/// ScrollView ベースで自立カードを縦に積み、純正の "List + Section" 感を脱する。
 struct HomeView: View {
 
     @Query(filter: #Predicate<WorkoutSession> { $0.endedAt == nil })
@@ -17,17 +20,38 @@ struct HomeView: View {
     @Query(sort: \PersonalRecord.achievedAt, order: .reverse)
     private var personalRecords: [PersonalRecord]
 
-    private var streakDays: Int {
-        Analytics.streakDays(sessions: completedSessions)
+    @AppStorage(WeeklyTrainingTarget.storageKey) private var weeklyTargetDays: Int =
+        WeeklyTrainingTarget.defaultDays
+
+    /// HealthStore から取得した直近 14 日の HRV 系列。Pro 未契約や HealthKit 未認可では空のまま。
+    /// 値が入ると `coachingAdvice` の HRV 低下判定が動作する。
+    @State private var hrvSeries: [HealthTrendPoint] = []
+
+    private var weeklyVolumeRange: ClosedRange<Date> { Analytics.currentWeekRange() }
+
+    private var weekSessionDays: Int {
+        Analytics.weeklySessionDays(sessions: completedSessions, in: weeklyVolumeRange)
     }
 
-    private var weeklyVolume: [(muscle: MuscleGroup, total: Double)] {
-        let range = Analytics.currentWeekRange()
+    private var consecutiveWeeks: Int {
+        Analytics.consecutiveActiveWeeks(sessions: completedSessions)
+    }
+
+    private var weeklyVolumeByMuscle: [(muscle: MuscleGroup, total: Double)] {
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
-        let byGroup = Analytics.volumeByMuscleGroup(sets: allSets, in: range)
-        return byGroup
+        let byGroup = Analytics.volumeByMuscleGroup(sets: allSets, in: weeklyVolumeRange)
+        return
+            byGroup
             .sorted { $0.value > $1.value }
             .map { (muscle: $0.key, total: $0.value) }
+    }
+
+    private var weeklyVolumeTotal: Double {
+        weeklyVolumeByMuscle.reduce(0) { $0 + $1.total }
+    }
+
+    private var weeklySessionCount: Int {
+        completedSessions.filter { weeklyVolumeRange.contains($0.startedAt) }.count
     }
 
     private var recentPRs: [PersonalRecord] {
@@ -35,191 +59,276 @@ struct HomeView: View {
     }
 
     private var coachingAdvice: [CoachingAdvice] {
-        // Pro 限定機能（仕様書 §10）: Free プランではコーチングを生成しない
         guard ProGate.canUseAICoaching else { return [] }
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
-        let deload = Analytics.deloadAdvice(sessions: completedSessions, sets: allSets)
+        let deload = Analytics.deloadAdvice(
+            sessions: completedSessions, sets: allSets, hrvSeries: hrvSeries)
         let volume = Analytics.volumeAdvice(from: allSets)
         let prPredictions = Analytics.prPredictions(sets: allSets, records: personalRecords)
-        // 緊急度: ディロード警告 → PR 予測（info）→ ボリューム警告。合計 3 件まで
         return Array((deload + prPredictions + volume).prefix(3))
     }
 
+    private var activeSession: WorkoutSession? { activeSessions.first }
+
     var body: some View {
         NavigationStack {
-            List {
-                if let active = activeSessions.first {
-                    activeSection(active)
+            ScrollView {
+                VStack(spacing: OikomiSpacing.xl) {
+                    if let active = activeSession {
+                        resumeCard(active)
+                    }
+
+                    heroBlock
+
+                    TodayConditionCard()
+
+                    if !coachingAdvice.isEmpty {
+                        coachingSection
+                    }
+
+                    if !recentPRs.isEmpty {
+                        prHighlightsSection
+                    }
+
+                    weeklyVolumeSection
                 }
-
-                if !coachingAdvice.isEmpty {
-                    coachingSection
-                }
-
-                summarySection
-
-                weeklyVolumeSection
-
-                recentPRSection
+                .padding(.horizontal, OikomiSpacing.l)
+                .padding(.bottom, OikomiSpacing.xxl)
             }
+            .scrollContentBackground(.hidden)
+            .background(OikomiColor.appBackground)
             .navigationTitle("ホーム")
             .navigationDestination(for: Exercise.self) { exercise in
                 ExerciseDetailView(exercise: exercise)
             }
+            .task(id: ProGate.isProActive) {
+                await refreshHRVSeries()
+            }
         }
     }
+
+    /// HealthStore から直近 14 日の HRV 推移を取り直す。Pro/権限がなければ空を返すだけ。
+    @MainActor
+    private func refreshHRVSeries() async {
+        guard ProGate.canReadHealthData else {
+            hrvSeries = []
+            return
+        }
+        hrvSeries = await HealthStore.shared.dailySeries(for: .hrv, days: 14)
+    }
+
+    // MARK: - Resume card
+
+    @ViewBuilder
+    private func resumeCard(_ session: WorkoutSession) -> some View {
+        HStack(spacing: OikomiSpacing.m) {
+            ZStack {
+                RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous)
+                    .fill(OikomiColor.brandPrimary.opacity(0.18))
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(OikomiColor.brandPrimary)
+            }
+            .frame(width: 52, height: 52)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("進行中のワークアウト")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text(session.routine?.name ?? "ルーティンなし")
+                    .font(.headline)
+                HStack(spacing: OikomiSpacing.s) {
+                    Label("\(session.sets?.count ?? 0) セット", systemImage: "list.bullet")
+                    Label("\(session.startedAt, style: .timer)", systemImage: "timer")
+                }
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: OikomiSpacing.s)
+
+            Image(systemName: "play.fill")
+                .font(.title3)
+                .foregroundStyle(.white)
+                .frame(width: 40, height: 40)
+                .background(OikomiColor.brandPrimary, in: Circle())
+        }
+        .padding(OikomiSpacing.l)
+        .background(
+            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                .fill(OikomiColor.cardBackground)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                .stroke(OikomiColor.brandPrimary.opacity(0.25), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Hero block (WeeklyTargetRing + StatTile 2)
+
+    @ViewBuilder
+    private var heroBlock: some View {
+        VStack(spacing: OikomiSpacing.l) {
+            WeeklyTargetRing(
+                daysThisWeek: weekSessionDays,
+                target: weeklyTargetDays,
+                consecutiveWeeks: consecutiveWeeks
+            )
+            .padding(.top, OikomiSpacing.s)
+
+            HStack(spacing: OikomiSpacing.m) {
+                StatTile(
+                    title: "今週のセッション",
+                    value: "\(weeklySessionCount)",
+                    unit: "回",
+                    caption: weeklySessionCount > 0 ? nil : "まだなし",
+                    systemImage: "figure.strengthtraining.traditional",
+                    tint: OikomiColor.brandPrimary
+                )
+                StatTile(
+                    title: "今週のボリューム",
+                    value: weeklyVolumeTotal.formatted(.number.precision(.fractionLength(0))),
+                    unit: "kg",
+                    systemImage: "scalemass.fill",
+                    tint: OikomiColor.statBlue
+                )
+            }
+        }
+    }
+
+    // MARK: - Coaching
 
     @ViewBuilder
     private var coachingSection: some View {
-        Section("コーチング") {
-            ForEach(coachingAdvice) { advice in
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: iconName(for: advice.severity))
-                        .font(.title3)
-                        .foregroundStyle(color(for: advice.severity))
-                        .frame(width: 28)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(advice.title)
-                            .font(.subheadline.weight(.semibold))
-                        Text(advice.message)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            SectionHeader(title: "コーチング")
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: OikomiSpacing.m) {
+                    ForEach(coachingAdvice) { advice in
+                        CoachingChip(advice: advice)
                     }
                 }
-                .padding(.vertical, 2)
+            }
+            .scrollClipDisabled()
+        }
+    }
+
+    // MARK: - Recent PRs
+
+    @ViewBuilder
+    private var prHighlightsSection: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            SectionHeader(title: "直近の自己ベスト")
+            VStack(spacing: OikomiSpacing.m) {
+                ForEach(recentPRs) { pr in
+                    prCard(pr)
+                }
             }
         }
     }
 
-    private func iconName(for severity: CoachingAdvice.Severity) -> String {
-        switch severity {
-        case .warning: return "exclamationmark.triangle.fill"
-        case .success: return "checkmark.seal.fill"
-        case .info: return "info.circle.fill"
+    @ViewBuilder
+    private func prCard(_ pr: PersonalRecord) -> some View {
+        Group {
+            if let exercise = pr.exercise {
+                NavigationLink(value: exercise) {
+                    prCardContent(pr)
+                }
+                .buttonStyle(.plain)
+            } else {
+                prCardContent(pr)
+            }
         }
     }
-
-    private func color(for severity: CoachingAdvice.Severity) -> Color {
-        switch severity {
-        case .warning: return .orange
-        case .success: return .green
-        case .info: return .blue
-        }
-    }
-
-    // MARK: - Sections
 
     @ViewBuilder
-    private func activeSection(_ session: WorkoutSession) -> some View {
-        Section {
-            VStack(alignment: .leading, spacing: 6) {
-                Label("進行中のワークアウト", systemImage: "figure.strengthtraining.traditional")
-                    .font(.caption)
+    private func prCardContent(_ pr: PersonalRecord) -> some View {
+        HighlightCard(
+            title: pr.exercise?.name ?? "（種目不明）",
+            subtitle:
+                "推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1)))) kg・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))",
+            systemImage: "trophy.fill",
+            iconTint: OikomiColor.brandSecondary
+        ) {
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(pr.weight.formatted()) kg")
+                    .font(.headline.monospacedDigit())
+                Text("× \(pr.reps)")
+                    .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
-                Text("\(session.sets?.count ?? 0) セット記録済み")
-                    .font(.headline)
-                HStack(spacing: 4) {
-                    Text(session.startedAt, style: .relative)
-                    Text("前に開始")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 2)
         }
     }
 
-    @ViewBuilder
-    private var summarySection: some View {
-        Section("今の状態") {
-            LabeledContent("連続記録日数") {
-                HStack(spacing: 4) {
-                    if streakDays > 0 {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(.orange)
-                            .font(.subheadline)
-                    }
-                    Text("\(streakDays) 日")
-                        .font(.body.monospacedDigit())
-                }
-            }
-            LabeledContent("総セッション数") {
-                Text("\(completedSessions.count)")
-                    .font(.body.monospacedDigit())
-            }
-            LabeledContent("総セット数") {
-                let total = completedSessions.reduce(0) { $0 + ($1.sets?.count ?? 0) }
-                Text("\(total)")
-                    .font(.body.monospacedDigit())
-            }
-        }
-    }
+    // MARK: - Weekly volume chart
 
     @ViewBuilder
     private var weeklyVolumeSection: some View {
-        Section("今週のボリューム（kg・部位別）") {
-            if weeklyVolume.isEmpty {
-                Text("今週はまだ記録なし")
-                    .foregroundStyle(.secondary)
-                    .font(.callout)
-            } else {
-                ForEach(weeklyVolume.prefix(6), id: \.muscle) { entry in
-                    HStack {
-                        Text(entry.muscle.displayName)
-                            .font(.body)
-                        Spacer()
-                        Text(entry.total.formatted(.number.precision(.fractionLength(0))))
-                            .font(.body.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            SectionHeader(title: "今週のボリューム", subtitle: "部位別合計 kg")
+
+            if weeklyVolumeByMuscle.isEmpty {
+                VStack(spacing: OikomiSpacing.s) {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.title2)
+                        .foregroundStyle(.tertiary)
+                    Text("今週はまだ記録なし")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(OikomiSpacing.xl)
+                .background(
+                    OikomiColor.cardBackground,
+                    in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+            } else {
+                volumeChart
             }
         }
     }
 
     @ViewBuilder
-    private var recentPRSection: some View {
-        Section("直近の自己ベスト") {
-            if recentPRs.isEmpty {
-                Text("まだ PR がありません")
-                    .foregroundStyle(.secondary)
-                    .font(.callout)
-            } else {
-                ForEach(recentPRs) { pr in
-                    if let exercise = pr.exercise {
-                        NavigationLink(value: exercise) {
-                            prRow(pr)
-                        }
-                    } else {
-                        prRow(pr)
-                    }
+    private var volumeChart: some View {
+        let topGroups = Array(weeklyVolumeByMuscle.prefix(6))
+        VStack(alignment: .leading, spacing: OikomiSpacing.m) {
+            Chart(topGroups, id: \.muscle) { entry in
+                BarMark(
+                    x: .value("ボリューム", entry.total),
+                    y: .value("部位", entry.muscle.displayName)
+                )
+                .foregroundStyle(by: .value("部位", entry.muscle.displayName))
+                .annotation(position: .trailing, alignment: .leading) {
+                    Text(entry.total.formatted(.number.precision(.fractionLength(0))))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
                 }
             }
+            .chartLegend(.hidden)
+            .chartXAxis(.hidden)
+            .frame(height: CGFloat(topGroups.count) * 32 + 16)
         }
-    }
-
-    @ViewBuilder
-    private func prRow(_ pr: PersonalRecord) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(pr.exercise?.name ?? "（種目不明）")
-                    .font(.body)
-                Text(pr.achievedAt, style: .date)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(pr.weight.formatted())kg × \(pr.reps)")
-                    .font(.body.monospacedDigit())
-                Text("推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1))))kg")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-        }
+        .padding(OikomiSpacing.l)
+        .background(
+            OikomiColor.cardBackground, in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
     }
 }
 
-#Preview {
+#Preview("Light") {
     HomeView()
+        .modelContainer(
+            for: [
+                WorkoutSession.self, SetRecord.self, PersonalRecord.self, Exercise.self,
+                Routine.self, RoutineExercise.self, HealthSnapshot.self,
+            ], inMemory: true)
+}
+
+#Preview("Dark") {
+    HomeView()
+        .modelContainer(
+            for: [
+                WorkoutSession.self, SetRecord.self, PersonalRecord.self, Exercise.self,
+                Routine.self, RoutineExercise.self, HealthSnapshot.self,
+            ], inMemory: true
+        )
+        .preferredColorScheme(.dark)
 }

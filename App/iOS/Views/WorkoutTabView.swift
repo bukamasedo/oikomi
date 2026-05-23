@@ -1,7 +1,8 @@
+import OikomiKit
 import SwiftData
 import SwiftUI
-import OikomiKit
 
+/// ワークアウトタブ。開始前 / 進行中の 2 状態を扱う。
 struct WorkoutTabView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -14,11 +15,12 @@ struct WorkoutTabView: View {
 
     @State private var showingAddSetSheet = false
     @State private var preselectedExercise: Exercise?
-    @State private var showingExercisePicker = false
+    @State private var editingSetIntent: EditSetIntent?
     @State private var showingNewRoutine = false
     @State private var editingRoutine: Routine?
     @State private var errorMessage: String?
     @State private var restEndAt: Date?
+    @State private var restTotalSeconds: Int = 60
     @State private var confirmingFinish = false
 
     private var activeSession: WorkoutSession? { activeSessions.first }
@@ -32,6 +34,7 @@ struct WorkoutTabView: View {
                     startView
                 }
             }
+            .background(OikomiColor.appBackground)
             .navigationTitle(activeSession?.routine?.name ?? "トレーニング")
             .alert("エラー", isPresented: .constant(errorMessage != nil)) {
                 Button("OK") { errorMessage = nil }
@@ -51,127 +54,204 @@ struct WorkoutTabView: View {
 
     @ViewBuilder
     private var startView: some View {
-        List {
-            Section("ルーティンから始める") {
-                if routines.isEmpty {
-                    Text("まだルーティンがありません")
-                        .foregroundStyle(.secondary)
-                        .font(.callout)
-                } else {
-                    ForEach(routines) { routine in
-                        Button {
-                            startSession(from: routine)
-                        } label: {
-                            routineRow(routine)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                deleteRoutine(routine)
-                            } label: {
-                                Label("削除", systemImage: "trash")
-                            }
-                            Button {
-                                editingRoutine = routine
-                            } label: {
-                                Label("編集", systemImage: "pencil")
-                            }
-                            .tint(.blue)
-                        }
-                    }
-                }
+        ScrollView {
+            VStack(spacing: OikomiSpacing.xl) {
+                quickStartButton
 
+                if routines.isEmpty {
+                    OikomiEmptyState(
+                        title: "ルーティンがありません",
+                        message: "よく使うトレーニングをルーティンとして保存しておくと、ワンタップで始められます。",
+                        systemImage: "list.bullet.clipboard",
+                        tint: OikomiColor.brandPrimary
+                    ) {
+                        Button {
+                            showingNewRoutine = true
+                        } label: {
+                            Label("ルーティンを作成", systemImage: "plus.circle.fill")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(OikomiColor.brandPrimary)
+                    }
+                    .frame(minHeight: 280)
+                } else {
+                    routineGrid
+                }
+            }
+            .padding(.horizontal, OikomiSpacing.l)
+            .padding(.bottom, OikomiSpacing.xxl)
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showingNewRoutine = true
                 } label: {
-                    Label("ルーティンを作成", systemImage: "plus.circle")
-                }
-            }
-
-            Section {
-                Button {
-                    startSession(from: nil)
-                } label: {
-                    Label("ルーティンなしで開始", systemImage: "play")
+                    Image(systemName: "plus.circle.fill")
                 }
             }
         }
     }
 
     @ViewBuilder
-    private func routineRow(_ routine: Routine) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(routine.name)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+    private var quickStartButton: some View {
+        Button {
+            startSession(from: nil)
+        } label: {
+            HStack(spacing: OikomiSpacing.m) {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.18))
+                    Image(systemName: "play.fill")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: 44, height: 44)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("クイック開始")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    Text("ルーティンなしで今すぐスタート")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.9))
+                }
                 Spacer()
-                Image(systemName: "play.fill")
-                    .foregroundStyle(.tint)
-                    .font(.caption)
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.white.opacity(0.8))
+                    .font(.subheadline.weight(.semibold))
             }
-            let exerciseNames = routine.orderedExercises
-                .compactMap(\.exercise?.name)
-                .joined(separator: " / ")
-            if !exerciseNames.isEmpty {
-                Text(exerciseNames)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
+            .padding(OikomiSpacing.l)
+            .background(
+                LinearGradient(
+                    colors: [OikomiColor.brandPrimary, OikomiColor.brandSecondary],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var routineGrid: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            SectionHeader(title: "ルーティン")
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: OikomiSpacing.m),
+                    GridItem(.flexible(), spacing: OikomiSpacing.m),
+                ],
+                spacing: OikomiSpacing.m
+            ) {
+                ForEach(routines) { routine in
+                    RoutineCard(routine: routine) {
+                        startSession(from: routine)
+                    }
+                    .contextMenu {
+                        Button {
+                            editingRoutine = routine
+                        } label: {
+                            Label("編集", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            deleteRoutine(routine)
+                        } label: {
+                            Label("削除", systemImage: "trash")
+                        }
+                    }
+                }
             }
         }
-        .padding(.vertical, 2)
     }
 
     // MARK: - 進行中画面
 
     @ViewBuilder
     private func activeSessionView(_ session: WorkoutSession) -> some View {
-        List {
-            ForEach(groupedExercises(session), id: \.0.id) { exercise, sets in
-                exerciseSection(exercise: exercise, sets: sets)
-            }
+        ScrollView {
+            VStack(spacing: OikomiSpacing.l) {
+                sessionHero(session)
 
-            Section {
-                Button {
-                    showingExercisePicker = true
-                } label: {
-                    Label("種目を追加", systemImage: "plus.circle")
+                ForEach(groupedExercises(session), id: \.0.id) { exercise, sets in
+                    ExerciseInSessionCard(
+                        exercise: exercise,
+                        sets: sets,
+                        onToggleSet: { set in
+                            if set.isCompleted {
+                                uncompleteSet(set)
+                            } else {
+                                completePlannedSet(set)
+                            }
+                        },
+                        onAddSet: {
+                            preselectedExercise = exercise
+                            showingAddSetSheet = true
+                        },
+                        onDeleteSet: { set in
+                            deleteSet(set)
+                        },
+                        onEditSet: { set in
+                            editingSetIntent = EditSetIntent(set)
+                        }
+                    )
                 }
+
+                addExerciseCard
             }
+            .padding(.horizontal, OikomiSpacing.l)
+            .padding(.bottom, restEndAt != nil ? 100 : OikomiSpacing.xxl)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let endAt = restEndAt {
-                RestTimerBanner(endAt: endAt) {
-                    restEndAt = nil
-                    RestTimerNotifier.cancel()
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-                .background(Color(uiColor: .systemGroupedBackground))
+                RestTimerCard(
+                    endAt: endAt,
+                    totalSeconds: restTotalSeconds,
+                    onSkip: {
+                        restEndAt = nil
+                        RestTimerNotifier.cancel()
+                        // Watch 側のローカル通知も止め、Live Activity の restEndAt もクリア
+                        WCSyncBridge.shared.sendRestTimerCancel()
+                    }
+                )
+                .padding(.horizontal, OikomiSpacing.l)
+                .padding(.bottom, OikomiSpacing.s)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.easeInOut(duration: 0.2), value: restEndAt)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                HStack(spacing: 4) {
-                    Image(systemName: "timer")
-                        .font(.caption2)
-                    Text(session.startedAt, style: .timer)
-                        .font(.caption.monospacedDigit())
+        .onReceive(NotificationCenter.default.publisher(for: WCSyncBridge.dataDidChangeNotification)) { note in
+            guard let kind = note.userInfo?["kind"] as? String else { return }
+            if kind == SyncEnvelope.Kind.restTimerCancel.rawValue {
+                // Watch でレストをスキップ / 完了取消 → iPhone 側の UI タイマーも消す
+                restEndAt = nil
+            } else if kind == SyncEnvelope.Kind.restTimerStart.rawValue,
+                let endAt = note.userInfo?["endAt"] as? Date,
+                endAt > Date()
+            {
+                // Watch でセット完了 → iPhone 側のレストタイマーも起動
+                restEndAt = endAt
+                if let total = note.userInfo?["totalSeconds"] as? Int, total > 0 {
+                    restTotalSeconds = total
                 }
-                .foregroundStyle(.secondary)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("終了") {
-                    confirmingFinish = true
-                }
-                .foregroundStyle(.red)
             }
         }
-        .confirmationDialog("ワークアウトを終了しますか？", isPresented: $confirmingFinish, titleVisibility: .visible) {
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    confirmingFinish = true
+                } label: {
+                    Text("終了")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.red)
+                }
+            }
+        }
+        .alert("ワークアウトを終了しますか？", isPresented: $confirmingFinish) {
             Button("終了する", role: .destructive) { finishSession(session) }
             Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("現在のセッションを完了します。")
         }
         .sheet(isPresented: $showingAddSetSheet) {
             AddSetSheet(
@@ -181,14 +261,94 @@ struct WorkoutTabView: View {
                 onSaved: { _ in }
             )
         }
-        .sheet(isPresented: $showingExercisePicker) {
-            ExercisePickerSheet { picked in
-                addExerciseToSession(picked, session: session)
-            }
+        .sheet(item: $editingSetIntent) { intent in
+            AddSetSheet(
+                session: session,
+                planMode: true,
+                editingSet: intent.set,
+                onSaved: { _ in }
+            )
         }
     }
 
-    /// セッション内のセットを種目別にグループ化（初出順）
+    /// `.sheet(item:)` 用ラッパ。SetRecord は @Model だが Identifiable 非準拠のため、
+    /// 表示単位を Identifiable にして編集シートのプレゼンテーションを駆動する。
+    private struct EditSetIntent: Identifiable {
+        let id: UUID
+        let set: SetRecord
+        init(_ set: SetRecord) {
+            self.id = set.id
+            self.set = set
+        }
+    }
+
+    @ViewBuilder
+    private func sessionHero(_ session: WorkoutSession) -> some View {
+        let totalSets = session.sets?.count ?? 0
+        let completedSets = session.sets?.filter(\.isCompleted).count ?? 0
+
+        HStack(spacing: OikomiSpacing.l) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("経過時間")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text(session.startedAt, style: .timer)
+                    .font(OikomiFont.statValue)
+                    .lineLimit(1)
+            }
+            .fixedSize(horizontal: true, vertical: false)
+
+            Divider().frame(height: 40)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("完了 / 計画")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text("\(completedSets) / \(totalSets)")
+                    .font(OikomiFont.statValue)
+                    .lineLimit(1)
+                    .foregroundStyle(
+                        completedSets >= totalSets && totalSets > 0 ? Color.green : .primary
+                    )
+            }
+            .fixedSize(horizontal: true, vertical: false)
+
+            Spacer()
+        }
+        .padding(OikomiSpacing.l)
+        .background(
+            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                .fill(OikomiColor.cardBackground)
+        )
+    }
+
+    @ViewBuilder
+    private var addExerciseCard: some View {
+        Button {
+            // 種目を明示的にクリアし、AddSetSheet 内でピッカー → 重量/レップ調整 → 保存の流れに統一
+            preselectedExercise = nil
+            showingAddSetSheet = true
+        } label: {
+            HStack(spacing: OikomiSpacing.s) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(OikomiColor.brandPrimary)
+                Text("種目を追加")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
+            .padding(OikomiSpacing.l)
+            .background(
+                RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                    .strokeBorder(OikomiColor.brandPrimary.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [5]))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Helpers
+
     private func groupedExercises(_ session: WorkoutSession) -> [(Exercise, [SetRecord])] {
         var firstAppearance: [UUID: Int] = [:]
         var byExercise: [UUID: (Exercise, [SetRecord])] = [:]
@@ -205,94 +365,13 @@ struct WorkoutTabView: View {
         }
     }
 
-    @ViewBuilder
-    private func exerciseSection(exercise: Exercise, sets: [SetRecord]) -> some View {
-        let completed = sets.filter(\.isCompleted).count
-        Section {
-            ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
-                setRow(set, indexInGroup: index + 1)
-            }
-
-            Button {
-                preselectedExercise = exercise
-                showingAddSetSheet = true
-            } label: {
-                Label("セット", systemImage: "plus.circle")
-                    .font(.subheadline)
-            }
-        } header: {
-            HStack {
-                Text(exercise.name)
-                    .font(.headline)
-                    .textCase(nil)
-                    .foregroundStyle(.primary)
-                Spacer()
-                Text("\(completed) / \(sets.count)")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(completed >= sets.count && sets.count > 0 ? .green : .secondary)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func setRow(_ set: SetRecord, indexInGroup: Int) -> some View {
-        Button {
-            if !set.isCompleted {
-                completePlannedSet(set)
-            }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(set.isCompleted ? .green : .secondary)
-                    .font(.title3)
-                Text("\(indexInGroup)")
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .frame(width: 18, alignment: .leading)
-                if let weight = set.weight, let reps = set.reps {
-                    Text("\(weight.formatted())kg × \(reps)")
-                        .font(.body.monospacedDigit())
-                        .foregroundStyle(set.isCompleted ? .secondary : .primary)
-                } else if let reps = set.reps {
-                    Text("\(reps)レップ（自重）")
-                        .font(.body.monospacedDigit())
-                        .foregroundStyle(set.isCompleted ? .secondary : .primary)
-                }
-                Spacer()
-                if set.isCompleted, let rm = set.estimated1RM {
-                    Text("1RM \(rm.formatted(.number.precision(.fractionLength(0))))")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-        }
-        .buttonStyle(.plain)
-        .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
-                deleteSet(set)
-            } label: {
-                Label("削除", systemImage: "trash")
-            }
-        }
-    }
-
-    /// セット保存後にレストタイマーを起動する（addSet パスのレガシー）。
-    private func handleSetSaved(_ set: SetRecord) {
-        guard let rest = set.exercise?.defaultRestSeconds, rest > 0 else {
-            restEndAt = nil
-            return
-        }
-        let endAt = Date().addingTimeInterval(TimeInterval(rest))
-        restEndAt = endAt
-        RestTimerNotifier.scheduleRestEnd(at: endAt)
-    }
-
     private func completePlannedSet(_ set: SetRecord) {
         let repo = WorkoutSessionRepository(context: modelContext)
         do {
             let endAt = try repo.markSetCompleted(set)
             if let endAt {
                 restEndAt = endAt
+                restTotalSeconds = set.exercise?.defaultRestSeconds ?? 60
                 RestTimerNotifier.scheduleRestEnd(at: endAt)
             }
         } catch {
@@ -300,26 +379,25 @@ struct WorkoutTabView: View {
         }
     }
 
+    /// 完了済みセットを未完了に戻す。間違ってチェックを入れた場合の取消。
+    /// レストタイマーが起動中なら一緒にキャンセル。
+    private func uncompleteSet(_ set: SetRecord) {
+        let repo = WorkoutSessionRepository(context: modelContext)
+        do {
+            try repo.uncompleteSet(set)
+            if restEndAt != nil {
+                restEndAt = nil
+                RestTimerNotifier.cancel()
+            }
+        } catch {
+            errorMessage = "戻すのに失敗: \(error.localizedDescription)"
+        }
+    }
+
     private func deleteSet(_ set: SetRecord) {
         modelContext.delete(set)
         try? modelContext.save()
     }
-
-    private func addExerciseToSession(_ exercise: Exercise, session: WorkoutSession) {
-        // 直近の同種目セットから weight/reps を補完
-        let lastForExercise = session.orderedSets.last { $0.exercise?.id == exercise.id }
-        let useBodyweight = exercise.measurementType == .bodyweightReps
-        let weight = useBodyweight ? nil : (lastForExercise?.weight ?? 20)
-        let reps = lastForExercise?.reps ?? 8
-        let repo = WorkoutSessionRepository(context: modelContext)
-        do {
-            _ = try repo.addPlannedSet(to: session, exercise: exercise, weight: weight, reps: reps)
-        } catch {
-            errorMessage = "種目追加に失敗: \(error.localizedDescription)"
-        }
-    }
-
-    // MARK: - Actions
 
     private func startSession(from routine: Routine?) {
         let sessionRepo = WorkoutSessionRepository(context: modelContext)
@@ -350,4 +428,24 @@ struct WorkoutTabView: View {
             errorMessage = "削除に失敗: \(error.localizedDescription)"
         }
     }
+}
+
+#Preview("Light") {
+    WorkoutTabView()
+        .modelContainer(
+            for: [
+                WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
+                RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
+            ], inMemory: true)
+}
+
+#Preview("Dark") {
+    WorkoutTabView()
+        .modelContainer(
+            for: [
+                WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
+                RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
+            ], inMemory: true
+        )
+        .preferredColorScheme(.dark)
 }
