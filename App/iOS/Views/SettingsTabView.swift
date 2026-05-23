@@ -633,8 +633,8 @@ private struct ProUpgradeSheet: View {
             .disabled(subscriptionManager.purchaseInProgress)
 
             HStack(spacing: 16) {
-                Link("利用規約", destination: URL(string: "https://example.com/terms")!)
-                Link("プライバシーポリシー", destination: URL(string: "https://example.com/privacy")!)
+                Link("利用規約", destination: URL(string: "https://bukamasedo.github.io/oikomi/legal/terms/")!)
+                Link("プライバシーポリシー", destination: URL(string: "https://bukamasedo.github.io/oikomi/legal/privacy/")!)
             }
             .font(.caption)
             .foregroundStyle(.secondary)

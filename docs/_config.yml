@@ -1,0 +1,16 @@
+title: Oikomi
+description: Apple Watch を主役とした筋トレ記録アプリ。法的文書ホスティング。
+baseurl: "/oikomi"
+url: "https://bukamasedo.github.io"
+theme: jekyll-theme-minimal
+
+lang: ja
+timezone: Asia/Tokyo
+
+exclude:
+  - SPEC.md
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .bundle
