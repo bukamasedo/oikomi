@@ -5,44 +5,66 @@ import Foundation
 /// SwiftData クエリ結果を渡して呼ぶ前提で、副作用なし・テスト容易。
 public enum Analytics {
 
-    /// 連続記録日数（streak）を計算する。
+    /// 指定週内のユニークなトレーニング実施日数を返す。
     ///
-    /// 仕様: 「今日 or 昨日」が直近セッションなら streak は継続中とみなす。
-    /// 連続する日付がギャップなく続く限りカウント。
+    /// 筋トレは休養日を含むサイクルが前提なので「連続日数」ではなく「週あたり頻度」で進捗を測る。
+    /// 仕様: 範囲内に endedAt != nil のセッションがある日を 1 日とカウント。同日複数セッションは 1 日扱い。
     ///
     /// - Parameters:
     ///   - sessions: 完了済みセッション（endedAt != nil）の配列。順不同で OK。
-    ///   - referenceDate: 「今日」とみなす基準日（テスト容易性のため引数化）
+    ///   - range: 集計対象の期間（通常は `currentWeekRange()`）
     ///   - calendar: 用途に応じた Calendar（デフォルト = .current）
-    public static func streakDays(
+    public static func weeklySessionDays(
+        sessions: [WorkoutSession],
+        in range: ClosedRange<Date>,
+        calendar: Calendar = .current
+    ) -> Int {
+        let days = Set(
+            sessions
+                .filter { $0.endedAt != nil && range.contains($0.startedAt) }
+                .map { calendar.startOfDay(for: $0.startedAt) }
+        )
+        return days.count
+    }
+
+    /// 連続してトレーニングを実施した「週」の数を返す。
+    ///
+    /// 仕様: 「今週 or 先週」を起点に、過去に向かって 1 セッション以上ある週がギャップなく続く限りカウント。
+    /// 「今週まだ未実施」でも先週があれば streak は継続中扱い（休養日と同じ哲学）。
+    ///
+    /// - Parameters:
+    ///   - sessions: 完了済みセッション（endedAt != nil）の配列。順不同で OK。
+    ///   - referenceDate: 「今週」とみなす基準日
+    ///   - calendar: 週の起算日を決める Calendar
+    public static func consecutiveActiveWeeks(
         sessions: [WorkoutSession],
         referenceDate: Date = Date(),
         calendar: Calendar = .current
     ) -> Int {
-        let activeDates = Set(
+        let activeWeekStarts = Set(
             sessions
                 .filter { $0.endedAt != nil }
-                .map { calendar.startOfDay(for: $0.startedAt) }
+                .compactMap { calendar.dateInterval(of: .weekOfYear, for: $0.startedAt)?.start }
         )
-        guard !activeDates.isEmpty else { return 0 }
+        guard !activeWeekStarts.isEmpty else { return 0 }
 
-        let today = calendar.startOfDay(for: referenceDate)
-        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        guard let thisWeekStart = calendar.dateInterval(of: .weekOfYear, for: referenceDate)?.start
+        else { return 0 }
+        let lastWeekStart = calendar.date(byAdding: .weekOfYear, value: -1, to: thisWeekStart)!
 
-        // 起点は「今日に活動あり」なら今日、なければ昨日。それ以外は streak 0。
         var cursor: Date
-        if activeDates.contains(today) {
-            cursor = today
-        } else if activeDates.contains(yesterday) {
-            cursor = yesterday
+        if activeWeekStarts.contains(thisWeekStart) {
+            cursor = thisWeekStart
+        } else if activeWeekStarts.contains(lastWeekStart) {
+            cursor = lastWeekStart
         } else {
             return 0
         }
 
         var count = 0
-        while activeDates.contains(cursor) {
+        while activeWeekStarts.contains(cursor) {
             count += 1
-            guard let prev = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            guard let prev = calendar.date(byAdding: .weekOfYear, value: -1, to: cursor) else { break }
             cursor = prev
         }
         return count
@@ -65,6 +87,48 @@ public enum Analytics {
             }
         }
         return totals
+    }
+
+    /// 指定期間のワーキングセット数を部位別に集計する。
+    ///
+    /// `volumeByMuscleGroup` と異なり「セット数（刺激の頻度）」を測る指標。
+    /// ウォームアップと未完了（計画のみ）セットは除外する。
+    /// `.fullBody` は特定部位に紐づかないため集計対象外。
+    public static func setCountByMuscleGroup(
+        sets: [SetRecord],
+        in range: ClosedRange<Date>
+    ) -> [MuscleGroup: Int] {
+        var counts: [MuscleGroup: Int] = [:]
+        for set in sets where range.contains(set.completedAt) {
+            guard !set.isWarmup, set.isCompleted else { continue }
+            for group in (set.exercise?.muscleGroups ?? []) where group != .fullBody {
+                counts[group, default: 0] += 1
+            }
+        }
+        return counts
+    }
+
+    /// 「今週」の部位別セット数を、MEV/MAV 推奨レンジと合わせて集計する。
+    ///
+    /// UI 側はこの戻り値を直接表示できる。`count` 降順ソート済み。
+    /// `weeklySetTarget.isTracked == false` の部位（fullBody）は含めない。
+    public static func weeklySetCountReport(
+        sets: [SetRecord],
+        referenceDate: Date = Date(),
+        calendar: Calendar = .current
+    ) -> [MuscleSetCountRow] {
+        let range = currentWeekRange(referenceDate: referenceDate, calendar: calendar)
+        let counts = setCountByMuscleGroup(sets: sets, in: range)
+        let rows: [MuscleSetCountRow] = MuscleGroup.allCases.compactMap { muscle in
+            let target = muscle.weeklySetTarget
+            guard target.isTracked else { return nil }
+            let count = counts[muscle] ?? 0
+            return MuscleSetCountRow(muscle: muscle, count: count, target: target)
+        }
+        return rows.sorted { lhs, rhs in
+            if lhs.count != rhs.count { return lhs.count > rhs.count }
+            return lhs.muscle.rawValue < rhs.muscle.rawValue
+        }
     }
 
     /// 「今週」の日付範囲（月曜開始）。
@@ -124,13 +188,17 @@ public enum Analytics {
 
     /// ディロード（休息）推奨アドバイスを生成する。
     ///
-    /// 仕様書 §4.2.2 のディロード推奨の v0.1 簡易版。HRV ベースの本格判定は v1.1 で追加予定。
-    /// 現状は「連続トレ日数」と「直近4週の週ボリュームの増加率」をシグナルにする：
+    /// 仕様書 §4.2.2 準拠。3 種類のシグナルを組み合わせる：
     /// - 連続 5 日以上トレーニング → 休息提案
     /// - 直近1週のボリュームが過去3週平均の 130% 以上 → ディロード提案
+    /// - HRV（直近 3 日平均）が過去 14 日のベースライン平均より 15% 以上低下 → 強度緩和提案
+    ///
+    /// HRV 系列は呼び出し側で `HealthStore.dailySeries(for: .hrv, days: 14)` を取得して渡す。
+    /// Pro 未契約や HealthKit 未認可など空配列の場合、HRV 判定はスキップして既存ロジックのみ動作する。
     public static func deloadAdvice(
         sessions: [WorkoutSession],
         sets: [SetRecord],
+        hrvSeries: [HealthTrendPoint] = [],
         referenceDate: Date = Date(),
         calendar: Calendar = .current
     ) -> [CoachingAdvice] {
@@ -190,19 +258,75 @@ public enum Analytics {
             }
         }
 
+        // 3) HRV 低下判定（仕様書 §4.2.2）
+        //   現在値 = 直近 3 日 (参照日から逆算) の平均
+        //   ベースライン = 直近 14 日のうち、現在値ウィンドウより 4 日以上前のデータの平均
+        //   どちらも有効サンプル ≥3 件を要求。current ≤ baseline * 0.85 で warning。
+        if let advice = hrvDeloadAdvice(
+            hrvSeries: hrvSeries, referenceDate: referenceDate, calendar: calendar)
+        {
+            advices.append(advice)
+        }
+
         return advices.sorted { $0.impact > $1.impact }
+    }
+
+    /// HRV 低下シグナルから単発の `CoachingAdvice` を生成する。テスト容易性のため切り出し。
+    static func hrvDeloadAdvice(
+        hrvSeries: [HealthTrendPoint],
+        referenceDate: Date,
+        calendar: Calendar
+    ) -> CoachingAdvice? {
+        guard !hrvSeries.isEmpty else { return nil }
+        let today = calendar.startOfDay(for: referenceDate)
+        guard let recentWindowStart = calendar.date(byAdding: .day, value: -2, to: today),
+            let baselineCutoff = calendar.date(byAdding: .day, value: -3, to: recentWindowStart),
+            let baselineStart = calendar.date(byAdding: .day, value: -13, to: today)
+        else { return nil }
+
+        // recent: 直近 3 日 (today, today-1, today-2)
+        let recentValues =
+            hrvSeries
+            .filter { $0.date >= recentWindowStart && $0.date <= today && $0.value > 0 }
+            .map(\.value)
+        // baseline: 直近 14 日から recent ウィンドウを除外した期間
+        let baselineValues =
+            hrvSeries
+            .filter { $0.date >= baselineStart && $0.date <= baselineCutoff && $0.value > 0 }
+            .map(\.value)
+
+        guard recentValues.count >= 3, baselineValues.count >= 3 else { return nil }
+        let current = recentValues.reduce(0, +) / Double(recentValues.count)
+        let baseline = baselineValues.reduce(0, +) / Double(baselineValues.count)
+        guard baseline > 0, current <= baseline * 0.85 else { return nil }
+
+        let dropPercent = Int(((1 - current / baseline) * 100).rounded())
+        return CoachingAdvice(
+            title: "HRV 低下を検知",
+            message:
+                "今日は HRV が直近2週平均より \(dropPercent)% 低下しています。前回比 80% 程度の重量で組むことを検討してください。",
+            severity: .warning,
+            impact: (baseline - current) * 100
+        )
     }
 
     /// 自己ベスト更新の可能性が高い種目について、コーチングアドバイスを生成する。
     ///
-    /// 仕様書 §4.2.2 「PR 予測 — 直近5回の伸び率から推定」のシンプル実装。
-    /// 線形回帰の代わりに「直近 N セッションの最高 1RM が現 PR の 95% 以上」を閾値とする。
-    /// より高度な予測モデルは v1.1 以降で検討。
+    /// 仕様書 §4.2.2 「PR 予測 — 直近の伸び率から推定」を最小二乗線形回帰で実装。
+    /// 種目ごとに「セッション順 (0..n-1)」を X 軸、各セッションの最高推定 1RM を Y 軸として
+    /// 直線フィットし、次回セッション (X = n) の予測値が現 PR を超える時のみ advice を発行する。
+    ///
+    /// フィルタ条件：
+    /// - 直近 `windowSize` セッションを採用（デフォルト 10）。最低 `minSamples` (= 5) 必要。
+    /// - slope > 0（上昇トレンド）のみ予測
+    /// - R² >= `minR2`（デフォルト 0.3）でばらつきが大きすぎる系列は除外
+    /// - 予測値 > 現 PR の場合のみ発行
     public static func prPredictions(
         sets: [SetRecord],
         records: [PersonalRecord],
-        sessionCount: Int = 3,
-        threshold: Double = 0.95,
+        windowSize: Int = 10,
+        minSamples: Int = 5,
+        minR2: Double = 0.3,
         calendar: Calendar = .current
     ) -> [CoachingAdvice] {
         var advices: [CoachingAdvice] = []
@@ -211,40 +335,73 @@ public enum Analytics {
             guard let exercise = pr.exercise, pr.estimated1RM > 0 else { continue }
             let exerciseId = exercise.id
 
-            // 種目別のセットを「セッション単位」にまとめて、各セッションの最高 1RM を取る
+            // 種目別のセットを「セッション単位」にまとめて、各セッションの最高 1RM を取り
+            // 古い順に並べる（線形回帰の X は 0..n-1）
             let exerciseSets = sets.filter { !$0.isWarmup && $0.exercise?.id == exerciseId }
             let bySession = Dictionary(grouping: exerciseSets) { $0.session?.id ?? UUID() }
-            let sessionMaxes = bySession.values
+            let sessionMaxes =
+                bySession.values
                 .compactMap { setsInSession -> (date: Date, max: Double)? in
                     let validRMs = setsInSession.compactMap(\.estimated1RM)
                     guard let maxRM = validRMs.max(),
                         let latest = setsInSession.map(\.completedAt).max()
-                    else {
-                        return nil
-                    }
+                    else { return nil }
                     return (date: latest, max: maxRM)
                 }
-                .sorted { $0.date > $1.date }
-                .prefix(sessionCount)
+                .sorted { $0.date < $1.date }
+                .suffix(windowSize)
 
-            guard let bestRecent = sessionMaxes.map(\.max).max(), bestRecent > 0 else { continue }
-            let ratio = bestRecent / pr.estimated1RM
-
-            // 既に PR を超えていれば（次回更新もう間近で予測価値あり）または閾値を超えていれば予測
-            if ratio >= threshold {
-                let predicted = max(pr.estimated1RM, bestRecent) * 1.025  // +2.5% を狙う
-                advices.append(
-                    CoachingAdvice(
-                        title: "PR 更新の可能性",
-                        message: "次回\(exercise.name)で推定 \(predicted.formatted(.number.precision(.fractionLength(1))))kg の PR を狙えます。",
-                        severity: .info,
-                        impact: predicted
-                    )
-                )
+            guard sessionMaxes.count >= minSamples else { continue }
+            let points = sessionMaxes.enumerated().map {
+                (x: Double($0.offset), y: $0.element.max)
             }
+            guard let fit = linearRegression(points) else { continue }
+            guard fit.slope > 0, fit.r2 >= minR2 else { continue }
+
+            let predicted = fit.intercept + fit.slope * Double(points.count)
+            guard predicted > pr.estimated1RM else { continue }
+
+            let growth = predicted - pr.estimated1RM
+            advices.append(
+                CoachingAdvice(
+                    title: "PR 更新の可能性",
+                    message:
+                        "次回\(exercise.name)で推定 \(predicted.formatted(.number.precision(.fractionLength(1))))kg の PR を狙えます（直近\(points.count)セッションの上昇トレンドより）。",
+                    severity: .info,
+                    impact: predicted + growth
+                )
+            )
         }
 
         return advices.sorted { $0.impact > $1.impact }
+    }
+
+    /// 最小二乗法による単純線形回帰。
+    ///
+    /// 戻り値の `r2` は決定係数（1 に近いほど直線フィットが良い）。
+    /// 入力点が 2 点未満、または X の分散がゼロのときは `nil`。
+    static func linearRegression(
+        _ points: [(x: Double, y: Double)]
+    ) -> (slope: Double, intercept: Double, r2: Double)? {
+        let n = Double(points.count)
+        guard n >= 2 else { return nil }
+        let sumX = points.reduce(0) { $0 + $1.x }
+        let sumY = points.reduce(0) { $0 + $1.y }
+        let sumXY = points.reduce(0) { $0 + $1.x * $1.y }
+        let sumXX = points.reduce(0) { $0 + $1.x * $1.x }
+        let denom = n * sumXX - sumX * sumX
+        guard denom != 0 else { return nil }
+        let slope = (n * sumXY - sumX * sumY) / denom
+        let intercept = (sumY - slope * sumX) / n
+
+        let meanY = sumY / n
+        let ssTot = points.reduce(0) { acc, p in acc + (p.y - meanY) * (p.y - meanY) }
+        let ssRes = points.reduce(0) { acc, p in
+            let pred = intercept + slope * p.x
+            return acc + (p.y - pred) * (p.y - pred)
+        }
+        let r2 = ssTot == 0 ? (ssRes == 0 ? 1 : 0) : 1 - ssRes / ssTot
+        return (slope, intercept, r2)
     }
 
     /// 指定種目の「最大挙上重量の日次推移」を返す。古い順。
@@ -261,7 +418,8 @@ public enum Analytics {
                 && (set.weight ?? 0) > 0
         }
         let grouped = Dictionary(grouping: filtered) { calendar.startOfDay(for: $0.completedAt) }
-        return grouped
+        return
+            grouped
             .compactMap { (date, sets) -> DateWeightPoint? in
                 let maxWeight = sets.compactMap(\.weight).max() ?? 0
                 return DateWeightPoint(date: date, weight: maxWeight)
@@ -374,6 +532,37 @@ public struct DateWeightPoint: Sendable, Identifiable, Hashable {
     public init(date: Date, weight: Double) {
         self.date = date
         self.weight = weight
+    }
+}
+
+/// 部位別の週セット数 + MEV/MAV 推奨レンジ + 過不足判定。
+///
+/// 分析タブの「部位別」セクションで一覧表示する。
+public struct MuscleSetCountRow: Sendable, Identifiable, Hashable {
+    public var id: MuscleGroup { muscle }
+    public let muscle: MuscleGroup
+    public let count: Int
+    public let target: WeeklySetTarget
+
+    public init(muscle: MuscleGroup, count: Int, target: WeeklySetTarget) {
+        self.muscle = muscle
+        self.count = count
+        self.target = target
+    }
+
+    public enum Status: String, Sendable {
+        /// MEV 未満（刺激不足）
+        case insufficient
+        /// MEV 〜 MAV のレンジ内
+        case optimal
+        /// MAV 超過（過剰）
+        case excessive
+    }
+
+    public var status: Status {
+        if count < target.mev { return .insufficient }
+        if count > target.mav { return .excessive }
+        return .optimal
     }
 }
 
