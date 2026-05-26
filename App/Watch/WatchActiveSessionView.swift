@@ -1,6 +1,7 @@
 import OikomiKit
 import SwiftData
 import SwiftUI
+import WatchKit
 
 struct WatchActiveSessionView: View {
 
@@ -8,44 +9,49 @@ struct WatchActiveSessionView: View {
 
     let session: WorkoutSession
 
-    @State private var showingAddSet = false
-    @State private var showingExercisePicker = false
-    @State private var preselectedExercise: Exercise?
-    @State private var editingPlannedSet: SetRecord?
     @State private var errorMessage: String?
     @State private var restEndAt: Date?
     @State private var restTotalSeconds: Int = 60
     @State private var confirmingFinish = false
     @State private var healthSession = WatchHealthSession()
 
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    /// `@AppStorage` の KVO が WC 受信後に再描画を起こさない事象（iOS 26 で観測）に備えた
+    /// 明示フォールバック。`.onReceive(unitPreferenceUpdate)` で `UnitPreference.current()` を
+    /// 書き込み、`weightUnit` 計算で AppStorage より優先する。
+    @State private var weightUnitOverride: WeightUnit?
+    private var weightUnit: WeightUnit {
+        if let weightUnitOverride { return weightUnitOverride }
+        return WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
+
     var body: some View {
         List {
             Section { sessionHero }
                 .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 4, trailing: 0))
+                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
 
             if let endAt = restEndAt {
                 Section {
-                    WatchRestTimerView(endAt: endAt, totalSeconds: restTotalSeconds) {
-                        restEndAt = nil
-                        RestTimerNotifier.cancel()
+                    WatchRestTimerView(
+                        endAt: endAt,
+                        totalSeconds: restTotalSeconds
+                    ) {
+                        clearRestTimer()
                         // iPhone 側のローカル通知 / Live Activity restEndAt も同時にクリア
                         WCSyncBridge.shared.sendRestTimerCancel()
                     }
                 }
                 .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 2, trailing: 0))
             }
 
             ForEach(groupedExercises(session), id: \.0.id) { exercise, sets in
                 exerciseSection(exercise: exercise, sets: sets)
             }
-
-            Section {
-                addExerciseRow
-            }
-            .listRowBackground(Color.clear)
         }
+        .listSectionSpacing(.compact)
         .navigationTitle(session.routine?.name ?? "進行中")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -63,22 +69,6 @@ struct WatchActiveSessionView: View {
                 .accessibilityLabel("ワークアウトを終了")
             }
         }
-        .sheet(isPresented: $showingAddSet) {
-            WatchAddSetView(session: session, preselectedExercise: preselectedExercise)
-        }
-        .sheet(isPresented: $showingExercisePicker) {
-            NavigationStack {
-                WatchExercisePicker { picked in
-                    addExerciseToSession(picked)
-                }
-            }
-        }
-        .sheet(item: $editingPlannedSet) { plannedSet in
-            WatchAddSetView(session: session, editingPlannedSet: plannedSet) { restEnd in
-                restEndAt = restEnd
-                restTotalSeconds = plannedSet.exercise?.defaultRestSeconds ?? 60
-            }
-        }
         .confirmationDialog(
             "ワークアウトを終了しますか？", isPresented: $confirmingFinish, titleVisibility: .visible
         ) {
@@ -92,16 +82,24 @@ struct WatchActiveSessionView: View {
             guard let kind = note.userInfo?["kind"] as? String else { return }
             if kind == SyncEnvelope.Kind.restTimerCancel.rawValue {
                 // iPhone でレストをスキップ / 完了取消 → Watch 側の UI タイマーも消す
-                restEndAt = nil
+                clearRestTimer()
             } else if kind == SyncEnvelope.Kind.restTimerStart.rawValue,
                 let endAt = note.userInfo?["endAt"] as? Date,
                 endAt > Date()
             {
-                // iPhone でセット完了 → Watch 側のレストタイマーも起動
+                // iPhone でセット完了したケースの remote 起動経路。
+                // Watch 自身で完了させたときは completePlanned 内で直接 State を更新するため
+                // ここには来ない（WCSyncBridge.sendRestTimerStart は WCSession 経由送信のみで
+                // 自分の NotificationCenter には post しない仕様）。
                 restEndAt = endAt
                 if let total = note.userInfo?["totalSeconds"] as? Int, total > 0 {
                     restTotalSeconds = total
                 }
+            } else if kind == SyncEnvelope.Kind.unitPreferenceUpdate.rawValue {
+                // iPhone で kg/lb 切替を受信。@AppStorage の KVO が再描画を起こさない経路の
+                // フォールバックとして、明示的に App Group UserDefaults から再読込し、
+                // computed `weightUnit` で AppStorage より優先表示させる。
+                weightUnitOverride = UnitPreference.current()
             }
         }
         .alert("エラー", isPresented: .constant(errorMessage != nil)) {
@@ -158,15 +156,6 @@ struct WatchActiveSessionView: View {
             ForEach(sets) { set in
                 setRow(set)
             }
-            Button {
-                preselectedExercise = exercise
-                showingAddSet = true
-            } label: {
-                Label("セット", systemImage: "plus.circle.fill")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(WatchColor.brand)
-            }
-            .buttonStyle(.plain)
         } header: {
             HStack(spacing: WatchSpacing.s) {
                 Text(exercise.name)
@@ -191,6 +180,13 @@ struct WatchActiveSessionView: View {
 
     @ViewBuilder
     private func setRow(_ set: SetRecord) -> some View {
+        // 完了セットは実績スナップショット (restSeconds) を、未完了は予定値を優先解決する。
+        // 0 のときは表示しない（自重種目で defaultRestSeconds=0 の運用想定）。
+        let rest: Int = {
+            if set.isCompleted, let snapshot = set.restSeconds { return snapshot }
+            return set.resolveRestSeconds()
+        }()
+
         Button {
             if set.isCompleted {
                 uncompletePlanned(set)
@@ -202,7 +198,7 @@ struct WatchActiveSessionView: View {
                 Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(set.isCompleted ? .green : .secondary)
                 if let w = set.weight, let r = set.reps {
-                    Text("\(w.formatted())kg × \(r)")
+                    Text("\(WeightFormatter.string(kilograms: w, in: weightUnit)) × \(r)")
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(set.isCompleted ? .secondary : .primary)
                 } else if let r = set.reps {
@@ -210,42 +206,18 @@ struct WatchActiveSessionView: View {
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(set.isCompleted ? .secondary : .primary)
                 }
-                Spacer()
-                if !set.isCompleted {
-                    Button {
-                        editingPlannedSet = set
-                    } label: {
-                        Image(systemName: "slider.horizontal.3")
-                            .font(.caption2.weight(.semibold))
+                Spacer(minLength: WatchSpacing.xs)
+                if rest > 0 {
+                    HStack(spacing: 2) {
+                        Image(systemName: "timer")
+                        Text("\(rest)秒")
+                            .monospacedDigit()
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(WatchColor.brand)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize()
                 }
             }
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Add exercise
-
-    @ViewBuilder
-    private var addExerciseRow: some View {
-        Button {
-            showingExercisePicker = true
-        } label: {
-            HStack(spacing: WatchSpacing.s) {
-                Image(systemName: "plus.circle.fill")
-                    .foregroundStyle(WatchColor.brand)
-                Text("種目を追加")
-                    .font(.caption.weight(.semibold))
-                Spacer()
-            }
-            .padding(.horizontal, WatchSpacing.m)
-            .padding(.vertical, WatchSpacing.m)
-            .background(
-                RoundedRectangle(cornerRadius: WatchRadius.card, style: .continuous)
-                    .strokeBorder(WatchColor.brand.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [4]))
-            )
         }
         .buttonStyle(.plain)
     }
@@ -272,10 +244,13 @@ struct WatchActiveSessionView: View {
     private func completePlanned(_ set: SetRecord) {
         let repo = WorkoutSessionRepository(context: modelContext)
         do {
-            let endAt = try repo.markSetCompleted(set)
-            if let endAt {
+            // Watch で完了させたケースは、自分の NotificationCenter には何も post されない
+            // （WCSyncBridge.sendRestTimerStart は WCSession 経由でのみ送る）。
+            // よってローカル State はここで直接更新する。iPhone でのケースは onReceive 側で扱う。
+            if let endAt = try repo.markSetCompleted(set) {
+                let total = set.restSeconds ?? set.exercise?.defaultRestSeconds ?? 60
                 restEndAt = endAt
-                restTotalSeconds = set.exercise?.defaultRestSeconds ?? 60
+                restTotalSeconds = total
                 RestTimerNotifier.scheduleRestEnd(at: endAt)
             }
         } catch {
@@ -289,25 +264,16 @@ struct WatchActiveSessionView: View {
         do {
             try repo.uncompleteSet(set)
             if restEndAt != nil {
-                restEndAt = nil
-                RestTimerNotifier.cancel()
+                clearRestTimer()
             }
         } catch {
             errorMessage = "戻すのに失敗: \(error.localizedDescription)"
         }
     }
 
-    private func addExerciseToSession(_ exercise: Exercise) {
-        let lastForExercise = session.orderedSets.last { $0.exercise?.id == exercise.id }
-        let useBodyweight = exercise.measurementType == .bodyweightReps
-        let weight = useBodyweight ? nil : (lastForExercise?.weight ?? 20)
-        let reps = lastForExercise?.reps ?? 8
-        let repo = WorkoutSessionRepository(context: modelContext)
-        do {
-            _ = try repo.addPlannedSet(to: session, exercise: exercise, weight: weight, reps: reps)
-        } catch {
-            errorMessage = "種目追加失敗: \(error.localizedDescription)"
-        }
+    private func clearRestTimer() {
+        restEndAt = nil
+        RestTimerNotifier.cancel()
     }
 
     private func finishSession() {

@@ -231,6 +231,18 @@ public final class HealthStore {
         #endif
     }
 
+    /// 直近 N 日（`endingAt` 含む）の HRV 平均を返す。Pro 未契約・データなし・権限拒否は nil。
+    ///
+    /// 7 日間のような短い期間で「今日のコンディションが普段比どうか」を簡易判定する用途。
+    /// `dailySeries(.hrv, days:)` を再利用して移動平均を取る。
+    public func hrvAverage(days: Int, endingAt: Date = Date()) async -> Double? {
+        guard days > 0, ProGate.canReadHealthData else { return nil }
+        let series = await dailySeries(for: .hrv, days: days)
+        let values = series.map(\.value).filter { $0 > 0 }
+        guard !values.isEmpty else { return nil }
+        return values.reduce(0, +) / Double(values.count)
+    }
+
     /// 指定指標の日次推移を取得する。古い順。Pro 未契約・データなし・権限拒否はすべて空配列。
     public func dailySeries(for metric: HealthMetric, days: Int) async -> [HealthTrendPoint] {
         guard days > 0, ProGate.canReadHealthData else { return [] }

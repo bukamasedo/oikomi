@@ -1,4 +1,5 @@
 import Testing
+
 @testable import OikomiKit
 
 @Suite("OneRepMax")
@@ -34,7 +35,7 @@ struct OneRepMaxTests {
         let sets: [(weight: Double, reps: Int)] = [
             (80, 8),  // ≈ 101.3
             (90, 5),  // ≈ 105.0
-            (100, 3), // ≈ 110.0
+            (100, 3),  // ≈ 110.0
         ]
         let best = OneRepMax.best(from: sets)
         #expect(abs(best - 110.0) < 0.01)

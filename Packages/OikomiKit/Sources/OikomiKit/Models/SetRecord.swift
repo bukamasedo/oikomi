@@ -31,6 +31,11 @@ public final class SetRecord {
 
     public var restSeconds: Int?
 
+    /// セッション内でこのセット (および同種目の以降のセット) に適用するレスト秒数の上書き。
+    /// nil = 上書きなし → RoutineExercise.plannedRestSeconds → Exercise.defaultRestSeconds の順で解決。
+    /// `restSeconds` (完了時スナップショット) と責務を分けるため別フィールドにしている。
+    public var restSecondsOverride: Int?
+
     public var completedAt: Date = Date()
 
     /// 計画(未完了) vs 実績(完了)を区別する。
@@ -50,6 +55,7 @@ public final class SetRecord {
         isWarmup: Bool = false,
         estimated1RM: Double? = nil,
         restSeconds: Int? = nil,
+        restSecondsOverride: Int? = nil,
         completedAt: Date = Date(),
         isCompleted: Bool = true
     ) {
@@ -64,6 +70,7 @@ public final class SetRecord {
         self.isWarmup = isWarmup
         self.estimated1RM = estimated1RM
         self.restSeconds = restSeconds
+        self.restSecondsOverride = restSecondsOverride
         self.completedAt = completedAt
         self.isCompleted = isCompleted
     }

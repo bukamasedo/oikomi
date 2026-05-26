@@ -79,6 +79,7 @@ public final class WorkoutSessionRepository {
         // セット配列を同梱する。空セッションでは空配列が流れるだけで害はない。
         WCSyncBridge.shared.sendSessionUpsert(session, sets: session.orderedSets)
         reloadStatsWidgetTimelines()
+        ForgottenSessionNotifier.refresh()
 
         if fetchHealthSnapshot {
             let sessionId = session.id
@@ -114,6 +115,7 @@ public final class WorkoutSessionRepository {
         reps: Int?,
         durationSeconds: Int? = nil,
         isWarmup: Bool = false,
+        restSecondsOverride: Int? = nil,
         completedAt: Date = Date()
     ) throws -> SetRecord {
         let nextOrder = (session.sets ?? []).map(\.order).max().map { $0 + 1 } ?? 0
@@ -132,6 +134,7 @@ public final class WorkoutSessionRepository {
             durationSeconds: durationSeconds,
             isWarmup: isWarmup,
             estimated1RM: estimated1RM,
+            restSecondsOverride: restSecondsOverride,
             completedAt: completedAt
         )
         context.insert(set)
@@ -145,14 +148,16 @@ public final class WorkoutSessionRepository {
 
         WCSyncBridge.shared.sendSetUpsert(set)
         reloadStatsWidgetTimelines()
+        ForgottenSessionNotifier.refresh()
 
         // Live Activity の更新（Live Activity が立ち上がっている時のみ）
         if WorkoutActivityController.shared.isActive {
             let name = exercise.name
             let count = session.sets?.count ?? 0
+            let restSec = set.resolveRestSeconds()
             let endAt: Date? =
-                exercise.defaultRestSeconds > 0
-                ? completedAt.addingTimeInterval(TimeInterval(exercise.defaultRestSeconds))
+                restSec > 0
+                ? completedAt.addingTimeInterval(TimeInterval(restSec))
                 : nil
             Task { @MainActor in
                 await WorkoutActivityController.shared.update(
@@ -177,7 +182,8 @@ public final class WorkoutSessionRepository {
         weight: Double?,
         reps: Int?,
         durationSeconds: Int? = nil,
-        isWarmup: Bool = false
+        isWarmup: Bool = false,
+        restSecondsOverride: Int? = nil
     ) throws -> SetRecord {
         let nextOrder = (session.sets ?? []).map(\.order).max().map { $0 + 1 } ?? 0
         let set = SetRecord(
@@ -188,6 +194,7 @@ public final class WorkoutSessionRepository {
             reps: reps,
             durationSeconds: durationSeconds,
             isWarmup: isWarmup,
+            restSecondsOverride: restSecondsOverride,
             isCompleted: false
         )
         context.insert(set)
@@ -217,7 +224,7 @@ public final class WorkoutSessionRepository {
         if let weight = set.weight, weight > 0, let reps = set.reps, reps > 0 {
             set.estimated1RM = OneRepMax.epley(weight: weight, reps: reps)
         }
-        let restSec = set.exercise?.defaultRestSeconds ?? 0
+        let restSec = set.resolveRestSeconds()
         if restSec > 0 {
             set.restSeconds = restSec
         }
@@ -230,6 +237,7 @@ public final class WorkoutSessionRepository {
 
         WCSyncBridge.shared.sendSetUpsert(set)
         reloadStatsWidgetTimelines()
+        ForgottenSessionNotifier.refresh()
 
         let restEndAt: Date? =
             restSec > 0
@@ -238,8 +246,15 @@ public final class WorkoutSessionRepository {
 
         // 相手端末のレストタイマーも起動。完了時刻と total を確定した値で渡し、
         // 受信側で defaultRestSeconds を再計算しない（種目マスタ差分による表示ずれを回避）。
+        // 直前完了セットの weight / reps も同梱して、受信側でサブテキスト表示
+        // （「80kg × 5 · 180秒」）に使えるようにする。bodyweight など値が nil の場合はそのまま nil で送る。
         if let endAt = restEndAt {
-            WCSyncBridge.shared.sendRestTimerStart(endAt: endAt, totalSeconds: restSec)
+            WCSyncBridge.shared.sendRestTimerStart(
+                endAt: endAt,
+                totalSeconds: restSec,
+                completedWeightKg: set.weight,
+                completedReps: set.reps
+            )
         }
 
         if WorkoutActivityController.shared.isActive, let exercise = set.exercise {
@@ -330,6 +345,62 @@ public final class WorkoutSessionRepository {
         return set
     }
 
+    /// セッション内の特定セットに対してレスト秒数の上書きを設定/解除する。
+    /// `value == nil` で上書き解除（種目デフォルトに戻す）。
+    public func setRestSecondsOverride(_ value: Int?, on set: SetRecord) throws {
+        set.restSecondsOverride = value
+        try context.save()
+        WCSyncBridge.shared.sendSetUpsert(set)
+    }
+
+    /// セット 1 件を削除する。完了済みの場合は履歴から消える。
+    /// `WorkoutSession.sets` の cascade 削除ルールに従って関連は自動整理。
+    public func deleteSet(_ set: SetRecord) throws {
+        let session = set.session
+        context.delete(set)
+        try context.save()
+        reloadStatsWidgetTimelines()
+
+        if WorkoutActivityController.shared.isActive, let session {
+            let count = session.sets?.filter { $0.isCompleted }.count ?? 0
+            let lastName = session.orderedSets.last?.exercise?.name ?? ""
+            Task { @MainActor in
+                await WorkoutActivityController.shared.update(
+                    currentExerciseName: lastName,
+                    setCount: count,
+                    restEndAt: nil
+                )
+            }
+        }
+    }
+
+    /// セッション内の特定種目に紐づく全セットを削除する。
+    /// 「クイック追加で間違って入れた種目を丸ごと消したい」ユースケース。
+    /// 削除件数を返す（呼び出し側のフィードバック用）。
+    @discardableResult
+    public func deleteExercise(_ exercise: Exercise, from session: WorkoutSession) throws -> Int {
+        let targets = (session.sets ?? []).filter { $0.exercise?.id == exercise.id }
+        for set in targets {
+            context.delete(set)
+        }
+        try context.save()
+        reloadStatsWidgetTimelines()
+
+        if WorkoutActivityController.shared.isActive {
+            let count = session.sets?.filter { $0.isCompleted }.count ?? 0
+            let lastName = session.orderedSets.last?.exercise?.name ?? ""
+            Task { @MainActor in
+                await WorkoutActivityController.shared.update(
+                    currentExerciseName: lastName,
+                    setCount: count,
+                    restEndAt: nil
+                )
+            }
+        }
+
+        return targets.count
+    }
+
     /// 既存セッションを複製して新しいセッションを開始する。
     ///
     /// 仕様書 §4.1.4「履歴コピー」の実装。`source` の routine 紐付けと全セット内容（種目・重量・
@@ -395,6 +466,7 @@ public final class WorkoutSessionRepository {
 
         WCSyncBridge.shared.sendSessionUpsert(session)
         reloadStatsWidgetTimelines()
+        ForgottenSessionNotifier.cancel()
         print("[Oikomi.sync] finishSession step=upsert_called id=\(sid)")
     }
 
@@ -403,6 +475,7 @@ public final class WorkoutSessionRepository {
         context.delete(session)
         try context.save()
         reloadStatsWidgetTimelines()
+        ForgottenSessionNotifier.cancel()
     }
 
     private func reloadStatsWidgetTimelines() {
@@ -450,5 +523,35 @@ public final class WorkoutSessionRepository {
         }
         try context.save()
         return stale.count
+    }
+}
+
+extension SetRecord {
+    /// このセット完了時に採用するレスト秒数を解決する。
+    ///
+    /// 優先順位:
+    /// 1. このセット自身の restSecondsOverride（クイック追加時のユーザー明示指定）
+    /// 2. セッションが Routine 由来で、その RoutineExercise に plannedRestSeconds があればそれを使う
+    /// 3. なければ Exercise.defaultRestSeconds（種目マスター値）にフォールバック
+    public func resolveRestSeconds() -> Int {
+        if let override = restSecondsOverride {
+            return max(0, override)
+        }
+        guard let exercise else { return 0 }
+        if let routineEx = linkedRoutineExercise(),
+            let override = routineEx.plannedRestSeconds
+        {
+            return max(0, override)
+        }
+        return exercise.defaultRestSeconds
+    }
+
+    /// このセットがルーティン由来かを判定し、対応する RoutineExercise を返す。
+    /// セッションに routine が紐付き、その routine 内に同じ Exercise を持つ entry があればそれを返す。
+    public func linkedRoutineExercise() -> RoutineExercise? {
+        guard let routine = session?.routine,
+            let exerciseId = exercise?.id
+        else { return nil }
+        return (routine.exercises ?? []).first { $0.exercise?.id == exerciseId }
     }
 }

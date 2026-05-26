@@ -7,6 +7,12 @@ struct MuscleGroupAnalysisSection: View {
 
     let sets: [SetRecord]
 
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
+
     private var report: [MuscleSetCountRow] {
         Analytics.weeklySetCountReport(sets: sets)
     }
@@ -116,7 +122,7 @@ struct MuscleGroupAnalysisSection: View {
     private var volumeCard: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.m) {
             HStack {
-                Label("今週のボリューム kg（部位別）", systemImage: "scalemass.fill")
+                Label("今週のボリューム \(weightUnit.symbol)（部位別）", systemImage: "scalemass.fill")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
             }
@@ -132,10 +138,13 @@ struct MuscleGroupAnalysisSection: View {
                             Text(entry.muscle.displayName)
                                 .font(.callout)
                             Spacer()
-                            Text(entry.total.formatted(.number.precision(.fractionLength(0))))
-                                .font(.callout.monospacedDigit())
-                                .foregroundStyle(.primary)
-                            Text("kg")
+                            Text(
+                                WeightFormatter.numberOnly(
+                                    kilograms: entry.total, in: weightUnit, fractionDigits: 0...0)
+                            )
+                            .font(.callout.monospacedDigit())
+                            .foregroundStyle(.primary)
+                            Text(weightUnit.symbol)
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                         }
@@ -152,9 +161,9 @@ struct MuscleGroupAnalysisSection: View {
     @ViewBuilder
     private var legendCard: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("セット数と kg の違い")
+            Text("セット数と \(weightUnit.symbol) の違い")
                 .font(.caption.weight(.semibold))
-            Text("セット数は「刺激の頻度」、kg は「強度の総量」を表します。両方を合わせて見ると、追い込めているか・効率的かを判断できます。")
+            Text("セット数は「刺激の頻度」、\(weightUnit.symbol) は「強度の総量」を表します。両方を合わせて見ると、追い込めているか・効率的かを判断できます。")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }

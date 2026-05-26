@@ -7,6 +7,9 @@ import SwiftUI
 /// ScrollView ベースで自立カードを縦に積み、純正の "List + Section" 感を脱する。
 struct HomeView: View {
 
+    /// 進行中ワークアウトカードのタップでトレーニングタブへ切替えるための Binding。
+    @Binding var selectedTab: ContentView.Tab
+
     @Query(filter: #Predicate<WorkoutSession> { $0.endedAt == nil })
     private var activeSessions: [WorkoutSession]
 
@@ -19,6 +22,12 @@ struct HomeView: View {
 
     @Query(sort: \PersonalRecord.achievedAt, order: .reverse)
     private var personalRecords: [PersonalRecord]
+
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
 
     @AppStorage(WeeklyTrainingTarget.storageKey) private var weeklyTargetDays: Int =
         WeeklyTrainingTarget.defaultDays
@@ -64,7 +73,8 @@ struct HomeView: View {
         let deload = Analytics.deloadAdvice(
             sessions: completedSessions, sets: allSets, hrvSeries: hrvSeries)
         let volume = Analytics.volumeAdvice(from: allSets)
-        let prPredictions = Analytics.prPredictions(sets: allSets, records: personalRecords)
+        let prPredictions = Analytics.prPredictions(
+            sets: allSets, records: personalRecords, weightUnit: weightUnit)
         return Array((deload + prPredictions + volume).prefix(3))
     }
 
@@ -121,47 +131,55 @@ struct HomeView: View {
 
     @ViewBuilder
     private func resumeCard(_ session: WorkoutSession) -> some View {
-        HStack(spacing: OikomiSpacing.m) {
-            ZStack {
-                RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous)
-                    .fill(OikomiColor.brandPrimary.opacity(0.18))
-                Image(systemName: "figure.strengthtraining.traditional")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(OikomiColor.brandPrimary)
-            }
-            .frame(width: 52, height: 52)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("進行中のワークアウト")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-                Text(session.routine?.name ?? "ルーティンなし")
-                    .font(.headline)
-                HStack(spacing: OikomiSpacing.s) {
-                    Label("\(session.sets?.count ?? 0) セット", systemImage: "list.bullet")
-                    Label("\(session.startedAt, style: .timer)", systemImage: "timer")
+        Button {
+            selectedTab = .workout
+        } label: {
+            HStack(spacing: OikomiSpacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous)
+                        .fill(OikomiColor.brandPrimary.opacity(0.18))
+                    Image(systemName: "figure.strengthtraining.traditional")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(OikomiColor.brandPrimary)
                 }
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .frame(width: 52, height: 52)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("進行中のワークアウト")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    Text(session.routine?.name ?? "ルーティンなし")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    HStack(spacing: OikomiSpacing.s) {
+                        Label("\(session.sets?.count ?? 0) セット", systemImage: "list.bullet")
+                        Label("\(session.startedAt, style: .timer)", systemImage: "timer")
+                    }
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: OikomiSpacing.s)
+
+                Image(systemName: "play.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(OikomiColor.brandPrimary, in: Circle())
             }
-
-            Spacer(minLength: OikomiSpacing.s)
-
-            Image(systemName: "play.fill")
-                .font(.title3)
-                .foregroundStyle(.white)
-                .frame(width: 40, height: 40)
-                .background(OikomiColor.brandPrimary, in: Circle())
+            .padding(OikomiSpacing.l)
+            .background(
+                RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                    .fill(OikomiColor.cardBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                    .stroke(OikomiColor.brandPrimary.opacity(0.25), lineWidth: 1)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
         }
-        .padding(OikomiSpacing.l)
-        .background(
-            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
-                .fill(OikomiColor.cardBackground)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
-                .stroke(OikomiColor.brandPrimary.opacity(0.25), lineWidth: 1)
-        )
+        .buttonStyle(.plain)
+        .accessibilityLabel("進行中のワークアウトを開く")
     }
 
     // MARK: - Hero block (WeeklyTargetRing + StatTile 2)
@@ -187,8 +205,9 @@ struct HomeView: View {
                 )
                 StatTile(
                     title: "今週のボリューム",
-                    value: weeklyVolumeTotal.formatted(.number.precision(.fractionLength(0))),
-                    unit: "kg",
+                    value: WeightFormatter.numberOnly(
+                        kilograms: weeklyVolumeTotal, in: weightUnit, fractionDigits: 0...0),
+                    unit: weightUnit.symbol,
                     systemImage: "scalemass.fill",
                     tint: OikomiColor.statBlue
                 )
@@ -246,12 +265,12 @@ struct HomeView: View {
         HighlightCard(
             title: pr.exercise?.name ?? "（種目不明）",
             subtitle:
-                "推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1)))) kg・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))",
+                "推定1RM \(WeightFormatter.oneRM(kilograms: pr.estimated1RM, in: weightUnit))・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))",
             systemImage: "trophy.fill",
             iconTint: OikomiColor.brandSecondary
         ) {
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(pr.weight.formatted()) kg")
+                Text(WeightFormatter.string(kilograms: pr.weight, in: weightUnit))
                     .font(.headline.monospacedDigit())
                 Text("× \(pr.reps)")
                     .font(.caption.monospacedDigit())
@@ -265,7 +284,7 @@ struct HomeView: View {
     @ViewBuilder
     private var weeklyVolumeSection: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-            SectionHeader(title: "今週のボリューム", subtitle: "部位別合計 kg")
+            SectionHeader(title: "今週のボリューム", subtitle: "部位別合計 \(weightUnit.symbol)")
 
             if weeklyVolumeByMuscle.isEmpty {
                 VStack(spacing: OikomiSpacing.s) {
@@ -314,7 +333,7 @@ struct HomeView: View {
 }
 
 #Preview("Light") {
-    HomeView()
+    HomeView(selectedTab: .constant(.home))
         .modelContainer(
             for: [
                 WorkoutSession.self, SetRecord.self, PersonalRecord.self, Exercise.self,
@@ -323,7 +342,7 @@ struct HomeView: View {
 }
 
 #Preview("Dark") {
-    HomeView()
+    HomeView(selectedTab: .constant(.home))
         .modelContainer(
             for: [
                 WorkoutSession.self, SetRecord.self, PersonalRecord.self, Exercise.self,

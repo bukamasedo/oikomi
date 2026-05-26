@@ -327,7 +327,8 @@ public enum Analytics {
         windowSize: Int = 10,
         minSamples: Int = 5,
         minR2: Double = 0.3,
-        calendar: Calendar = .current
+        calendar: Calendar = .current,
+        weightUnit: WeightUnit = .kg
     ) -> [CoachingAdvice] {
         var advices: [CoachingAdvice] = []
 
@@ -366,7 +367,7 @@ public enum Analytics {
                 CoachingAdvice(
                     title: "PR 更新の可能性",
                     message:
-                        "次回\(exercise.name)で推定 \(predicted.formatted(.number.precision(.fractionLength(1))))kg の PR を狙えます（直近\(points.count)セッションの上昇トレンドより）。",
+                        "次回\(exercise.name)で推定 \(WeightFormatter.oneRM(kilograms: predicted, in: weightUnit)) の PR を狙えます（直近\(points.count)セッションの上昇トレンドより）。",
                     severity: .info,
                     impact: predicted + growth
                 )

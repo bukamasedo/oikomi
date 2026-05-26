@@ -10,15 +10,27 @@ struct BodyAnalysisSection: View {
     @State private var lbmSeries: [HealthTrendPoint] = []
     @State private var isLoading = true
 
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
+
     private let days = 90
 
     var body: some View {
+        let convertedWeight = weightSeries.map {
+            HealthTrendPoint(date: $0.date, value: weightUnit.fromKilograms($0.value))
+        }
+        let convertedLBM = lbmSeries.map {
+            HealthTrendPoint(date: $0.date, value: weightUnit.fromKilograms($0.value))
+        }
         VStack(spacing: OikomiSpacing.l) {
             metricCard(
                 title: "体重",
                 subtitle: "直近 90 日",
-                unit: "kg",
-                series: weightSeries,
+                unit: weightUnit.symbol,
+                series: convertedWeight,
                 tint: OikomiColor.textSecondary,
                 systemImage: "scalemass.fill"
             )
@@ -33,8 +45,8 @@ struct BodyAnalysisSection: View {
             metricCard(
                 title: "除脂肪体重 (LBM)",
                 subtitle: "直近 90 日",
-                unit: "kg",
-                series: lbmSeries,
+                unit: weightUnit.symbol,
+                series: convertedLBM,
                 tint: OikomiColor.statGreen,
                 systemImage: "figure.strengthtraining.traditional"
             )

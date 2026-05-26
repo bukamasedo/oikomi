@@ -19,9 +19,12 @@ struct WorkoutTabView: View {
     @State private var showingNewRoutine = false
     @State private var editingRoutine: Routine?
     @State private var errorMessage: String?
-    @State private var restEndAt: Date?
-    @State private var restTotalSeconds: Int = 60
     @State private var confirmingFinish = false
+    @State private var pendingExerciseDeletion: PendingExerciseDeletion?
+
+    /// レストタイマー表示は `ContentView` の safeAreaInset で行うため、ここで観察するのは
+    /// レイアウト調整 (scroll bottom padding) のためのみ。
+    @State private var restStore = RestTimerStore.shared
 
     private var activeSession: WorkoutSession? { activeSessions.first }
 
@@ -193,6 +196,10 @@ struct WorkoutTabView: View {
                         },
                         onEditSet: { set in
                             editingSetIntent = EditSetIntent(set)
+                        },
+                        onDeleteExercise: {
+                            pendingExerciseDeletion = PendingExerciseDeletion(
+                                exercise: exercise, setCount: sets.count)
                         }
                     )
                 }
@@ -200,41 +207,7 @@ struct WorkoutTabView: View {
                 addExerciseCard
             }
             .padding(.horizontal, OikomiSpacing.l)
-            .padding(.bottom, restEndAt != nil ? 100 : OikomiSpacing.xxl)
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if let endAt = restEndAt {
-                RestTimerCard(
-                    endAt: endAt,
-                    totalSeconds: restTotalSeconds,
-                    onSkip: {
-                        restEndAt = nil
-                        RestTimerNotifier.cancel()
-                        // Watch 側のローカル通知も止め、Live Activity の restEndAt もクリア
-                        WCSyncBridge.shared.sendRestTimerCancel()
-                    }
-                )
-                .padding(.horizontal, OikomiSpacing.l)
-                .padding(.bottom, OikomiSpacing.s)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .animation(.easeInOut(duration: 0.2), value: restEndAt)
-        .onReceive(NotificationCenter.default.publisher(for: WCSyncBridge.dataDidChangeNotification)) { note in
-            guard let kind = note.userInfo?["kind"] as? String else { return }
-            if kind == SyncEnvelope.Kind.restTimerCancel.rawValue {
-                // Watch でレストをスキップ / 完了取消 → iPhone 側の UI タイマーも消す
-                restEndAt = nil
-            } else if kind == SyncEnvelope.Kind.restTimerStart.rawValue,
-                let endAt = note.userInfo?["endAt"] as? Date,
-                endAt > Date()
-            {
-                // Watch でセット完了 → iPhone 側のレストタイマーも起動
-                restEndAt = endAt
-                if let total = note.userInfo?["totalSeconds"] as? Int, total > 0 {
-                    restTotalSeconds = total
-                }
-            }
+            .padding(.bottom, OikomiSpacing.xxl)
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -252,6 +225,26 @@ struct WorkoutTabView: View {
             Button("キャンセル", role: .cancel) {}
         } message: {
             Text("現在のセッションを完了します。")
+        }
+        .alert(
+            "種目を削除しますか？",
+            isPresented: Binding(
+                get: { pendingExerciseDeletion != nil },
+                set: { if !$0 { pendingExerciseDeletion = nil } }
+            ),
+            presenting: pendingExerciseDeletion
+        ) { pending in
+            Button("削除する", role: .destructive) {
+                deleteExerciseInSession(pending.exercise, in: session)
+                pendingExerciseDeletion = nil
+            }
+            Button("キャンセル", role: .cancel) {
+                pendingExerciseDeletion = nil
+            }
+        } message: { pending in
+            Text(
+                "「\(pending.exercise.name)」とこのセッション内の \(pending.setCount) 件のセットを削除します。"
+            )
         }
         .sheet(isPresented: $showingAddSetSheet) {
             AddSetSheet(
@@ -280,6 +273,13 @@ struct WorkoutTabView: View {
             self.id = set.id
             self.set = set
         }
+    }
+
+    /// 種目削除の確認ダイアログ駆動用ラッパ。
+    private struct PendingExerciseDeletion: Identifiable {
+        let id = UUID()
+        let exercise: Exercise
+        let setCount: Int
     }
 
     @ViewBuilder
@@ -370,8 +370,13 @@ struct WorkoutTabView: View {
         do {
             let endAt = try repo.markSetCompleted(set)
             if let endAt {
-                restEndAt = endAt
-                restTotalSeconds = set.exercise?.defaultRestSeconds ?? 60
+                let total = set.restSeconds ?? set.exercise?.defaultRestSeconds ?? 60
+                restStore.start(
+                    endAt: endAt,
+                    totalSeconds: total,
+                    completedWeightKg: set.weight,
+                    completedReps: set.reps
+                )
                 RestTimerNotifier.scheduleRestEnd(at: endAt)
             }
         } catch {
@@ -385,8 +390,8 @@ struct WorkoutTabView: View {
         let repo = WorkoutSessionRepository(context: modelContext)
         do {
             try repo.uncompleteSet(set)
-            if restEndAt != nil {
-                restEndAt = nil
+            if restStore.endAt != nil {
+                restStore.cancel()
                 RestTimerNotifier.cancel()
             }
         } catch {
@@ -395,8 +400,21 @@ struct WorkoutTabView: View {
     }
 
     private func deleteSet(_ set: SetRecord) {
-        modelContext.delete(set)
-        try? modelContext.save()
+        let repo = WorkoutSessionRepository(context: modelContext)
+        do {
+            try repo.deleteSet(set)
+        } catch {
+            errorMessage = "削除に失敗: \(error.localizedDescription)"
+        }
+    }
+
+    private func deleteExerciseInSession(_ exercise: Exercise, in session: WorkoutSession) {
+        let repo = WorkoutSessionRepository(context: modelContext)
+        do {
+            try repo.deleteExercise(exercise, from: session)
+        } catch {
+            errorMessage = "削除に失敗: \(error.localizedDescription)"
+        }
     }
 
     private func startSession(from routine: Routine?) {
@@ -413,7 +431,7 @@ struct WorkoutTabView: View {
         Task { @MainActor in
             do {
                 try await repo.finishSession(session)
-                restEndAt = nil
+                restStore.cancel()
             } catch {
                 errorMessage = "終了に失敗: \(error.localizedDescription)"
             }

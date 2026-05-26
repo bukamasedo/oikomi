@@ -199,6 +199,32 @@ struct RepositoryTests {
         #expect(custom.muscleGroups.contains(.quads))
     }
 
+    // テスト環境では Transaction.currentEntitlements が空 = ProGate.isProActive == false。
+    // Free 上限 (ProGate.freeCustomExerciseLimit = 5) を境に挙動が切り替わることを検証する。
+    @Test("addCustomExercise: Free 上限超過で ProGateError を投げる")
+    func addCustomExerciseFreeLimitExceeded() throws {
+        let context = try Self.makeContext()
+        let repo = ExerciseRepository(context: context)
+
+        for i in 0..<ProGate.freeCustomExerciseLimit {
+            _ = try repo.addCustomExercise(name: "カスタム\(i)")
+        }
+
+        #expect(
+            throws: ProGateError.customExerciseLimitReached(
+                current: ProGate.freeCustomExerciseLimit,
+                limit: ProGate.freeCustomExerciseLimit
+            )
+        ) {
+            _ = try repo.addCustomExercise(name: "6 件目")
+        }
+
+        let customCount = try context.fetch(
+            FetchDescriptor<Exercise>(predicate: #Predicate { $0.isCustom == true })
+        ).count
+        #expect(customCount == ProGate.freeCustomExerciseLimit)
+    }
+
     @Test("startSession(routine:) ルーティンの plannedSets を未完了セットに展開")
     func startSessionExpandsPlannedSets() throws {
         let context = try Self.makeContext()

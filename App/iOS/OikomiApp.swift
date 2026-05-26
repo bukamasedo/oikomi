@@ -18,6 +18,10 @@ struct OikomiApp: App {
             // 受信時の upsert に使う ModelContext を毎回 mainContext から取得
             WCSyncBridge.shared.activate { container.mainContext }
 
+            // レストタイマー Store を WCSyncBridge 通知に購読させる。
+            // ContentView の safeAreaInset でタブ横断表示するための真実のソース。
+            RestTimerStore.shared.registerWCSyncListener()
+
             // 起動時にシード種目を（差分）投入 + HealthKit 権限を要求 + stale session 掃除
             Task { @MainActor in
                 let repo = ExerciseRepository(context: container.mainContext)
@@ -33,17 +37,22 @@ struct OikomiApp: App {
                 if let cleaned = try? sessionRepo.cleanupStaleActiveSessions(), cleaned > 0 {
                     print("[Oikomi.sync] cleaned up \(cleaned) stale active sessions on launch")
                 }
-                do {
-                    try await HealthStore.shared.requestWorkoutWriteAuthorization()
-                } catch {
-                    print("HealthKit 権限取得スキップ: \(error)")
+                // オンボーディング未完了の場合は OnboardingView 内でリクエストするため
+                // 起動時の自動リクエストはスキップ（システムダイアログの二重表示を防ぐ）。
+                if OnboardingState.isCompleted {
+                    do {
+                        try await HealthStore.shared.requestWorkoutWriteAuthorization()
+                    } catch {
+                        print("HealthKit 権限取得スキップ: \(error)")
+                    }
                 }
                 // StoreKit 2: products ロード + Transaction listener 開始 + 現在の権利確認
                 await SubscriptionManager.shared.start()
 
-                // Sign in with Apple のセッションが revoke / transferred されていないか確認。
-                // revoke 検出時は AppleAuthManager 内で signOut される。
-                await AppleAuthManager.shared.verifyCredentialState()
+                // 通知の許可 + BGTask 登録 + 全予定通知のスケジュール（オンボーディング完了後のみ）
+                if OnboardingState.isCompleted {
+                    await NotificationCoordinator.bootstrap()
+                }
             }
         } catch {
             fatalError("ModelContainer 初期化失敗: \(error)")
@@ -62,6 +71,9 @@ struct OikomiApp: App {
             // endedAt を反映できる。
             if newPhase == .active {
                 WCSyncBridge.shared.requestFullSync()
+                Task { @MainActor in
+                    await NotificationCoordinator.rescheduleAll()
+                }
             }
         }
     }

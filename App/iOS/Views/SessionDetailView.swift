@@ -16,6 +16,12 @@ struct SessionDetailView: View {
     @State private var showingActiveBlockedAlert = false
     @State private var errorMessage: String?
 
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
+
     private var setsByExercise: [(exercise: Exercise, sets: [SetRecord])] {
         var seen = Set<UUID>()
         var ordered: [(Exercise, [SetRecord])] = []
@@ -118,7 +124,9 @@ struct SessionDetailView: View {
                 divider
                 heroMetric(
                     title: "ボリューム",
-                    value: totalVolume.formatted(.number.precision(.fractionLength(0))) + " kg"
+                    value: WeightFormatter.numberOnly(
+                        kilograms: totalVolume, in: weightUnit, fractionDigits: 0...0)
+                        + " \(weightUnit.symbol)"
                 )
             }
         }

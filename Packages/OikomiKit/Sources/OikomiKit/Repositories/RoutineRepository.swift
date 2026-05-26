@@ -51,7 +51,8 @@ public final class RoutineRepository {
         exercise: Exercise,
         plannedSets: Int = 3,
         plannedReps: Int = 8,
-        plannedWeight: Double? = nil
+        plannedWeight: Double? = nil,
+        plannedRestSeconds: Int? = nil
     ) throws -> RoutineExercise {
         let nextOrder = (routine.exercises ?? []).map(\.order).max().map { $0 + 1 } ?? 0
         let entry = RoutineExercise(
@@ -60,7 +61,8 @@ public final class RoutineRepository {
             order: nextOrder,
             plannedSets: plannedSets,
             plannedReps: plannedReps,
-            plannedWeight: plannedWeight
+            plannedWeight: plannedWeight,
+            plannedRestSeconds: plannedRestSeconds
         )
         context.insert(entry)
         try context.save()
@@ -116,6 +118,20 @@ public final class RoutineRepository {
     /// セッション開始時に呼び出して、ルーティンの最終利用日時を更新する。
     public func markUsed(_ routine: Routine, at date: Date = Date()) throws {
         routine.lastUsedAt = date
+        try context.save()
+        WCSyncBridge.shared.sendRoutineUpsert(routine)
+    }
+
+    /// 指定曜日 (`Calendar.Component.weekday` の 1=日 ... 7=土) に予定されているルーティンを返す。
+    /// `scheduledWeekdays` が空のルーティン (任意日) は含めない。
+    public func routines(forWeekday weekday: Int) throws -> [Routine] {
+        let all = try context.fetch(FetchDescriptor<Routine>())
+        return all.filter { $0.scheduledWeekdays.contains(weekday) }
+    }
+
+    /// `Routine.scheduledWeekdays` を差し替えて保存する。
+    public func setScheduledWeekdays(_ weekdays: [Int], for routine: Routine) throws {
+        routine.scheduledWeekdays = weekdays.sorted().filter { (1...7).contains($0) }
         try context.save()
         WCSyncBridge.shared.sendRoutineUpsert(routine)
     }

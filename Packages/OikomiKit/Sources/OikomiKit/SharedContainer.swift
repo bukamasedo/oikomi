@@ -52,7 +52,6 @@ public enum SharedModelContainer {
         if let existing = container {
             return existing
         }
-        let schema = Schema(OikomiKit.schemaModels)
 
         // watchOS は CloudKit のサイレントプッシュ用 background mode を扱えず、
         // 起動時に "BUG IN CLIENT OF CLOUDKIT" assertion で停止する。
@@ -76,23 +75,26 @@ public enum SharedModelContainer {
         let sharedURL = isStoredInMemoryOnly ? nil : storeURL()
 
         if wantCloudKit && !isStoredInMemoryOnly {
-            // まず CloudKit 有効で試す
+            // まず CloudKit 有効で試す。
+            // 失敗した Schema を再利用すると "invalid reuse after initialization failure" になるため、
+            // 各試行で新しい Schema を生成する。
             do {
+                let cloudSchema = Schema(OikomiKit.schemaModels)
                 let configuration: ModelConfiguration
                 if let sharedURL {
                     configuration = ModelConfiguration(
-                        schema: schema,
+                        schema: cloudSchema,
                         url: sharedURL,
                         cloudKitDatabase: .automatic
                     )
                 } else {
                     configuration = ModelConfiguration(
-                        schema: schema,
+                        schema: cloudSchema,
                         isStoredInMemoryOnly: false,
                         cloudKitDatabase: .automatic
                     )
                 }
-                let new = try ModelContainer(for: schema, configurations: [configuration])
+                let new = try ModelContainer(for: cloudSchema, configurations: [configuration])
                 container = new
                 activeCloudKitMode = .enabled
                 return new
@@ -105,21 +107,23 @@ public enum SharedModelContainer {
             activeCloudKitMode = .disabled
         }
 
+        // フォールバック / .none ローカル用は別 Schema インスタンスで開く
+        let localSchema = Schema(OikomiKit.schemaModels)
         let configuration: ModelConfiguration
         if let sharedURL {
             configuration = ModelConfiguration(
-                schema: schema,
+                schema: localSchema,
                 url: sharedURL,
                 cloudKitDatabase: .none
             )
         } else {
             configuration = ModelConfiguration(
-                schema: schema,
+                schema: localSchema,
                 isStoredInMemoryOnly: isStoredInMemoryOnly,
                 cloudKitDatabase: .none
             )
         }
-        let new = try ModelContainer(for: schema, configurations: [configuration])
+        let new = try ModelContainer(for: localSchema, configurations: [configuration])
         container = new
         return new
     }
