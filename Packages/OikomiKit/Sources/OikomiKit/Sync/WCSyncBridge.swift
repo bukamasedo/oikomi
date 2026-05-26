@@ -212,20 +212,6 @@ public final class WCSyncBridge {
         dispatch(envelope, guaranteedDelivery: true)
     }
 
-    /// iPhone で Sign in with Apple のサインイン / サインアウト状態が変わった時に Watch へ通知する。
-    /// Watch には SIWA UI が無いため、iPhone 由来の状態を表示専用に同期する。
-    /// `userID` が nil ならサインアウト扱い。
-    public func sendAuthStateChange(userID: String?, displayName: String?) {
-        if applyingRemoteUpdate { return }
-        let envelope = SyncEnvelope(
-            kind: .authStateChange,
-            authUserID: userID,
-            authDisplayName: displayName
-        )
-        print("[Oikomi.sync] sendAuthStateChange dispatched signedIn=\(userID != nil)")
-        dispatch(envelope, guaranteedDelivery: true)
-    }
-
     /// レストタイマーをスキップしたことを相手デバイスに伝え、相手のローカル通知も止める。
     /// iPhone でも Watch でも skip ハンドラから呼ぶ。
     /// guaranteedDelivery=true で sendMessage + transferUserInfo に並行配送し、reachable の
@@ -245,12 +231,23 @@ public final class WCSyncBridge {
     /// guaranteedDelivery=true で sendMessage + transferUserInfo を並行配送し、reachable の
     /// 瞬間揺れでも必着にする。さらに applicationContext を最新状態（endAt / totalSeconds）に
     /// 更新し、アプリ起動直後や再 reachable 時の自動回復を狙う。
-    public func sendRestTimerStart(endAt: Date, totalSeconds: Int) {
+    /// セット完了によりレストタイマーが起動したことを相手デバイスに伝える。
+    /// 受信側はローカル通知をスケジュールし、UI / Live Activity を更新する。
+    /// `completedWeightKg` / `completedReps` は完了直前セットの値で、サブテキスト表示
+    /// （例: 「80kg × 5 · 180秒」）に使う。bodyweight など値が nil の場合は流さない。
+    public func sendRestTimerStart(
+        endAt: Date,
+        totalSeconds: Int,
+        completedWeightKg: Double? = nil,
+        completedReps: Int? = nil
+    ) {
         if applyingRemoteUpdate { return }
         let envelope = SyncEnvelope(
             kind: .restTimerStart,
             restEndAt: endAt,
-            restTotalSeconds: totalSeconds
+            restTotalSeconds: totalSeconds,
+            restCompletedWeightKg: completedWeightKg,
+            restCompletedReps: completedReps
         )
         lastRestTimerEnvelopeAt = envelope.timestamp
         print("[Oikomi.sync] sendRestTimerStart dispatched endAt=\(endAt) total=\(totalSeconds)")
@@ -260,6 +257,48 @@ public final class WCSyncBridge {
             totalSeconds: totalSeconds,
             envelopeAt: envelope.timestamp
         )
+    }
+
+    /// 重量単位 (kg/lb) 設定を相手デバイスに伝える。
+    /// App Group UserDefaults は別物理デバイス間で共有されないため、設定変更時に
+    /// 明示的にこのメソッドを呼ぶ必要がある。受信側は `UnitPreference.set` で
+    /// ローカル App Group に書き込み、`@AppStorage` 経由で UI が自動再描画される。
+    public func sendUnitPreferenceUpdate(_ unit: WeightUnit) {
+        if applyingRemoteUpdate { return }
+        let envelope = SyncEnvelope(
+            kind: .unitPreferenceUpdate,
+            weightUnit: unit.rawValue
+        )
+        print("[Oikomi.sync] sendUnitPreferenceUpdate dispatched unit=\(unit.rawValue)")
+        dispatch(envelope, guaranteedDelivery: true)
+        updateUnitPreferenceContext(unit: unit)
+    }
+
+    /// 重量単位 (kg/lb) を applicationContext に投影する。
+    /// sendMessage / transferUserInfo は kill 状態の相手や複数回変更後の最新値到達が遅延しうるが、
+    /// applicationContext は OS が「最新値だけ保持」して次回 activate 時に必ず配送する保証付きチャネル。
+    /// restTimer 用の既存キーと共存させるため、現在 OS が保持している context をマージしてから書く。
+    private func updateUnitPreferenceContext(unit: WeightUnit) {
+        #if canImport(WatchConnectivity)
+            guard WCSession.isSupported() else { return }
+            let session = WCSession.default
+            guard session.activationState == .activated else { return }
+
+            var context = session.applicationContext
+            context["oikomi.unitPreference"] = unit.rawValue
+            context["oikomi.unitPreference.at"] = Date()
+
+            do {
+                try session.updateApplicationContext(context)
+                print(
+                    "[Oikomi.sync] updateApplicationContext unitPreference=\(unit.rawValue)"
+                )
+            } catch {
+                print(
+                    "WCSyncBridge updateApplicationContext (unitPreference) failed: \(error)"
+                )
+            }
+        #endif
     }
 
     /// 現在のレストタイマー状態を applicationContext に投影する。
@@ -301,9 +340,13 @@ public final class WCSyncBridge {
         var restEndAtForNotification: Date? = nil
 
         switch envelope.kind {
-        case .sessionUpsert, .setUpsert, .routineUpsert, .routineDeleted, .fullSyncResponse,
+        case .sessionUpsert, .setUpsert, .routineUpsert, .routineDeleted,
             .exerciseFavoriteUpdate:
             applyEnvelopeToLocalStore(envelope)
+        case .fullSyncResponse:
+            // 同期データ本体を反映してから、相手側 UnitPreference 設定も取り込む。
+            applyEnvelopeToLocalStore(envelope)
+            applyUnitPreference(rawValue: envelope.weightUnit)
         case .bulkDelete:
             applyBulkDeleteToLocalStore()
         case .fullSyncRequest:
@@ -332,11 +375,8 @@ public final class WCSyncBridge {
             restEndAtForNotification = applyRestTimerStart(envelope)
         case .iconChange:
             applyIconChange(iconName: envelope.iconName)
-        case .authStateChange:
-            applyAuthStateChange(
-                userID: envelope.authUserID,
-                displayName: envelope.authDisplayName
-            )
+        case .unitPreferenceUpdate:
+            applyUnitPreference(rawValue: envelope.weightUnit)
         }
 
         var userInfo: [String: Any] = ["kind": envelope.kind.rawValue]
@@ -347,12 +387,33 @@ public final class WCSyncBridge {
                 userInfo["endAt"] = local
             }
             if let total = envelope.restTotalSeconds { userInfo["totalSeconds"] = total }
+            // 直前完了セットのサブテキスト表示用。expired 時もキーは載せておく
+            // （UI 層は endAt の有無で表示制御するため、weight/reps だけ来ても害なし）。
+            if let weight = envelope.restCompletedWeightKg {
+                userInfo["completedWeightKg"] = weight
+            }
+            if let reps = envelope.restCompletedReps {
+                userInfo["completedReps"] = reps
+            }
         }
         NotificationCenter.default.post(
             name: Self.dataDidChangeNotification,
             object: nil,
             userInfo: userInfo
         )
+    }
+
+    /// 受信した weightUnit を App Group UserDefaults に書き込む。
+    /// 不正値は無視。`UnitPreference.set` 経由で `UserDefaults.didChangeNotification` が発火し、
+    /// `@AppStorage` バインディングが自動再描画する。
+    /// 再送ループを防ぐため `applyingRemoteUpdate` を立てて書き込む（`@AppStorage` の onChange を
+    /// 経由した sendUnitPreferenceUpdate がガードで早期 return する）。
+    private func applyUnitPreference(rawValue: String?) {
+        guard let raw = rawValue, let unit = WeightUnit(rawValue: raw) else { return }
+        applyingRemoteUpdate = true
+        defer { applyingRemoteUpdate = false }
+        UnitPreference.set(unit)
+        print("[Oikomi.sync] unitPreferenceUpdate applied unit=\(unit.rawValue)")
     }
 
     private func applyEnvelopeToLocalStore(_ envelope: SyncEnvelope) {
@@ -389,15 +450,6 @@ public final class WCSyncBridge {
         print(
             "[Oikomi.sync] iconChange received name=\(iconName ?? "<primary>") (no-op: alternate icons unsupported on watchOS)"
         )
-    }
-
-    /// 相手デバイス (主に Watch) から authStateChange を受け取った時の処理。
-    /// AppleAuthManager に反映して UserDefaults にも書き戻す。
-    private func applyAuthStateChange(userID: String?, displayName: String?) {
-        print("[Oikomi.sync] authStateChange received signedIn=\(userID != nil)")
-        applyingRemoteUpdate = true
-        defer { applyingRemoteUpdate = false }
-        AppleAuthManager.shared.applyRemoteState(userID: userID, displayName: displayName)
     }
 
     /// 相手デバイスから restTimerCancel を受け取ったときの処理。
@@ -516,6 +568,22 @@ public final class WCSyncBridge {
         }
     }
 
+    /// `applicationContext` 経由で届いた重量単位設定を処理する。
+    /// activate 完了時 / didReceiveApplicationContext で OS から渡される。
+    /// 内部の `applyUnitPreference` に委譲し、`@AppStorage` への再描画通知も同経路で行う。
+    /// nil / 空文字は無視（既存値を保持）。
+    internal func handleUnitPreferenceContext(rawValue: String?) {
+        guard let rawValue, !rawValue.isEmpty else { return }
+        applyUnitPreference(rawValue: rawValue)
+        // @AppStorage が KVO で再描画しない経路（iOS 26 で観測される事例）の保険として、
+        // 明示的に NotificationCenter に流して View 側の onReceive 経由で再読込させる。
+        NotificationCenter.default.post(
+            name: Self.dataDidChangeNotification,
+            object: nil,
+            userInfo: ["kind": SyncEnvelope.Kind.unitPreferenceUpdate.rawValue]
+        )
+    }
+
     /// 相手デバイスからの bulkDelete を受け取った時のローカル全削除処理。
     /// 設定画面の resetAllData と同じ範囲を削除し、シード種目を再投入する。
     private func applyBulkDeleteToLocalStore() {
@@ -574,11 +642,14 @@ public final class WCSyncBridge {
         let setDTOs = sessions.flatMap { $0.orderedSets.compactMap { $0.makeDTO() } }
         let routineDTOs = routines.map { $0.makeDTO() }
 
+        // 起動直後の Watch が iPhone 側の最新単位 (kg/lb) を取り込めるよう、
+        // 応答にも現在の UnitPreference を載せる。
         let envelope = SyncEnvelope(
             kind: .fullSyncResponse,
             sessions: sessionDTOs,
             sets: setDTOs,
-            routines: routineDTOs
+            routines: routineDTOs,
+            weightUnit: UnitPreference.current().rawValue
         )
         dispatch(envelope)
     }
@@ -747,7 +818,8 @@ public final class WCSyncBridge {
                 order: entry.order,
                 plannedSets: entry.plannedSets,
                 plannedReps: entry.plannedReps,
-                plannedWeight: entry.plannedWeight
+                plannedWeight: entry.plannedWeight,
+                plannedRestSeconds: entry.plannedRestSeconds
             )
             context.insert(routineExercise)
         }
@@ -897,6 +969,7 @@ extension JSONDecoder {
             let envelopeAt = receivedContext["oikomi.restTimer.envelopeAt"] as? Date
             let endAt = receivedContext["oikomi.restTimer.endAt"] as? Date
             let totalSeconds = receivedContext["oikomi.restTimer.totalSeconds"] as? Int
+            let unitRaw = receivedContext["oikomi.unitPreference"] as? String
             Task { @MainActor in
                 WCSyncBridge.shared.handleActivationCompleted(
                     state: activationState,
@@ -908,6 +981,9 @@ extension JSONDecoder {
                         endAt: endAt,
                         totalSeconds: totalSeconds
                     )
+                }
+                if unitRaw != nil {
+                    WCSyncBridge.shared.handleUnitPreferenceContext(rawValue: unitRaw)
                 }
             }
         }
@@ -947,12 +1023,16 @@ extension JSONDecoder {
             let envelopeAt = applicationContext["oikomi.restTimer.envelopeAt"] as? Date
             let endAt = applicationContext["oikomi.restTimer.endAt"] as? Date
             let totalSeconds = applicationContext["oikomi.restTimer.totalSeconds"] as? Int
+            let unitRaw = applicationContext["oikomi.unitPreference"] as? String
             Task { @MainActor in
                 WCSyncBridge.shared.handleRestTimerContext(
                     envelopeAt: envelopeAt,
                     endAt: endAt,
                     totalSeconds: totalSeconds
                 )
+                if unitRaw != nil {
+                    WCSyncBridge.shared.handleUnitPreferenceContext(rawValue: unitRaw)
+                }
             }
         }
 

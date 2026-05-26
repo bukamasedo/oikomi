@@ -15,6 +15,12 @@ struct HistoryView: View {
     @State private var period: PeriodSegment.Period = .week
     @State private var selectedDate: Date?
 
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
+
     private let calendar = Calendar.current
 
     private var activeDates: Set<Date> {
@@ -148,8 +154,9 @@ struct HistoryView: View {
             divider
             summaryTile(
                 title: "ボリューム",
-                value: totalVolume.formatted(.number.precision(.fractionLength(0))),
-                unit: "kg",
+                value: WeightFormatter.numberOnly(
+                    kilograms: totalVolume, in: weightUnit, fractionDigits: 0...0),
+                unit: weightUnit.symbol,
                 systemImage: "scalemass.fill",
                 tint: OikomiColor.statIndigo
             )

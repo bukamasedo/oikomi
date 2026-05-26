@@ -10,9 +10,6 @@ struct OikomiMacApp: App {
     init() {
         do {
             sharedModelContainer = try SharedModelContainer.bootstrap()
-            Task { @MainActor in
-                await AppleAuthManager.shared.verifyCredentialState()
-            }
         } catch {
             fatalError("ModelContainer 初期化失敗: \(error)")
         }

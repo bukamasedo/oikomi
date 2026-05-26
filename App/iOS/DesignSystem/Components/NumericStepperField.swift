@@ -1,3 +1,4 @@
+import OikomiKit
 import SwiftUI
 
 /// 大型 ±入力フィールド。AddSetSheet の重量・レップ入力に使う。
@@ -141,16 +142,50 @@ extension Comparable {
     }
 }
 
+/// 重量専用の ± 入力フィールド。
+///
+/// 内部 Binding は常に kg。表示・操作はユーザー設定の `WeightUnit`（kg / lb）で行い、
+/// 値の読み書き時に自動変換する。`NumericStepperField` の薄いラッパー。
+struct WeightStepperField: View {
+
+    let title: String
+    @Binding var kilograms: Double
+    let unit: WeightUnit
+    /// nil の場合は `unit.defaultRange` を使う（kg: 0...500 / lb: 0...1100）。
+    var rangeInKilograms: ClosedRange<Double>? = nil
+    /// 直前値との差分（kg）。nil なら表示しない。
+    var deltaKilograms: Double? = nil
+
+    var body: some View {
+        let displayBinding = Binding<Double>(
+            get: { unit.fromKilograms(kilograms) },
+            set: { newDisplay in kilograms = unit.toKilograms(newDisplay) }
+        )
+        let displayRange: ClosedRange<Double> = {
+            guard let r = rangeInKilograms else { return unit.defaultRange }
+            return unit.fromKilograms(r.lowerBound)...unit.fromKilograms(r.upperBound)
+        }()
+        let displayDelta = deltaKilograms.map { unit.fromKilograms($0) }
+
+        NumericStepperField(
+            title: title,
+            value: displayBinding,
+            range: displayRange,
+            step: unit.displayStep,
+            unit: unit.symbol,
+            delta: displayDelta
+        )
+    }
+}
+
 #Preview("Light") {
     StatefulPreviewWrapper(50.0) { weight in
         VStack(spacing: OikomiSpacing.l) {
-            NumericStepperField(
+            WeightStepperField(
                 title: "重量",
-                value: weight,
-                range: 0...500,
-                step: 2.5,
-                unit: "kg",
-                delta: 5.0
+                kilograms: weight,
+                unit: .kg,
+                deltaKilograms: 5.0
             )
             StatefulPreviewWrapper(8.0) { reps in
                 NumericStepperField(
@@ -169,15 +204,13 @@ extension Comparable {
     }
 }
 
-#Preview("Dark") {
+#Preview("Pounds") {
     StatefulPreviewWrapper(50.0) { weight in
-        NumericStepperField(
+        WeightStepperField(
             title: "重量",
-            value: weight,
-            range: 0...500,
-            step: 2.5,
-            unit: "kg",
-            delta: -2.5
+            kilograms: weight,
+            unit: .lb,
+            deltaKilograms: -2.5
         )
         .padding()
         .background(OikomiColor.appBackground)

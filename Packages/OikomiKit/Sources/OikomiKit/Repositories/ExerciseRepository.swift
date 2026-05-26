@@ -82,6 +82,15 @@ public final class ExerciseRepository {
         WCSyncBridge.shared.sendExerciseFavoriteUpdate(exerciseId: exercise.id, isFavorite: exercise.isFavorite)
     }
 
+    /// 種目のデフォルトレスト秒数を更新する。シード種目・カスタム種目どちらも対象。
+    ///
+    /// シード再投入処理は既存 Exercise を上書きしないため、ここで書き換えた値は保護される。
+    public func updateDefaultRestSeconds(_ exercise: Exercise, to seconds: Int) throws {
+        let clamped = max(0, min(seconds, 3600))
+        exercise.defaultRestSeconds = clamped
+        try context.save()
+    }
+
     /// カスタム種目を追加する。
     ///
     /// Free プランで `ProGate.freeCustomExerciseLimit` を超えると `ProGateError` を投げる。

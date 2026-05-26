@@ -9,6 +9,11 @@ public final class Routine {
     public var createdAt: Date = Date()
     public var lastUsedAt: Date?
 
+    /// このルーティンが予定されている曜日。`Calendar.Component.weekday` の 1 (日) – 7 (土)。
+    /// 空配列は「任意日」扱いで、PR 予測通知などの曜日ベース判定の対象外になる。
+    /// 既存データは SwiftData の lightweight migration により空配列で復元される。
+    public var scheduledWeekdays: [Int] = []
+
     @Relationship(deleteRule: .cascade, inverse: \RoutineExercise.routine)
     public var exercises: [RoutineExercise]? = []
 
@@ -20,18 +25,27 @@ public final class Routine {
         id: UUID = UUID(),
         name: String,
         createdAt: Date = Date(),
-        lastUsedAt: Date? = nil
+        lastUsedAt: Date? = nil,
+        scheduledWeekdays: [Int] = []
     ) {
         self.id = id
         self.name = name
         self.createdAt = createdAt
         self.lastUsedAt = lastUsedAt
+        self.scheduledWeekdays = scheduledWeekdays
     }
 }
 
 extension Routine {
     public var orderedExercises: [RoutineExercise] {
         (exercises ?? []).sorted { $0.order < $1.order }
+    }
+
+    /// 指定日にこのルーティンが予定されているか判定する。空配列の場合は常に false。
+    public func isScheduled(on date: Date, calendar: Calendar = .current) -> Bool {
+        guard !scheduledWeekdays.isEmpty else { return false }
+        let weekday = calendar.component(.weekday, from: date)
+        return scheduledWeekdays.contains(weekday)
     }
 }
 
@@ -45,6 +59,8 @@ public final class RoutineExercise {
     public var plannedSets: Int = 3
     public var plannedReps: Int = 8
     public var plannedWeight: Double?
+    /// このルーティン用のレスト秒数上書き。nil の場合は Exercise.defaultRestSeconds を採用。
+    public var plannedRestSeconds: Int?
 
     public init(
         id: UUID = UUID(),
@@ -53,7 +69,8 @@ public final class RoutineExercise {
         order: Int = 0,
         plannedSets: Int = 3,
         plannedReps: Int = 8,
-        plannedWeight: Double? = nil
+        plannedWeight: Double? = nil,
+        plannedRestSeconds: Int? = nil
     ) {
         self.id = id
         self.routine = routine
@@ -62,5 +79,6 @@ public final class RoutineExercise {
         self.plannedSets = plannedSets
         self.plannedReps = plannedReps
         self.plannedWeight = plannedWeight
+        self.plannedRestSeconds = plannedRestSeconds
     }
 }

@@ -87,19 +87,23 @@ public struct RoutineExerciseDTO: Codable, Sendable, Hashable {
     public let plannedSets: Int
     public let plannedReps: Int
     public let plannedWeight: Double?
+    /// レスト秒数の上書き。旧バイナリの JSON にはキー欠落 → nil で decode され「種目デフォルトを使う」挙動になる。
+    public let plannedRestSeconds: Int?
 
     public init(
         exerciseName: String,
         order: Int,
         plannedSets: Int,
         plannedReps: Int,
-        plannedWeight: Double? = nil
+        plannedWeight: Double? = nil,
+        plannedRestSeconds: Int? = nil
     ) {
         self.exerciseName = exerciseName
         self.order = order
         self.plannedSets = plannedSets
         self.plannedReps = plannedReps
         self.plannedWeight = plannedWeight
+        self.plannedRestSeconds = plannedRestSeconds
     }
 }
 
@@ -146,7 +150,7 @@ public struct SyncEnvelope: Codable, Sendable {
         case restTimerCancel  // 片方の端末でレストをスキップ → 相手端末のローカル通知もキャンセル
         case restTimerStart  // 片方の端末でセット完了 → 相手端末のレストタイマーも起動
         case iconChange  // iPhone 設定でアプリアイコン変更 → Watch も追従
-        case authStateChange  // iPhone での Sign in with Apple サインイン / サインアウト
+        case unitPreferenceUpdate  // iPhone↔Watch で重量単位 (kg/lb) 設定を同期。App Group は別デバイス間で共有されないため WC 経由が必須
     }
 
     public let kind: Kind
@@ -161,11 +165,14 @@ public struct SyncEnvelope: Codable, Sendable {
     public let restEndAt: Date?
     /// restTimerStart のみ使用。UI 表示用の総秒数（受信側で defaultRestSeconds を再計算しない）。
     public let restTotalSeconds: Int?
+    /// restTimerStart のみ使用。直前に完了したセットの重量（kg 内部表現）。サブテキスト表示用。
+    public let restCompletedWeightKg: Double?
+    /// restTimerStart のみ使用。直前に完了したセットのレップ数。サブテキスト表示用。
+    public let restCompletedReps: Int?
     /// iconChange のみ使用。`nil` = primary（デフォルト）に戻す。
     public let iconName: String?
-    /// authStateChange のみ使用。サインアウト時は nil。
-    public let authUserID: String?
-    public let authDisplayName: String?
+    /// unitPreferenceUpdate / fullSyncResponse で使用。`WeightUnit.rawValue` を載せる。
+    public let weightUnit: String?
 
     public init(
         kind: Kind,
@@ -177,9 +184,10 @@ public struct SyncEnvelope: Codable, Sendable {
         exerciseFavorites: [ExerciseFavoriteDTO]? = nil,
         restEndAt: Date? = nil,
         restTotalSeconds: Int? = nil,
+        restCompletedWeightKg: Double? = nil,
+        restCompletedReps: Int? = nil,
         iconName: String? = nil,
-        authUserID: String? = nil,
-        authDisplayName: String? = nil
+        weightUnit: String? = nil
     ) {
         self.kind = kind
         self.timestamp = timestamp
@@ -190,9 +198,10 @@ public struct SyncEnvelope: Codable, Sendable {
         self.exerciseFavorites = exerciseFavorites
         self.restEndAt = restEndAt
         self.restTotalSeconds = restTotalSeconds
+        self.restCompletedWeightKg = restCompletedWeightKg
+        self.restCompletedReps = restCompletedReps
         self.iconName = iconName
-        self.authUserID = authUserID
-        self.authDisplayName = authDisplayName
+        self.weightUnit = weightUnit
     }
 }
 
@@ -239,7 +248,8 @@ extension Routine {
                 order: routineEx.order,
                 plannedSets: routineEx.plannedSets,
                 plannedReps: routineEx.plannedReps,
-                plannedWeight: routineEx.plannedWeight
+                plannedWeight: routineEx.plannedWeight,
+                plannedRestSeconds: routineEx.plannedRestSeconds
             )
         }
         return RoutineDTO(

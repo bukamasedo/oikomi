@@ -23,12 +23,21 @@ struct AddSetSheet: View {
     private var isEditing: Bool { editingSet != nil }
 
     @State private var selectedExercise: Exercise?
-    @State private var weight: Double = 20
+    @State private var weight: Double = UnitPreference.current().defaultInitialKilograms
     @State private var reps: Int = 8
     @State private var previousWeight: Double? = nil
     @State private var previousReps: Int? = nil
     @State private var errorMessage: String?
     @State private var showingPicker = false
+    /// レスト秒数の上書き。nil = 種目デフォルト採用（ユーザー未操作）。
+    /// +/- ステッパーをタップした瞬間に値が入り、override 確定となる。
+    @State private var restOverride: Int? = nil
+
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
 
     private var useBodyweight: Bool {
         selectedExercise?.measurementType == .bodyweightReps
@@ -46,14 +55,11 @@ struct AddSetSheet: View {
                     exerciseCard
                     if selectedExercise != nil {
                         if !useBodyweight {
-                            NumericStepperField(
+                            WeightStepperField(
                                 title: "重量",
-                                value: $weight,
-                                range: 0...500,
-                                step: 2.5,
-                                formatter: { $0.formatted(.number.precision(.fractionLength(0...1))) },
-                                unit: "kg",
-                                delta: previousWeight.map { weight - $0 }
+                                kilograms: $weight,
+                                unit: weightUnit,
+                                deltaKilograms: previousWeight.map { weight - $0 }
                             )
                         }
                         NumericStepperField(
@@ -68,6 +74,7 @@ struct AddSetSheet: View {
                             unit: "回",
                             delta: previousReps.map { Double(reps - $0) }
                         )
+                        restCard
                     }
                 }
                 .padding(.horizontal, OikomiSpacing.l)
@@ -146,6 +153,39 @@ struct AddSetSheet: View {
     }
 
     @ViewBuilder
+    private var restCard: some View {
+        // 表示値: 上書きがあればそれを、無ければ種目デフォルトを (= resolveRestSeconds 相当)。
+        // +/- がタップされた瞬間に restOverride に書き込まれ、override 扱いになる。
+        let displayed = restOverride ?? selectedExercise?.defaultRestSeconds ?? 60
+        let binding = Binding<Double>(
+            get: { Double(displayed) },
+            set: { restOverride = max(0, Int($0)) }
+        )
+        VStack(alignment: .leading, spacing: OikomiSpacing.xs) {
+            NumericStepperField(
+                title: "レスト",
+                value: binding,
+                range: 0...600,
+                step: 15,
+                formatter: { Int($0) == 0 ? "なし" : "\(Int($0))" },
+                unit: Int(displayed) == 0 ? "" : "秒"
+            )
+            if restOverride != nil,
+                let def = selectedExercise?.defaultRestSeconds, def != restOverride
+            {
+                Button {
+                    restOverride = nil
+                } label: {
+                    Text("デフォルト (\(def) 秒) に戻す")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(OikomiColor.brandPrimary)
+                }
+                .padding(.leading, OikomiSpacing.s)
+            }
+        }
+    }
+
+    @ViewBuilder
     private var saveButton: some View {
         VStack(spacing: 0) {
             Divider()
@@ -177,11 +217,12 @@ struct AddSetSheet: View {
         if let editing = editingSet, let exercise = editing.exercise {
             selectedExercise = exercise
             if let w = editing.weight {
-                weight = quantize(w)
+                weight = w
             }
             if let r = editing.reps {
                 reps = r
             }
+            restOverride = editing.restSecondsOverride
             // 編集モードでは「前回比較」は意味が薄いので delta バッジ非表示
             previousWeight = nil
             previousReps = nil
@@ -203,8 +244,8 @@ struct AddSetSheet: View {
         let lastForExercise = session.orderedSets
             .last { $0.exercise?.id == exercise.id }
         if let lastWeight = lastForExercise?.weight {
-            weight = quantize(lastWeight)
-            previousWeight = quantize(lastWeight)
+            weight = lastWeight
+            previousWeight = lastWeight
         } else {
             previousWeight = nil
         }
@@ -214,10 +255,9 @@ struct AddSetSheet: View {
         } else {
             previousReps = nil
         }
-    }
-
-    private func quantize(_ v: Double) -> Double {
-        (v / 2.5).rounded() * 2.5
+        // 同セッション内で同種目を既に追加していたなら、その rest 上書きを引き継ぐ
+        // (毎回入力させず「最初の 1 セットで決めた値を継続」させる)
+        restOverride = lastForExercise?.restSecondsOverride
     }
 
     // MARK: - Save
@@ -234,19 +274,25 @@ struct AddSetSheet: View {
                     weight: useBodyweight ? nil : weight,
                     reps: reps
                 )
+                // restOverride は updateSet の責務外。明示的に同期する。
+                if saved.restSecondsOverride != restOverride {
+                    try repo.setRestSecondsOverride(restOverride, on: saved)
+                }
             } else if planMode {
                 saved = try repo.addPlannedSet(
                     to: session,
                     exercise: exercise,
                     weight: useBodyweight ? nil : weight,
-                    reps: reps
+                    reps: reps,
+                    restSecondsOverride: restOverride
                 )
             } else {
                 saved = try repo.addSet(
                     to: session,
                     exercise: exercise,
                     weight: useBodyweight ? nil : weight,
-                    reps: reps
+                    reps: reps,
+                    restSecondsOverride: restOverride
                 )
             }
             onSaved?(saved)

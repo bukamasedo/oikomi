@@ -42,13 +42,17 @@ struct StatsEntry: TimelineEntry {
     /// 連続活動週数。0 のときはサブラベル非表示。
     let consecutiveWeeks: Int
     let weekSessionCount: Int
+    /// 今週の総ボリューム（kg）。表示時に `weightUnit` で変換する。
     let weekVolume: Double
     let latestPRExerciseName: String?
+    /// 直近 PR の重量（kg）。表示時に `weightUnit` で変換する。
     let latestPRWeight: Double?
     /// 直近の HRV（SDNN, ms）。HealthSnapshot が無い / Pro 未契約なら nil。
     let latestHRV: Double?
     /// Pro 機能 (HealthKit 読み取り) が有効か。Free ユーザーには HRV プレースホルダを出す。
     let isProActive: Bool
+    /// ユーザー設定の表示単位。`UnitPreference.current()` から取得。
+    let weightUnit: WeightUnit
 }
 
 struct StatsProvider: TimelineProvider {
@@ -64,7 +68,8 @@ struct StatsProvider: TimelineProvider {
             latestPRExerciseName: "ベンチプレス",
             latestPRWeight: 100,
             latestHRV: 42,
-            isProActive: true
+            isProActive: true,
+            weightUnit: UnitPreference.current()
         )
     }
 
@@ -125,7 +130,8 @@ struct StatsProvider: TimelineProvider {
                 latestPRExerciseName: latestPR?.exercise?.name,
                 latestPRWeight: latestPR?.weight,
                 latestHRV: latestHRV,
-                isProActive: isProActive
+                isProActive: isProActive,
+                weightUnit: UnitPreference.current()
             )
         } catch {
             return nil
@@ -226,10 +232,12 @@ struct StatsWidgetView: View {
                     }
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text(
-                            "\(entry.weekVolume.formatted(.number.precision(.fractionLength(0))))"
+                            WeightFormatter.numberOnly(
+                                kilograms: entry.weekVolume, in: entry.weightUnit,
+                                fractionDigits: 0...0)
                         )
                         .font(.subheadline.monospacedDigit().weight(.semibold))
-                        Text("kg")
+                        Text(entry.weightUnit.symbol)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -296,7 +304,7 @@ struct StatsWidgetView: View {
                 Text(name)
                     .font(.caption.weight(.semibold))
                     .lineLimit(1)
-                Text("\(weight.formatted()) kg")
+                Text(WeightFormatter.string(kilograms: weight, in: entry.weightUnit))
                     .font(.caption.monospacedDigit())
             }
         }
@@ -357,9 +365,11 @@ struct StatsWidgetView: View {
                     .font(.caption2.monospacedDigit())
                     .lineLimit(1)
             } else {
-                Text("\(entry.weekSessionCount) セッション・\(Int(entry.weekVolume)) kg")
-                    .font(.caption2.monospacedDigit())
-                    .lineLimit(1)
+                Text(
+                    "\(entry.weekSessionCount) セッション・\(WeightFormatter.numberOnly(kilograms: entry.weekVolume, in: entry.weightUnit, fractionDigits: 0...0)) \(entry.weightUnit.symbol)"
+                )
+                .font(.caption2.monospacedDigit())
+                .lineLimit(1)
             }
             if let name = entry.latestPRExerciseName {
                 Text("PR: \(name)")

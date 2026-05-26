@@ -16,6 +16,8 @@ struct ExerciseInSessionCard: View {
     var onDeleteSet: (SetRecord) -> Void = { _ in }
     /// セット行の値部分タップで呼ばれる。編集シート起動用。readOnly 時は無視。
     var onEditSet: (SetRecord) -> Void = { _ in }
+    /// ヘッダのメニューから「種目を削除」がタップされたとき呼ばれる。readOnly 時はメニューごと非表示。
+    var onDeleteExercise: () -> Void = {}
 
     private var completedCount: Int { sets.filter(\.isCompleted).count }
 
@@ -39,12 +41,12 @@ struct ExerciseInSessionCard: View {
                     )
                     .padding(.horizontal, OikomiSpacing.l)
                     .contentShape(Rectangle())
-                    .swipeActions(edge: .trailing) {
+                    .contextMenu {
                         if !readOnly {
                             Button(role: .destructive) {
                                 onDeleteSet(set)
                             } label: {
-                                Label("削除", systemImage: "trash")
+                                Label("セットを削除", systemImage: "trash")
                             }
                         }
                     }
@@ -80,19 +82,22 @@ struct ExerciseInSessionCard: View {
     @ViewBuilder
     private var header: some View {
         HStack(alignment: .center, spacing: OikomiSpacing.s) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(exercise.name)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                if exercise.defaultRestSeconds > 0 {
-                    Text("レスト \(exercise.defaultRestSeconds) 秒")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
+            Text(exercise.name)
+                .font(.headline)
+                .lineLimit(1)
+                .truncationMode(.tail)
             Spacer(minLength: OikomiSpacing.s)
             completionChip
+        }
+        .contentShape(Rectangle())
+        .contextMenu {
+            if !readOnly {
+                Button(role: .destructive) {
+                    onDeleteExercise()
+                } label: {
+                    Label("種目を削除", systemImage: "trash")
+                }
+            }
         }
     }
 

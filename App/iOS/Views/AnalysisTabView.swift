@@ -23,6 +23,12 @@ struct AnalysisTabView: View {
     @State private var showingExercisePicker = false
     @State private var category: Category = .trend
 
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
+
     enum Category: String, CaseIterable, Identifiable {
         case trend, condition, body, muscle
 
@@ -164,7 +170,7 @@ struct AnalysisTabView: View {
         } else {
             ProLockTile(
                 title: "部位別分析",
-                message: "週セット数と週ボリューム kg を部位別に可視化します。",
+                message: "週セット数と週ボリューム \(weightUnit.symbol) を部位別に可視化します。",
                 systemImage: "rectangle.split.3x1.fill"
             )
         }
@@ -194,7 +200,9 @@ struct AnalysisTabView: View {
                 Chart(weeklySeries) { point in
                     BarMark(
                         x: .value("週", point.weekStart, unit: .weekOfYear),
-                        y: .value("総ボリューム (kg)", point.total)
+                        y: .value(
+                            "総ボリューム (\(weightUnit.symbol))",
+                            weightUnit.fromKilograms(point.total))
                     )
                     .foregroundStyle(OikomiColor.brandPrimary)
                     .cornerRadius(4)
@@ -203,7 +211,14 @@ struct AnalysisTabView: View {
                 .chartXAxis {
                     AxisMarks(values: .stride(by: .weekOfYear)) { _ in
                         AxisGridLine()
-                        AxisValueLabel(format: .dateTime.month(.abbreviated).day(), centered: true)
+                        AxisValueLabel(
+                            format: Date.VerbatimFormatStyle(
+                                format: "\(month: .defaultDigits)/\(day: .defaultDigits)",
+                                timeZone: .current,
+                                calendar: .current
+                            ),
+                            centered: true
+                        )
                     }
                 }
             }
@@ -253,14 +268,18 @@ struct AnalysisTabView: View {
                     Chart(series) { point in
                         LineMark(
                             x: .value("日付", point.date),
-                            y: .value("重量 (kg)", point.weight)
+                            y: .value(
+                                "重量 (\(weightUnit.symbol))",
+                                weightUnit.fromKilograms(point.weight))
                         )
                         .foregroundStyle(OikomiColor.brandPrimary)
                         .interpolationMethod(.catmullRom)
 
                         PointMark(
                             x: .value("日付", point.date),
-                            y: .value("重量 (kg)", point.weight)
+                            y: .value(
+                                "重量 (\(weightUnit.symbol))",
+                                weightUnit.fromKilograms(point.weight))
                         )
                         .foregroundStyle(OikomiColor.brandPrimary)
                     }
@@ -317,9 +336,9 @@ struct AnalysisTabView: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(pr.weight.formatted()) kg × \(pr.reps)")
+                Text("\(WeightFormatter.string(kilograms: pr.weight, in: weightUnit)) × \(pr.reps)")
                     .font(.body.monospacedDigit())
-                Text("推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1)))) kg")
+                Text("推定1RM \(WeightFormatter.oneRM(kilograms: pr.estimated1RM, in: weightUnit))")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.tertiary)
             }

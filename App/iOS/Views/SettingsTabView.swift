@@ -1,4 +1,3 @@
-import AuthenticationServices
 import OikomiKit
 import StoreKit
 import SwiftData
@@ -6,7 +5,7 @@ import SwiftUI
 
 /// アプリ設定タブ。
 ///
-/// 仕様書§7.1: HealthKit / 通知 / 課金 / ジム自宅モード切替 / アカウント
+/// 仕様書§7.1: HealthKit / 通知 / 課金 / ジム自宅モード切替
 /// v0.1 では HealthKit 状態 / 場所モード / オンボーディング再表示 / データリセット / Pro 導線 を提供。
 struct SettingsTabView: View {
 
@@ -16,14 +15,24 @@ struct SettingsTabView: View {
     @AppStorage(WeeklyTrainingTarget.storageKey) private var weeklyTargetDays: Int =
         WeeklyTrainingTarget.defaultDays
     @AppStorage(SharedModelContainer.cloudKitEnabledKey) private var cloudKitEnabled: Bool = true
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+
+    // 通知トグル群（デフォルト全 ON / 朝 7:00）
+    @AppStorage("OikomiNotif_Rest") private var notifRestEnabled: Bool = true
+    @AppStorage("OikomiNotif_Weekly") private var notifWeeklyEnabled: Bool = true
+    @AppStorage("OikomiNotif_PRPrediction") private var notifPRPredictionEnabled: Bool = true
+    @AppStorage("OikomiNotif_HRVDeload") private var notifHRVDeloadEnabled: Bool = true
+    @AppStorage("OikomiNotif_ForgottenSession") private var notifForgottenEnabled: Bool = true
+    @AppStorage("OikomiNotif_Trial") private var notifTrialEnabled: Bool = true
+    @AppStorage("OikomiNotif_TimePreset") private var notifTimePresetRaw: Int =
+        NotificationTimePreset.morning.rawValue
     @State private var showResetConfirm = false
     @State private var showProSheet = false
     @State private var showOnboarding = false
     @State private var errorMessage: String?
     @State private var showCloudKitChangeAlert = false
     @State private var exportedURL: URL?
-    @State private var authManager = AppleAuthManager.shared
-    @State private var signInError: String?
 
     #if DEBUG
         @State private var mockIsRunning = false
@@ -41,8 +50,8 @@ struct SettingsTabView: View {
                             trailing: OikomiSpacing.l)
                     )
                     .listRowBackground(Color.clear)
-                accountSection
                 preferenceSection
+                notificationsSection
                 iCloudSection
                 healthKitSection
                 dataSection
@@ -103,7 +112,7 @@ struct SettingsTabView: View {
                     Text(isPro ? "Oikomi Pro" : "Pro にアップグレード")
                         .font(.headline)
                         .foregroundStyle(.white)
-                    Text(isPro ? "全機能を利用できます" : "HRV 連動コーチング / iCloud 同期 / 無制限ルーティン")
+                    Text(isPro ? "全機能を利用できます" : ProFeatureCatalog.heroSummary)
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.9))
                 }
@@ -128,62 +137,6 @@ struct SettingsTabView: View {
     }
 
     @ViewBuilder
-    private var accountSection: some View {
-        Section("アカウント") {
-            if authManager.isSignedIn {
-                HStack(spacing: OikomiSpacing.m) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(authManager.displayName ?? "Apple ID")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Apple でサインイン中")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                Button(role: .destructive) {
-                    authManager.signOut()
-                    WCSyncBridge.shared.sendAuthStateChange(userID: nil, displayName: nil)
-                } label: {
-                    Label("サインアウト", systemImage: "rectangle.portrait.and.arrow.right")
-                }
-            } else {
-                VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-                    Text("サインインは任意です。匿名識別子と表示名のみ取得し、メアドは取得しません。")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    SignInWithAppleButton(.signIn) { request in
-                        request.requestedScopes = [.fullName]
-                    } onCompletion: { result in
-                        switch result {
-                        case .success(let authorization):
-                            authManager.handle(authorization: authorization)
-                            WCSyncBridge.shared.sendAuthStateChange(
-                                userID: authManager.signedInUserID,
-                                displayName: authManager.displayName
-                            )
-                            signInError = nil
-                        case .failure(let error):
-                            if (error as? ASAuthorizationError)?.code != .canceled {
-                                signInError = error.localizedDescription
-                            }
-                        }
-                    }
-                    .signInWithAppleButtonStyle(.black)
-                    .frame(height: 44)
-                    if let signInError {
-                        Text(signInError)
-                            .font(.caption2)
-                            .foregroundStyle(.red)
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
     private var preferenceSection: some View {
         Section {
             Picker(selection: $preferredLocationRaw) {
@@ -191,6 +144,20 @@ struct SettingsTabView: View {
                 Text("自宅").tag(Location.home.rawValue)
             } label: {
                 Label("トレーニング場所", systemImage: "location")
+            }
+
+            Picker(selection: $weightUnitRaw) {
+                ForEach(WeightUnit.allCases, id: \.rawValue) { unit in
+                    Text("\(unit.localizedName) (\(unit.symbol))").tag(unit.rawValue)
+                }
+            } label: {
+                Label("重量単位", systemImage: "scalemass")
+            }
+            .onChange(of: weightUnitRaw) { _, newValue in
+                // App Group UserDefaults は iPhone↔Watch 間では共有されないため、
+                // 設定変更を WC 経由で Watch に明示同期する。
+                guard let unit = WeightUnit(rawValue: newValue) else { return }
+                WCSyncBridge.shared.sendUnitPreferenceUpdate(unit)
             }
 
             Picker(selection: $weeklyTargetDays) {
@@ -208,8 +175,6 @@ struct SettingsTabView: View {
             }
         } header: {
             Text("環境")
-        } footer: {
-            Text("ホーム画面とウィジェットの達成リングがこの目標日数を基準に表示されます。筋トレは休養日込みのサイクルが前提なので、無理のない頻度を選んでください。")
         }
     }
 
@@ -225,23 +190,81 @@ struct SettingsTabView: View {
     }
 
     @ViewBuilder
+    private var notificationsSection: some View {
+        Section {
+            Toggle(isOn: $notifRestEnabled) {
+                notificationRow(kind: .rest)
+            }
+            Toggle(isOn: $notifWeeklyEnabled) {
+                notificationRow(kind: .weekly)
+            }
+            Toggle(isOn: $notifPRPredictionEnabled) {
+                notificationRow(kind: .prPrediction)
+            }
+            Toggle(isOn: $notifHRVDeloadEnabled) {
+                notificationRow(kind: .hrvDeload, proGated: !ProGate.canUseAICoaching)
+            }
+            .disabled(!ProGate.canUseAICoaching)
+            Toggle(isOn: $notifForgottenEnabled) {
+                notificationRow(kind: .forgottenSession)
+            }
+            Toggle(isOn: $notifTrialEnabled) {
+                notificationRow(kind: .trial)
+            }
+            Picker(selection: $notifTimePresetRaw) {
+                ForEach(NotificationTimePreset.allCases, id: \.rawValue) { preset in
+                    Text(preset.displayName).tag(preset.rawValue)
+                }
+            } label: {
+                Label("通知時刻", systemImage: "clock")
+            }
+        } header: {
+            Text("通知")
+        } footer: {
+            if !ProGate.canUseAICoaching {
+                Text("HRV 連動ディロード推奨は Pro 限定です。")
+            }
+        }
+        .onChange(of: notifRestEnabled) { _, _ in rescheduleNotifications() }
+        .onChange(of: notifWeeklyEnabled) { _, _ in rescheduleNotifications() }
+        .onChange(of: notifPRPredictionEnabled) { _, _ in rescheduleNotifications() }
+        .onChange(of: notifHRVDeloadEnabled) { _, _ in rescheduleNotifications() }
+        .onChange(of: notifForgottenEnabled) { _, _ in rescheduleNotifications() }
+        .onChange(of: notifTrialEnabled) { _, _ in rescheduleNotifications() }
+        .onChange(of: notifTimePresetRaw) { _, _ in rescheduleNotifications() }
+    }
+
+    @ViewBuilder
+    private func notificationRow(kind: NotificationKind, proGated: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Text(kind.displayName)
+                if proGated {
+                    Text("Pro")
+                        .font(.caption2.weight(.semibold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(OikomiColor.proAccent.opacity(0.18), in: Capsule())
+                        .foregroundStyle(OikomiColor.proAccent)
+                }
+            }
+            Text(kind.description)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func rescheduleNotifications() {
+        Task { @MainActor in
+            await NotificationCoordinator.rescheduleAll()
+        }
+    }
+
+    @ViewBuilder
     private var iCloudSection: some View {
         Section {
             Toggle(isOn: $cloudKitEnabled) {
-                HStack {
-                    Label("iCloud 同期", systemImage: "icloud")
-                    if !ProGate.canUseICloudSync {
-                        Spacer()
-                        Text("Pro")
-                            .font(.caption2.weight(.semibold))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                Capsule()
-                                    .fill(Color.yellow.opacity(0.3))
-                            )
-                    }
-                }
+                Label("iCloud 同期", systemImage: "icloud")
             }
             .disabled(!ProGate.canUseICloudSync)
             .onChange(of: cloudKitEnabled) { _, _ in
@@ -264,10 +287,6 @@ struct SettingsTabView: View {
             }
         } header: {
             Text("マルチデバイス同期")
-        } footer: {
-            Text(
-                "iPhone・Apple Watch・iPad・Mac 間で記録を自動同期します。すべての計算はオンデバイス、データは Apple の iCloud（ユーザーのプライベートデータベース）に保存されます。設定変更後はアプリの再起動が必要です。Pro 限定機能です。"
-            )
         }
         .alert("再起動が必要です", isPresented: $showCloudKitChangeAlert) {
             Button("OK") {}
@@ -300,8 +319,14 @@ struct SettingsTabView: View {
             Button {
                 showOnboarding = true
             } label: {
-                Label("オンボーディングを再表示", systemImage: "play.circle")
+                Label {
+                    Text("オンボーディングを再表示")
+                } icon: {
+                    Image(systemName: "play.circle")
+                        .foregroundStyle(Color.accentColor)
+                }
             }
+            .foregroundStyle(.primary)
             exportButton
             Button(role: .destructive) {
                 showResetConfirm = true
@@ -319,7 +344,12 @@ struct SettingsTabView: View {
                 exportData()
             } label: {
                 HStack {
-                    Label("CSV としてエクスポート", systemImage: "square.and.arrow.up")
+                    Label {
+                        Text("CSV としてエクスポート")
+                    } icon: {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(Color.accentColor)
+                    }
                     if let url = exportedURL {
                         Spacer()
                         ShareLink(item: url) {
@@ -329,12 +359,18 @@ struct SettingsTabView: View {
                     }
                 }
             }
+            .foregroundStyle(.primary)
         } else {
             Button {
                 showProSheet = true
             } label: {
                 HStack {
-                    Label("CSV としてエクスポート", systemImage: "square.and.arrow.up")
+                    Label {
+                        Text("CSV としてエクスポート")
+                    } icon: {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(Color.accentColor)
+                    }
                     Spacer()
                     Text("Pro")
                         .font(.caption2.weight(.semibold))
@@ -346,6 +382,7 @@ struct SettingsTabView: View {
                         )
                 }
             }
+            .foregroundStyle(.primary)
         }
     }
 
@@ -367,7 +404,7 @@ struct SettingsTabView: View {
                 Label("用語解説", systemImage: "book.closed")
             }
             LabeledContent("バージョン") {
-                Text("0.1.0")
+                Text(appVersionDisplay)
                     .foregroundStyle(.secondary)
             }
             LabeledContent("OikomiKit") {
@@ -463,6 +500,13 @@ struct SettingsTabView: View {
             }
         }
     #endif
+
+    private var appVersionDisplay: String {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "-"
+        let build = info?["CFBundleVersion"] as? String ?? "-"
+        return "\(short) (\(build))"
+    }
 
     // MARK: - Actions
 
@@ -617,12 +661,9 @@ private struct ProUpgradeSheet: View {
     @ViewBuilder
     private var bulletsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            ProBullet(title: "HRV 連動 AI コーチング", detail: "HRV 低下を検知して自動ディロード推奨")
-            ProBullet(title: "線形回帰 PR 予測", detail: "直近セッションのトレンドから次回 PR を予測")
-            ProBullet(title: "HealthKit 詳細読み取り", detail: "HRV・睡眠・安静時心拍数で負荷を自動調整")
-            ProBullet(title: "iCloud 同期", detail: "iPhone・Watch・Mac でデータ共有")
-            ProBullet(title: "Family Sharing", detail: "最大 6 名で利用可能")
-            ProBullet(title: "ルーティン・カスタム種目 無制限", detail: "Free は 5 / 5 まで")
+            ForEach(ProFeatureCatalog.allFeatures) { feature in
+                ProBullet(title: feature.title, detail: feature.description)
+            }
         }
         .padding(.horizontal, 24)
     }

@@ -22,10 +22,15 @@ struct ExercisePickerSheet: View {
     @State private var searchText: String = ""
     @State private var selectedFilter: MuscleGroup?
     @State private var favoritesOnly: Bool = false
+    @State private var showingCreateForm: Bool = false
 
     init(excluding: [Exercise] = [], onPick: @escaping (Exercise) -> Void) {
         self.excluding = excluding
         self.onPick = onPick
+    }
+
+    private var trimmedSearch: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var filtered: [Exercise] {
@@ -66,10 +71,22 @@ struct ExercisePickerSheet: View {
                     if filtered.isEmpty {
                         OikomiEmptyState(
                             title: "種目が見つかりません",
-                            message: "検索ワードやフィルタを調整してください",
+                            message: trimmedSearch.isEmpty
+                                ? "検索ワードやフィルタを調整してください"
+                                : "「\(trimmedSearch)」はライブラリにありません。カスタム種目として作成できます。",
                             systemImage: "magnifyingglass",
                             tint: OikomiColor.brandPrimary
-                        )
+                        ) {
+                            if !trimmedSearch.isEmpty {
+                                Button {
+                                    showingCreateForm = true
+                                } label: {
+                                    Label("「\(trimmedSearch)」を新規作成", systemImage: "plus.circle.fill")
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(OikomiColor.brandPrimary)
+                            }
+                        }
                     } else {
                         List {
                             if !favorites.isEmpty {
@@ -94,6 +111,20 @@ struct ExercisePickerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingCreateForm = true
+                    } label: {
+                        Label("新規作成", systemImage: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingCreateForm) {
+                CustomExerciseFormSheet(initialName: trimmedSearch) { created in
+                    // 作成済み Exercise を呼び出し元に返し、ピッカー自身も閉じる
+                    onPick(created)
+                    dismiss()
                 }
             }
         }

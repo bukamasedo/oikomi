@@ -51,6 +51,8 @@ targets:
         UIBackgroundModes:
           - remote-notification
           - processing
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.shuhirouchi.oikomi.coaching.refresh
         UILaunchScreen:
           UIColorName: ""
         UIApplicationSceneManifest:
@@ -78,8 +80,6 @@ targets:
     entitlements:
       path: App/iOS/Oikomi.entitlements
       properties:
-        com.apple.developer.applesignin:
-          - Default
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
         com.apple.developer.icloud-services:
@@ -208,8 +208,6 @@ targets:
     entitlements:
       path: App/Mac/OikomiMac.entitlements
       properties:
-        com.apple.developer.applesignin:
-          - Default
         com.apple.developer.icloud-services:
           - CloudKit
         com.apple.developer.icloud-container-identifiers:

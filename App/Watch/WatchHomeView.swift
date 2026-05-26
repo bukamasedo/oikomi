@@ -2,10 +2,10 @@ import OikomiKit
 import SwiftData
 import SwiftUI
 
-/// watchOS のホーム。ルーティン選択 + クイック開始。
+/// watchOS のホーム。ルーティン一覧のみ表示し、選択でセッション開始。
 ///
-/// iPhone の WorkoutTabView 開始前画面と同じ思想 (上にクイック開始 hero、下にルーティン)、
-/// ただし Watch の画面制約に合わせて List ベース + 各行は1〜2行に収める。
+/// 計画系操作（ルーティン作成・種目追加）は iPhone 専任。Watch ではあらかじめ
+/// 用意されたルーティンを実行するだけに絞る。
 struct WatchHomeView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -21,24 +21,11 @@ struct WatchHomeView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        List {
-            Section {
-                quickStartButton
-            }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-
-            if !routines.isEmpty {
-                Section("ルーティン") {
-                    ForEach(routines) { routine in
-                        Button {
-                            startSession(from: routine)
-                        } label: {
-                            routineRow(routine)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
+        Group {
+            if routines.isEmpty {
+                emptyState
+            } else {
+                routineList
             }
         }
         .navigationTitle("Oikomi")
@@ -52,40 +39,28 @@ struct WatchHomeView: View {
     // MARK: - Subviews
 
     @ViewBuilder
-    private var quickStartButton: some View {
-        Button {
-            startSession(from: nil)
-        } label: {
-            HStack(spacing: WatchSpacing.m) {
-                ZStack {
-                    Circle().fill(.white.opacity(0.22))
-                    Image(systemName: "play.fill")
-                        .font(.body.weight(.bold))
-                        .foregroundStyle(.white)
+    private var routineList: some View {
+        List {
+            Section("ルーティン") {
+                ForEach(routines) { routine in
+                    Button {
+                        startSession(from: routine)
+                    } label: {
+                        routineRow(routine)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .frame(width: 32, height: 32)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("クイック開始")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.white)
-                    Text("ルーティンなし")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.85))
-                }
-                Spacer()
             }
-            .padding(.horizontal, WatchSpacing.m)
-            .padding(.vertical, WatchSpacing.m)
-            .background(
-                LinearGradient(
-                    colors: [WatchColor.brand, WatchColor.brandSecondary],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: RoundedRectangle(cornerRadius: WatchRadius.card, style: .continuous)
-            )
         }
-        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var emptyState: some View {
+        ContentUnavailableView(
+            "ルーティンがありません",
+            systemImage: "iphone.gen3",
+            description: Text("iPhone で最初のルーティンを作成してください")
+        )
     }
 
     @ViewBuilder
@@ -119,7 +94,7 @@ struct WatchHomeView: View {
 
     // MARK: - Actions
 
-    private func startSession(from routine: Routine?) {
+    private func startSession(from routine: Routine) {
         let repo = WorkoutSessionRepository(context: modelContext)
         do {
             try repo.startSession(routine: routine)

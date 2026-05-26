@@ -2,9 +2,13 @@ import SwiftUI
 
 /// レスト中に画面下部 (safeAreaInset) に常時表示するカード。
 ///
-/// 残り秒数表示は `Text(timerInterval:countsDown:)` で OS の秒同期に乗せ、
-/// 進捗リングは `TimelineView(.animation)` で滑らかに更新する。
-/// `endAt: Date` が両端末で共有されていれば、表示は端末間で揃う。
+/// 進捗リングは `TimelineView(.animation)` で滑らかに更新、残り時間は
+/// `Text(timerInterval:countsDown:)` で OS 秒同期。ボタンのラベル切替
+/// （「スキップ」⇔「閉じる」）は `TimelineView(.explicit([.now, endAt]))`
+/// で endAt の瞬間に確定的に再評価させる。
+/// 旧実装の `@State hasEnded` + `.task(id: endAt)` 方式は SwiftUI の親再描画で
+/// `Task.sleep` がキャンセルされたまま復帰しないと `hasEnded = true` まで到達せず、
+/// 「カウントは 0 まで進んでいるのにボタンが切り替わらない」症状の原因になっていた。
 struct RestTimerCard: View {
 
     let endAt: Date
@@ -44,12 +48,15 @@ struct RestTimerCard: View {
 
             Spacer()
 
-            Button("スキップ", action: onSkip)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(OikomiColor.brandPrimary)
-                .padding(.horizontal, OikomiSpacing.m)
-                .padding(.vertical, OikomiSpacing.s)
-                .background(OikomiColor.brandPrimary.opacity(0.12), in: Capsule())
+            TimelineView(.explicit([Date(), endAt, endAt.addingTimeInterval(0.05)])) { ctx in
+                let ended = ctx.date >= endAt
+                Button(ended ? "閉じる" : "スキップ", action: onSkip)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(OikomiColor.brandPrimary)
+                    .padding(.horizontal, OikomiSpacing.m)
+                    .padding(.vertical, OikomiSpacing.s)
+                    .background(OikomiColor.brandPrimary.opacity(0.12), in: Capsule())
+            }
         }
         .padding(.horizontal, OikomiSpacing.l)
         .padding(.vertical, OikomiSpacing.m)

@@ -7,7 +7,19 @@ import SwiftUI
 /// Hero header + 推移グラフカード + StatTile + 直近セット feed。
 struct ExerciseDetailView: View {
 
+    @Environment(\.modelContext) private var modelContext
+
     let exercise: Exercise
+
+    @State private var editingRest = false
+    @State private var pendingRestSeconds: Int? = nil
+    @State private var restErrorMessage: String?
+
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
 
     @Query(
         filter: #Predicate<WorkoutSession> { $0.endedAt != nil },
@@ -63,6 +75,8 @@ struct ExerciseDetailView: View {
             VStack(spacing: OikomiSpacing.l) {
                 metaCard
 
+                defaultRestEditorCard
+
                 if let pr {
                     prCard(pr)
                 }
@@ -79,6 +93,73 @@ struct ExerciseDetailView: View {
         .background(OikomiColor.appBackground)
         .navigationTitle(exercise.name)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $editingRest, onDismiss: saveRest) {
+            RestSecondsPickerSheet(
+                seconds: Binding(
+                    get: { pendingRestSeconds },
+                    set: { pendingRestSeconds = $0 }
+                ),
+                allowsDefault: false,
+                title: "デフォルトレスト"
+            )
+            .presentationDetents([.height(360)])
+            .presentationDragIndicator(.visible)
+        }
+        .alert("エラー", isPresented: .constant(restErrorMessage != nil)) {
+            Button("OK") { restErrorMessage = nil }
+        } message: {
+            Text(restErrorMessage ?? "")
+        }
+    }
+
+    @ViewBuilder
+    private var defaultRestEditorCard: some View {
+        Button {
+            pendingRestSeconds = exercise.defaultRestSeconds
+            editingRest = true
+        } label: {
+            HStack(spacing: OikomiSpacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous)
+                        .fill(OikomiColor.brandPrimary.opacity(0.14))
+                    Image(systemName: "timer")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(OikomiColor.brandPrimary)
+                }
+                .frame(width: 44, height: 44)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("デフォルトレスト")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    Text(RestSecondsPickerSheet.formatLabel(exercise.defaultRestSeconds))
+                        .font(.headline.monospacedDigit())
+                        .foregroundStyle(.primary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(OikomiSpacing.l)
+            .background(
+                OikomiColor.cardBackground,
+                in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func saveRest() {
+        guard let newValue = pendingRestSeconds, newValue != exercise.defaultRestSeconds else { return }
+        let repo = ExerciseRepository(context: modelContext)
+        do {
+            try repo.updateDefaultRestSeconds(exercise, to: newValue)
+        } catch {
+            restErrorMessage = "保存に失敗: \(error.localizedDescription)"
+        }
     }
 
     // MARK: - Meta
@@ -126,10 +207,10 @@ struct ExerciseDetailView: View {
                 Text("自己ベスト")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
-                Text("\(pr.weight.formatted()) kg × \(pr.reps)")
+                Text("\(WeightFormatter.string(kilograms: pr.weight, in: weightUnit)) × \(pr.reps)")
                     .font(.title2.weight(.semibold).monospacedDigit())
                 Text(
-                    "推定1RM \(pr.estimated1RM.formatted(.number.precision(.fractionLength(1)))) kg・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))"
+                    "推定1RM \(WeightFormatter.oneRM(kilograms: pr.estimated1RM, in: weightUnit))・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))"
                 )
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
@@ -166,8 +247,9 @@ struct ExerciseDetailView: View {
             }
             StatTile(
                 title: "総ボリューム",
-                value: totalVolume.formatted(.number.precision(.fractionLength(0))),
-                unit: "kg",
+                value: WeightFormatter.numberOnly(
+                    kilograms: totalVolume, in: weightUnit, fractionDigits: 0...0),
+                unit: weightUnit.symbol,
                 systemImage: "scalemass.fill",
                 tint: OikomiColor.statIndigo
             )
@@ -194,14 +276,14 @@ struct ExerciseDetailView: View {
                 Chart(weightTrend) { point in
                     LineMark(
                         x: .value("日付", point.date),
-                        y: .value("重量 (kg)", point.weight)
+                        y: .value("重量 (\(weightUnit.symbol))", weightUnit.fromKilograms(point.weight))
                     )
                     .foregroundStyle(OikomiColor.brandPrimary)
                     .interpolationMethod(.catmullRom)
 
                     PointMark(
                         x: .value("日付", point.date),
-                        y: .value("重量 (kg)", point.weight)
+                        y: .value("重量 (\(weightUnit.symbol))", weightUnit.fromKilograms(point.weight))
                     )
                     .foregroundStyle(OikomiColor.brandPrimary)
                 }
@@ -262,7 +344,7 @@ struct ExerciseDetailView: View {
             }
             Spacer()
             if let weight = set.weight, let reps = set.reps {
-                Text("\(weight.formatted()) kg × \(reps)")
+                Text("\(WeightFormatter.string(kilograms: weight, in: weightUnit)) × \(reps)")
                     .font(.body.monospacedDigit())
             } else if let reps = set.reps {
                 Text("\(reps) レップ")

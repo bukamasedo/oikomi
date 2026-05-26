@@ -85,6 +85,39 @@ struct SyncDTOTests {
         #expect(decoded.exercises == nil)
     }
 
+    @Test("RoutineExerciseDTO は plannedRestSeconds を保持して round-trip")
+    func routineExerciseDTOPreservesPlannedRestSeconds() throws {
+        let dto = RoutineExerciseDTO(
+            exerciseName: "ベンチプレス",
+            order: 0,
+            plannedSets: 4,
+            plannedReps: 6,
+            plannedWeight: 90,
+            plannedRestSeconds: 240
+        )
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+        let data = try encoder.encode(dto)
+        let decoded = try decoder.decode(RoutineExerciseDTO.self, from: data)
+        #expect(decoded == dto)
+        #expect(decoded.plannedRestSeconds == 240)
+    }
+
+    @Test("RoutineExerciseDTO は plannedRestSeconds 欠落 JSON も decode 可能")
+    func routineExerciseDTODecodeWithoutRestSeconds_legacyCompat() throws {
+        let json = """
+            {
+                "exerciseName": "ベンチプレス",
+                "order": 0,
+                "plannedSets": 3,
+                "plannedReps": 8
+            }
+            """
+        let decoded = try JSONDecoder().decode(RoutineExerciseDTO.self, from: Data(json.utf8))
+        #expect(decoded.plannedRestSeconds == nil)
+        #expect(decoded.plannedWeight == nil)
+    }
+
     @Test("SetRecordDTO は encode → decode で同値")
     func setRoundTrip() throws {
         let dto = SetRecordDTO(

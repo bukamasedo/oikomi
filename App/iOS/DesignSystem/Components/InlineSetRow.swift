@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// - 左端: 完了チェックマーク（タップで markSetCompleted を呼ぶ想定）
 /// - 中央: 「(順番)  重量 × レップ」または「(順番) Xレップ（自重）」
-/// - 右端: 推定 1RM（完了時のみ）
+/// - 右端: 未完了は実施予定のレスト時間（⏱90秒）/ 完了は推定 1RM
 struct InlineSetRow: View {
 
     let set: SetRecord
@@ -13,6 +13,12 @@ struct InlineSetRow: View {
     var onToggleComplete: (() -> Void)? = nil
     /// 重量・レップ部分をタップしたとき呼ばれる。編集シート起動用。nil なら無反応。
     var onEditTap: (() -> Void)? = nil
+
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
 
     var body: some View {
         HStack(spacing: OikomiSpacing.m) {
@@ -43,11 +49,7 @@ struct InlineSetRow: View {
 
                     Spacer(minLength: OikomiSpacing.s)
 
-                    if set.isCompleted, let rm = set.estimated1RM {
-                        Text("1RM \(rm.formatted(.number.precision(.fractionLength(0))))")
-                            .font(.caption2.monospacedDigit())
-                            .foregroundStyle(.tertiary)
-                    }
+                    trailingAccessory
                 }
                 .contentShape(Rectangle())
             }
@@ -59,9 +61,31 @@ struct InlineSetRow: View {
     }
 
     @ViewBuilder
+    private var trailingAccessory: some View {
+        if set.isCompleted {
+            if let rm = set.estimated1RM {
+                Text("1RM \(rm.formatted(.number.precision(.fractionLength(0))))")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.tertiary)
+            }
+        } else {
+            let rest = set.resolveRestSeconds()
+            if rest > 0 {
+                HStack(spacing: 2) {
+                    Image(systemName: "timer")
+                    Text("\(rest)秒")
+                        .monospacedDigit()
+                }
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            }
+        }
+    }
+
+    @ViewBuilder
     private var valueLabel: some View {
         if let weight = set.weight, let reps = set.reps {
-            Text("\(weight.formatted()) kg × \(reps)")
+            Text("\(WeightFormatter.string(kilograms: weight, in: weightUnit)) × \(reps)")
                 .font(OikomiFont.setValue)
         } else if let reps = set.reps {
             Text("\(reps) レップ（自重）")

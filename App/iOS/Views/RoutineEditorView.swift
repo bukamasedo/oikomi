@@ -18,6 +18,7 @@ struct RoutineEditorView: View {
 
     @State private var name: String = ""
     @State private var drafts: [RoutineExerciseDraft] = []
+    @State private var scheduledWeekdays: Set<Int> = []
     @State private var showingPicker = false
     @State private var editingField: EditingField?
     @State private var draggedID: UUID?
@@ -28,6 +29,7 @@ struct RoutineEditorView: View {
             ScrollView {
                 VStack(spacing: OikomiSpacing.l) {
                     nameCard
+                    scheduleCard
 
                     if drafts.isEmpty {
                         emptyStateCard
@@ -167,11 +169,77 @@ struct RoutineEditorView: View {
         !name.trimmingCharacters(in: .whitespaces).isEmpty && !drafts.isEmpty
     }
 
+    @ViewBuilder
+    private var scheduleCard: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            HStack(spacing: OikomiSpacing.m) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous)
+                        .fill(OikomiColor.brandPrimary.opacity(0.14))
+                    Image(systemName: "calendar")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(OikomiColor.brandPrimary)
+                }
+                .frame(width: 36, height: 36)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("実施曜日")
+                        .font(.subheadline.weight(.semibold))
+                    Text("PR 予測通知の対象になります。未選択でも保存できます。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            HStack(spacing: OikomiSpacing.xs) {
+                ForEach(weekdayOptions, id: \.weekday) { option in
+                    weekdayChip(for: option)
+                }
+            }
+        }
+        .padding(OikomiSpacing.l)
+        .background(
+            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                .fill(OikomiColor.cardBackground)
+        )
+    }
+
+    /// 1=日, 2=月, ... 7=土
+    private var weekdayOptions: [(weekday: Int, label: String)] {
+        [
+            (1, "日"), (2, "月"), (3, "火"), (4, "水"), (5, "木"), (6, "金"), (7, "土"),
+        ]
+    }
+
+    @ViewBuilder
+    private func weekdayChip(for option: (weekday: Int, label: String)) -> some View {
+        let isSelected = scheduledWeekdays.contains(option.weekday)
+        Button {
+            if isSelected {
+                scheduledWeekdays.remove(option.weekday)
+            } else {
+                scheduledWeekdays.insert(option.weekday)
+            }
+        } label: {
+            Text(option.label)
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(
+                            isSelected
+                                ? OikomiColor.brandPrimary
+                                : OikomiColor.brandPrimary.opacity(0.10))
+                )
+                .foregroundStyle(isSelected ? Color.white : OikomiColor.brandPrimary)
+        }
+        .buttonStyle(.plain)
+    }
+
     private func loadExisting() {
         guard let routine = existingRoutine else { return }
         // 既存値があるなら一度だけロード (シート再表示で上書きしない)
         if !name.isEmpty || !drafts.isEmpty { return }
         name = routine.name
+        scheduledWeekdays = Set(routine.scheduledWeekdays)
         drafts = routine.orderedExercises.compactMap { entry in
             guard let exercise = entry.exercise else { return nil }
             return RoutineExerciseDraft(
@@ -179,7 +247,8 @@ struct RoutineEditorView: View {
                 exercise: exercise,
                 plannedSets: entry.plannedSets,
                 plannedReps: entry.plannedReps,
-                plannedWeight: entry.plannedWeight.map(quantize)
+                plannedWeight: entry.plannedWeight,
+                plannedRestSeconds: entry.plannedRestSeconds
             )
         }
     }
@@ -194,7 +263,9 @@ struct RoutineEditorView: View {
                 exercise: exercise,
                 plannedSets: 3,
                 plannedReps: lastSet?.reps ?? 8,
-                plannedWeight: isBodyweight ? nil : quantize(lastSet?.weight ?? 20)
+                plannedWeight: isBodyweight
+                    ? nil : (lastSet?.weight ?? UnitPreference.current().defaultInitialKilograms),
+                plannedRestSeconds: nil
             )
         )
     }
@@ -220,9 +291,11 @@ struct RoutineEditorView: View {
                     exercise: draft.exercise,
                     plannedSets: draft.plannedSets,
                     plannedReps: draft.plannedReps,
-                    plannedWeight: isBodyweight ? nil : draft.plannedWeight
+                    plannedWeight: isBodyweight ? nil : draft.plannedWeight,
+                    plannedRestSeconds: draft.plannedRestSeconds
                 )
             }
+            try repo.setScheduledWeekdays(Array(scheduledWeekdays), for: routine)
             dismiss()
         } catch {
             errorMessage = "保存に失敗: \(error.localizedDescription)"
@@ -242,6 +315,12 @@ private struct RoutineExerciseDraftCard: View {
     var onEditField: (ValueField) -> Void
     var onDelete: () -> Void
 
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
+
     private var isBodyweight: Bool {
         draft.exercise.measurementType == .bodyweightReps
     }
@@ -258,8 +337,9 @@ private struct RoutineExerciseDraftCard: View {
             if !isBodyweight {
                 valueRow(
                     label: "重量",
-                    valueText:
-                        "\((draft.plannedWeight ?? 20).formatted(.number.precision(.fractionLength(0...1)))) kg"
+                    valueText: WeightFormatter.string(
+                        kilograms: draft.plannedWeight ?? weightUnit.defaultInitialKilograms,
+                        in: weightUnit)
                 ) { onEditField(.weight) }
                 Divider().padding(.leading, OikomiSpacing.l * 2)
             }
@@ -274,6 +354,12 @@ private struct RoutineExerciseDraftCard: View {
                 label: "セット数",
                 valueText: "\(draft.plannedSets) セット"
             ) { onEditField(.sets) }
+            Divider().padding(.leading, OikomiSpacing.l * 2)
+
+            valueRow(
+                label: "レスト",
+                valueText: restValueLabel()
+            ) { onEditField(.rest) }
         }
         .background(
             OikomiColor.cardBackground,
@@ -309,10 +395,15 @@ private struct RoutineExerciseDraftCard: View {
                     .font(.headline)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                if draft.exercise.defaultRestSeconds > 0 {
-                    Text("レスト \(draft.exercise.defaultRestSeconds) 秒")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                let effectiveRest = draft.plannedRestSeconds ?? draft.exercise.defaultRestSeconds
+                if effectiveRest > 0 {
+                    Text(
+                        draft.plannedRestSeconds != nil
+                            ? "レスト \(RestSecondsPickerSheet.formatLabel(effectiveRest))（上書き）"
+                            : "レスト \(RestSecondsPickerSheet.formatLabel(effectiveRest))"
+                    )
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
                 }
             }
 
@@ -327,6 +418,13 @@ private struct RoutineExerciseDraftCard: View {
                 .background(Color.secondary.opacity(0.14), in: Capsule())
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private func restValueLabel() -> String {
+        if let override = draft.plannedRestSeconds {
+            return RestSecondsPickerSheet.formatLabel(override)
+        }
+        return "デフォルト (\(RestSecondsPickerSheet.formatLabel(draft.exercise.defaultRestSeconds)))"
     }
 
     @ViewBuilder
@@ -394,12 +492,13 @@ private struct ReorderDropDelegate: DropDelegate {
 }
 
 private enum ValueField {
-    case weight, reps, sets
+    case weight, reps, sets, rest
     var title: String {
         switch self {
         case .weight: "重量"
         case .reps: "レップ"
         case .sets: "セット"
+        case .rest: "レスト"
         }
     }
 }
@@ -412,6 +511,8 @@ private struct RoutineExerciseDraft: Identifiable {
     var plannedSets: Int
     var plannedReps: Int
     var plannedWeight: Double?
+    /// nil の場合は exercise.defaultRestSeconds を採用（上書き無し）。
+    var plannedRestSeconds: Int?
 }
 
 /// 1 つの値だけを ±入力で編集する bottom sheet。`NumericStepperField` で一貫性確保。
@@ -419,6 +520,12 @@ private struct SingleValueSheet: View {
     @Binding var draft: RoutineExerciseDraft
     let field: ValueField
     @Environment(\.dismiss) private var dismiss
+
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
 
     var body: some View {
         NavigationStack {
@@ -448,16 +555,13 @@ private struct SingleValueSheet: View {
     private var stepperView: some View {
         switch field {
         case .weight:
-            NumericStepperField(
+            WeightStepperField(
                 title: "重量",
-                value: Binding(
-                    get: { quantize(draft.plannedWeight ?? 20) },
+                kilograms: Binding(
+                    get: { draft.plannedWeight ?? weightUnit.defaultInitialKilograms },
                     set: { draft.plannedWeight = $0 }
                 ),
-                range: 0...500,
-                step: 2.5,
-                formatter: { $0.formatted(.number.precision(.fractionLength(0...1))) },
-                unit: "kg"
+                unit: weightUnit
             )
         case .reps:
             NumericStepperField(
@@ -483,11 +587,35 @@ private struct SingleValueSheet: View {
                 formatter: { "\(Int($0))" },
                 unit: "セット"
             )
+        case .rest:
+            // 表示値: 上書きがあればそれを、無ければ種目デフォルトを採用。
+            // +/- がタップされた瞬間に plannedRestSeconds が確定し、override 扱いになる。
+            let displayed = draft.plannedRestSeconds ?? draft.exercise.defaultRestSeconds
+            VStack(alignment: .leading, spacing: OikomiSpacing.xs) {
+                NumericStepperField(
+                    title: "レスト",
+                    value: Binding(
+                        get: { Double(displayed) },
+                        set: { draft.plannedRestSeconds = max(0, Int($0)) }
+                    ),
+                    range: 0...600,
+                    step: 15,
+                    formatter: { Int($0) == 0 ? "なし" : "\(Int($0))" },
+                    unit: Int(displayed) == 0 ? "" : "秒"
+                )
+                if draft.plannedRestSeconds != nil,
+                    draft.plannedRestSeconds != draft.exercise.defaultRestSeconds
+                {
+                    Button {
+                        draft.plannedRestSeconds = nil
+                    } label: {
+                        Text("デフォルト (\(draft.exercise.defaultRestSeconds) 秒) に戻す")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(OikomiColor.brandPrimary)
+                    }
+                    .padding(.leading, OikomiSpacing.s)
+                }
+            }
         }
     }
-}
-
-/// Wheel ピッカーの tag に一致させるため 2.5 の倍数に丸める。
-private func quantize(_ v: Double) -> Double {
-    (v / 2.5).rounded() * 2.5
 }
