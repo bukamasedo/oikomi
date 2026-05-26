@@ -98,17 +98,45 @@ public final class WorkoutActivityController {
         }
 
         /// セッション終了時に呼ぶ。
+        /// `.immediate` でロック画面 / Dynamic Island から即座に消す（`.default` は ~30 秒残るため
+        /// 「終わったのに残っている」という違和感の原因になる）。
         public func end() async {
             guard let activity = current else { return }
             let finalState = activity.content.state
             await activity.end(
                 ActivityContent(state: finalState, staleDate: nil),
-                dismissalPolicy: .default
+                dismissalPolicy: .immediate
             )
             current = nil
         }
 
         public var isActive: Bool { current != nil }
+
+        /// 現在進行中の Live Activity が紐付くセッション ID。未起動なら nil。
+        /// 「自分の Activity だけ end する」判定に使う（誤って別セッションの Activity を end しない）。
+        public var currentSessionId: UUID? { current?.attributes.sessionId }
+
+        /// アプリ起動時に呼ぶ。ActivityKit に残存している全 Live Activity を走査し、
+        /// `activeSessionIds` に含まれないものを即時 end する。
+        ///
+        /// クラッシュや強制終了で `end()` が呼ばれず孤児になった Activity を掃除する用途。
+        /// 副次効果として、生存している Activity が見つかれば `current` に再バインドして
+        /// プロセス再起動後の controller 整合性も回復する。
+        public func cleanupOrphanedActivities(activeSessionIds: Set<UUID>) async {
+            for activity in Activity<WorkoutActivityAttributes>.activities {
+                let sid = activity.attributes.sessionId
+                if activeSessionIds.contains(sid) {
+                    if current == nil {
+                        current = activity
+                    }
+                } else {
+                    await activity.end(
+                        ActivityContent(state: activity.content.state, staleDate: nil),
+                        dismissalPolicy: .immediate
+                    )
+                }
+            }
+        }
 
     #else
         public func start(sessionId: UUID, routineName: String?, startedAt: Date, setCount: Int = 0) {}
@@ -117,5 +145,7 @@ public final class WorkoutActivityController {
         public func setRestEnd(_ endAt: Date) async {}
         public func end() async {}
         public var isActive: Bool { false }
+        public var currentSessionId: UUID? { nil }
+        public func cleanupOrphanedActivities(activeSessionIds: Set<UUID>) async {}
     #endif
 }

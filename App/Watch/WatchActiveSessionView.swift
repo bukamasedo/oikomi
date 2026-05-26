@@ -12,6 +12,10 @@ struct WatchActiveSessionView: View {
     @State private var errorMessage: String?
     @State private var restEndAt: Date?
     @State private var restTotalSeconds: Int = 60
+    /// レストタイマー hero に出す「次セットの目安」用。直前に完了したセットの重量 (kg) と
+    /// レップ数を保持し、`WatchRestTimerView` の下段に "次: 60 kg × 10" として渡す。
+    @State private var nextSetWeightHint: Double?
+    @State private var nextSetRepsHint: Int?
     @State private var confirmingFinish = false
     @State private var healthSession = WatchHealthSession()
 
@@ -28,15 +32,19 @@ struct WatchActiveSessionView: View {
 
     var body: some View {
         List {
+            // 経過時間 + セット数。レスト中も視認できるよう常に最上段に残す。
             Section { sessionHero }
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
 
+            // レストタイマー hero。restEndAt が立っている間だけ sessionHero の直下に挿入し、
+            // 「あと何秒で次のセット」を一目で取れるようにする。
             if let endAt = restEndAt {
                 Section {
                     WatchRestTimerView(
                         endAt: endAt,
-                        totalSeconds: restTotalSeconds
+                        totalSeconds: restTotalSeconds,
+                        nextSetHint: nextSetHintText
                     ) {
                         clearRestTimer()
                         // iPhone 側のローカル通知 / Live Activity restEndAt も同時にクリア
@@ -95,6 +103,8 @@ struct WatchActiveSessionView: View {
                 if let total = note.userInfo?["totalSeconds"] as? Int, total > 0 {
                     restTotalSeconds = total
                 }
+                nextSetWeightHint = note.userInfo?["completedWeightKg"] as? Double
+                nextSetRepsHint = note.userInfo?["completedReps"] as? Int
             } else if kind == SyncEnvelope.Kind.unitPreferenceUpdate.rawValue {
                 // iPhone で kg/lb 切替を受信。@AppStorage の KVO が再描画を起こさない経路の
                 // フォールバックとして、明示的に App Group UserDefaults から再読込し、
@@ -251,6 +261,8 @@ struct WatchActiveSessionView: View {
                 let total = set.restSeconds ?? set.exercise?.defaultRestSeconds ?? 60
                 restEndAt = endAt
                 restTotalSeconds = total
+                nextSetWeightHint = set.weight
+                nextSetRepsHint = set.reps
                 RestTimerNotifier.scheduleRestEnd(at: endAt)
             }
         } catch {
@@ -273,7 +285,21 @@ struct WatchActiveSessionView: View {
 
     private func clearRestTimer() {
         restEndAt = nil
+        nextSetWeightHint = nil
+        nextSetRepsHint = nil
         RestTimerNotifier.cancel()
+    }
+
+    /// レストタイマー hero 下段の「次: 60 kg × 10」テキスト。直前完了セットの値を `weightUnit`
+    /// で整形する。重量未入力ならレップ数のみ、両方無ければ nil（行を非表示）。
+    private var nextSetHintText: String? {
+        if let w = nextSetWeightHint, let r = nextSetRepsHint {
+            return "\(WeightFormatter.string(kilograms: w, in: weightUnit)) × \(r)"
+        }
+        if let r = nextSetRepsHint {
+            return "\(r) レップ"
+        }
+        return nil
     }
 
     private func finishSession() {

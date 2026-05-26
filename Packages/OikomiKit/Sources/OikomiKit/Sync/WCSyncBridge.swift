@@ -718,6 +718,21 @@ public final class WCSyncBridge {
                 }
             }
         }
+
+        // 相手デバイスでセッションが終了した場合、iPhone 側の Live Activity も閉じる。
+        // ローカル `finishSession` 経由ではなく、Watch → iPhone への endedAt 受信のみの経路で
+        // Live Activity が残ってしまうのを防ぐ。誤って別セッションの Activity を end しないよう、
+        // currentSessionId と一致するときのみ end する。
+        #if os(iOS)
+            if dto.endedAt != nil {
+                let endingId = dto.id
+                Task { @MainActor in
+                    if WorkoutActivityController.shared.currentSessionId == endingId {
+                        await WorkoutActivityController.shared.end()
+                    }
+                }
+            }
+        #endif
     }
 
     private func upsert(set dto: SetRecordDTO, in context: ModelContext) {

@@ -1,6 +1,7 @@
 import OikomiKit
 import SwiftData
 import SwiftUI
+import UIKit
 
 @main
 struct OikomiApp: App {
@@ -10,6 +11,12 @@ struct OikomiApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // アラート/確認ダイアログのボタン色を標準ラベル色に揃える。
+        // ブランド tint（オレンジ）が UIAlertController にも継承され、キャンセルや
+        // 非破壊アクションがオレンジ表示になるため。destructive ボタンは UIKit が
+        // 赤を強制するので影響なし。
+        UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = .label
+
         do {
             let container = try SharedModelContainer.bootstrap()
             self.sharedModelContainer = container
@@ -37,6 +44,17 @@ struct OikomiApp: App {
                 if let cleaned = try? sessionRepo.cleanupStaleActiveSessions(), cleaned > 0 {
                     print("[Oikomi.sync] cleaned up \(cleaned) stale active sessions on launch")
                 }
+                // クラッシュ / 強制終了で end されなかった孤児 Live Activity を掃除する。
+                // 生きているセッション (endedAt == nil) に紐付く Activity は残し、それ以外は即時 end。
+                let activeIdsDescriptor = FetchDescriptor<WorkoutSession>(
+                    predicate: #Predicate<WorkoutSession> { $0.endedAt == nil }
+                )
+                let activeIds: Set<UUID> = Set(
+                    ((try? container.mainContext.fetch(activeIdsDescriptor)) ?? []).map(\.id)
+                )
+                await WorkoutActivityController.shared.cleanupOrphanedActivities(
+                    activeSessionIds: activeIds
+                )
                 // オンボーディング未完了の場合は OnboardingView 内でリクエストするため
                 // 起動時の自動リクエストはスキップ（システムダイアログの二重表示を防ぐ）。
                 if OnboardingState.isCompleted {
@@ -48,6 +66,8 @@ struct OikomiApp: App {
                 }
                 // StoreKit 2: products ロード + Transaction listener 開始 + 現在の権利確認
                 await SubscriptionManager.shared.start()
+                // Tip Jar（開発者支援）の Consumable IAP listener も起動
+                await TipJarManager.shared.start()
 
                 // 通知の許可 + BGTask 登録 + 全予定通知のスケジュール（オンボーディング完了後のみ）
                 if OnboardingState.isCompleted {

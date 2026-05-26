@@ -1,7 +1,88 @@
 {
   "identifier" : "C1B1A2E0-9A40-4A2C-9C2C-9AA53A6B7E11",
   "nonRenewingSubscriptions" : [],
-  "products" : [],
+  "products" : [
+    {
+      "displayPrice" : "120",
+      "familyShareable" : false,
+      "internalID" : "T0000001",
+      "localizations" : [
+        {
+          "description" : "プロテイン 1 杯分の応援。ありがとうございます！",
+          "displayName" : "🥛 プロテイン 1 杯",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "Buy the developer a protein shake.",
+          "displayName" : "🥛 Protein Shake",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.shuhirouchi.oikomi.tip.protein",
+      "referenceName" : "Tip - Protein",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "250",
+      "familyShareable" : false,
+      "internalID" : "T0000002",
+      "localizations" : [
+        {
+          "description" : "鶏胸肉 200g 分の応援。励みになります。",
+          "displayName" : "🍙 鶏胸肉 200g",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "Buy the developer 200g of chicken breast.",
+          "displayName" : "🍙 Chicken Breast 200g",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.shuhirouchi.oikomi.tip.chicken",
+      "referenceName" : "Tip - Chicken",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "500",
+      "familyShareable" : false,
+      "internalID" : "T0000003",
+      "localizations" : [
+        {
+          "description" : "ステーキ 1 枚分の応援。本当にありがとう！",
+          "displayName" : "🥩 ステーキ 1 枚",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "Buy the developer a steak.",
+          "displayName" : "🥩 Steak",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.shuhirouchi.oikomi.tip.steak",
+      "referenceName" : "Tip - Steak",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "1000",
+      "familyShareable" : false,
+      "internalID" : "T0000004",
+      "localizations" : [
+        {
+          "description" : "焼肉チートデイ級の大応援。最高です！",
+          "displayName" : "🍗 焼肉チートデイ",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "Treat the developer to a cheat day BBQ.",
+          "displayName" : "🍗 BBQ Cheat Day",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.shuhirouchi.oikomi.tip.cheatday",
+      "referenceName" : "Tip - Cheat Day",
+      "type" : "Consumable"
+    }
+  ],
   "settings" : {
     "_failTransactionsEnabled" : false,
     "_locale" : "ja_JP",
