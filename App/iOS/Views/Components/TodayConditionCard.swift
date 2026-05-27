@@ -71,7 +71,7 @@ struct TodayConditionCard: View {
             divider
             metricCell(
                 title: "睡眠",
-                value: sleepHours.map { String(format: "%.1f", $0) } ?? "—",
+                value: sleepHours.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
                 unit: "h",
                 systemImage: "moon.zzz.fill",
                 tint: OikomiColor.statIndigo

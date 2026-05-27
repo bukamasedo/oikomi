@@ -127,7 +127,7 @@ struct BodyAnalysisSection: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(String(format: "%.1f", latest.value))
+                        Text(latest.value, format: .number.precision(.fractionLength(1)))
                             .font(.title3.weight(.semibold).monospacedDigit())
                             .foregroundStyle(tint)
                         Text(unit)
@@ -144,9 +144,14 @@ struct BodyAnalysisSection: View {
                         Image(systemName: delta >= 0 ? "arrow.up.right" : "arrow.down.right")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(delta >= 0 ? OikomiColor.statBlue : OikomiColor.statGreen)
-                        Text("\(delta >= 0 ? "+" : "")\(String(format: "%.1f", delta))")
-                            .font(.callout.monospacedDigit())
-                            .foregroundStyle(delta >= 0 ? OikomiColor.statBlue : OikomiColor.statGreen)
+                        Text(
+                            delta,
+                            format: .number
+                                .precision(.fractionLength(1))
+                                .sign(strategy: .always(includingZero: false))
+                        )
+                        .font(.callout.monospacedDigit())
+                        .foregroundStyle(delta >= 0 ? OikomiColor.statBlue : OikomiColor.statGreen)
                         Text(unit)
                             .font(.caption2)
                             .foregroundStyle(.secondary)

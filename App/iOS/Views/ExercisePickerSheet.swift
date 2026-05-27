@@ -77,7 +77,7 @@ struct ExercisePickerSheet: View {
             VStack(spacing: 0) {
                 filterChips
                     .padding(.vertical, 8)
-                    .background(Color(uiColor: .systemBackground))
+                    .background(.background)
 
                 Group {
                     if isEmpty {

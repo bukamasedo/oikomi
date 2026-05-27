@@ -259,7 +259,7 @@ public final class WorkoutSessionRepository {
 
         if WorkoutActivityController.shared.isActive, let exercise = set.exercise {
             let name = exercise.name
-            let count = set.session?.sets?.filter { $0.isCompleted }.count ?? 0
+            let count = set.session?.sets?.count(where: { $0.isCompleted }) ?? 0
             Task { @MainActor in
                 await WorkoutActivityController.shared.update(
                     currentExerciseName: name,

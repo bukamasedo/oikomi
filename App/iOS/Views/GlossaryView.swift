@@ -135,13 +135,12 @@ private struct GlossaryEntry: Identifiable, Hashable {
     }
 
     func matches(_ query: String) -> Bool {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty { return true }
-        let needle = trimmed.lowercased()
-        return term.lowercased().contains(needle)
-            || (alias?.lowercased().contains(needle) ?? false)
-            || description.lowercased().contains(needle)
-            || (note?.lowercased().contains(needle) ?? false)
+        let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if needle.isEmpty { return true }
+        return term.localizedStandardContains(needle)
+            || (alias?.localizedStandardContains(needle) ?? false)
+            || description.localizedStandardContains(needle)
+            || (note?.localizedStandardContains(needle) ?? false)
     }
 }
 

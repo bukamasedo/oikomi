@@ -99,7 +99,7 @@ struct StatsProvider: TimelineProvider {
             let range = Analytics.currentWeekRange()
             let weekDays = Analytics.weeklySessionDays(sessions: completed, in: range)
             let consecutiveWeeks = Analytics.consecutiveActiveWeeks(sessions: completed)
-            let thisWeekSessions = completed.filter { range.contains($0.startedAt) }.count
+            let thisWeekSessions = completed.count(where: { range.contains($0.startedAt) })
             let weekVolume = Analytics.volumeByMuscleGroup(sets: allSets, in: range)
                 .values.reduce(0, +)
             var prDescriptor = FetchDescriptor<PersonalRecord>(

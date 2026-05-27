@@ -124,7 +124,7 @@ struct WatchActiveSessionView: View {
     @ViewBuilder
     private var sessionHero: some View {
         let totalSets = session.sets?.count ?? 0
-        let completedSets = session.sets?.filter(\.isCompleted).count ?? 0
+        let completedSets = session.sets?.count(where: \.isCompleted) ?? 0
         let allDone = completedSets >= totalSets && totalSets > 0
 
         HStack(spacing: WatchSpacing.m) {
@@ -160,7 +160,7 @@ struct WatchActiveSessionView: View {
 
     @ViewBuilder
     private func exerciseSection(exercise: Exercise, sets: [SetRecord]) -> some View {
-        let completed = sets.filter(\.isCompleted).count
+        let completed = sets.count(where: \.isCompleted)
         let allDone = completed >= sets.count && sets.count > 0
         Section {
             ForEach(sets) { set in
