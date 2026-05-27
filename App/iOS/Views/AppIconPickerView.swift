@@ -38,8 +38,7 @@ struct AppIconPickerView: View {
     @State private var currentAlternateName: String? = UIApplication.shared.alternateIconName
     @State private var isChanging = false
     @State private var errorMessage: String?
-    @State private var toast: AppIconOption?
-    @State private var toastTask: Task<Void, Never>?
+    @State private var showChangedAlert = false
 
     private static let iconBackgroundColor = Color(
         red: 0.90980, green: 0.36471, blue: 0.01569)
@@ -62,16 +61,9 @@ struct AppIconPickerView: View {
         }
         .navigationTitle("アイコン")
         .navigationBarTitleDisplayMode(.inline)
-        .overlay(alignment: .top) {
-            if let toast {
-                IconChangedToast(option: toast)
-                    .padding(.horizontal, OikomiSpacing.l)
-                    .padding(.top, OikomiSpacing.s)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .zIndex(1)
-            }
+        .alert("アイコンを変更しました", isPresented: $showChangedAlert) {
+            Button("OK") {}
         }
-        .animation(.easeInOut(duration: 0.2), value: toast?.id)
         .alert("変更に失敗しました", isPresented: .constant(errorMessage != nil)) {
             Button("OK") { errorMessage = nil }
         } message: {
@@ -150,18 +142,8 @@ struct AppIconPickerView: View {
                 print("[Oikomi.icon] setAlternateIconName succeeded: \(target)")
                 currentAlternateName = option.alternateName
                 WCSyncBridge.shared.sendIconChange(iconName: option.alternateName)
-                showToast(for: option)
+                showChangedAlert = true
             }
-        }
-    }
-
-    private func showToast(for option: AppIconOption) {
-        toastTask?.cancel()
-        toast = option
-        toastTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(1800))
-            guard !Task.isCancelled else { return }
-            toast = nil
         }
     }
 
@@ -176,45 +158,6 @@ struct AppIconPickerView: View {
             }
         #endif
         return "\(error.localizedDescription)\n(domain: \(error.domain), code: \(error.code))"
-    }
-}
-
-private struct IconChangedToast: View {
-    let option: AppIconOption
-
-    var body: some View {
-        HStack(spacing: OikomiSpacing.m) {
-            Image(option.previewAssetName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 36, height: 36)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("アイコンを変更しました")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                Text(option.title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, OikomiSpacing.m)
-        .padding(.vertical, OikomiSpacing.s)
-        .background(
-            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
-                .fill(.regularMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
-                .strokeBorder(Color.black.opacity(0.06), lineWidth: 0.5)
-        )
-        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isStaticText)
-        .accessibilityLabel("アイコンを\(option.title)に変更しました")
     }
 }
 
