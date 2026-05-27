@@ -87,6 +87,7 @@ struct TipJarSheet: View {
             Image(systemName: "heart.circle.fill")
                 .font(.system(size: 48))
                 .foregroundStyle(OikomiColor.brandPrimary)
+                .accessibilityHidden(true)
             Text("Oikomi の開発を応援")
                 .font(.title3.weight(.semibold))
             Text("いつもありがとうございます。お気持ちで支援いただけると、開発の励みになります。Pro とは別の任意のチップです。")
@@ -110,6 +111,7 @@ struct TipJarSheet: View {
                     .background(
                         Circle().fill(Color.secondary.opacity(0.10))
                     )
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(kind.displayName)
                         .font(.headline)
@@ -219,6 +221,7 @@ struct TipThankYouView: View {
                     .frame(width: 140, height: 140)
                 Text(purchasedKind?.emoji ?? "🥛")
                     .font(.system(size: 72))
+                    .accessibilityHidden(true)
             }
             VStack(spacing: 8) {
                 Text("ありがとうございます！")
