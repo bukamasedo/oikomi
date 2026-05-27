@@ -13,6 +13,7 @@ struct TipJarSheet: View {
     @State private var tipJar = TipJarManager.shared
     @State private var showThankYou: Bool = false
     @State private var lastPurchasedKind: TipProductKind?
+    @State private var showError: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -36,16 +37,13 @@ struct TipJarSheet: View {
                     Button("閉じる") { dismiss() }
                 }
             }
-            .alert(
-                "エラー",
-                isPresented: Binding(
-                    get: { tipJar.lastError != nil },
-                    set: { _ in tipJar.clearLastError() }
-                )
-            ) {
-                Button("OK") {}
+            .alert("エラー", isPresented: $showError) {
+                Button("OK") { tipJar.clearLastError() }
             } message: {
                 Text(tipJar.lastError ?? "")
+            }
+            .onChange(of: tipJar.lastError) { _, newValue in
+                showError = newValue != nil
             }
             .task {
                 if tipJar.products.isEmpty {

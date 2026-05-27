@@ -640,6 +640,7 @@ private struct ProUpgradeSheet: View {
     @State private var subscriptionManager = SubscriptionManager.shared
     @State private var selectedProductID: String = ProductIDs.proYearly
     @State private var showRestoredAlert = false
+    @State private var showError = false
 
     private var monthlyProduct: Product? {
         subscriptionManager.products.first(where: { $0.id == ProductIDs.proMonthly })
@@ -676,16 +677,13 @@ private struct ProUpgradeSheet: View {
                         ? "Pro が有効になりました。"
                         : "復元可能な購入が見つかりませんでした。")
             }
-            .alert(
-                "エラー",
-                isPresented: Binding(
-                    get: { subscriptionManager.lastError != nil },
-                    set: { _ in subscriptionManager.clearLastError() }
-                )
-            ) {
-                Button("OK") {}
+            .alert("エラー", isPresented: $showError) {
+                Button("OK") { subscriptionManager.clearLastError() }
             } message: {
                 Text(subscriptionManager.lastError ?? "")
+            }
+            .onChange(of: subscriptionManager.lastError) { _, newValue in
+                showError = newValue != nil
             }
             .task {
                 if subscriptionManager.products.isEmpty {
