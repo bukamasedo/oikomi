@@ -60,7 +60,7 @@ struct HomeView: View {
     }
 
     private var weeklySessionCount: Int {
-        completedSessions.filter { weeklyVolumeRange.contains($0.startedAt) }.count
+        completedSessions.count(where: { weeklyVolumeRange.contains($0.startedAt) })
     }
 
     private var recentPRs: [PersonalRecord] {

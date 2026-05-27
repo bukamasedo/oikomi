@@ -13,8 +13,10 @@ struct WorkoutLiveActivityWidget: Widget {
             // watchOS 26 + iOS 26 で Smart Stack ミラー表示に対応するため、@Environment 経由で
             // ActivityFamily を判定し、小サイズ (Watch) と通常 (iOS Lock Screen) を切り替える。
             FamilyAwareLiveActivityContent(context: context)
-                .activityBackgroundTint(Color.black.opacity(0.65))
-                .activitySystemActionForegroundColor(.white)
+                // 純正アプリと同様に system material（白っぽい）。`.primary` / `.secondary` を
+                // 使うことで Light/Dark の壁紙どちらでも読める。
+                .activityBackgroundTint(Color.white.opacity(0.18))
+                .activitySystemActionForegroundColor(WidgetColor.brand)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -46,18 +48,13 @@ struct WorkoutLiveActivityWidget: Widget {
     private func expandedLeading(context: ActivityViewContext<WorkoutActivityAttributes>)
         -> some View
     {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 3) {
-                Image(systemName: "figure.strengthtraining.traditional")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(WidgetColor.brand)
-                Text(context.attributes.routineName ?? "ワークアウト")
-                    .font(.caption.weight(.semibold))
-                    .lineLimit(1)
-            }
-            Text(context.attributes.startedAt, style: .timer)
-                .font(.caption2.monospacedDigit())
-                .foregroundStyle(.secondary)
+        HStack(spacing: WidgetSpacing.s) {
+            Image(systemName: "figure.strengthtraining.traditional")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(WidgetColor.brand)
+            Text(context.attributes.routineName ?? "ワークアウト")
+                .font(.caption.weight(.semibold))
+                .lineLimit(1)
         }
     }
 
@@ -65,46 +62,54 @@ struct WorkoutLiveActivityWidget: Widget {
     private func expandedTrailing(context: ActivityViewContext<WorkoutActivityAttributes>)
         -> some View
     {
-        VStack(alignment: .trailing, spacing: 0) {
-            Text("\(context.state.setCount)")
-                .font(.title3.monospacedDigit().weight(.bold))
-            Text("セット")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .fixedSize(horizontal: true, vertical: false)
+        Text("\(context.state.setCount) セット")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
     }
 
     @ViewBuilder
     private func expandedBottom(context: ActivityViewContext<WorkoutActivityAttributes>)
         -> some View
     {
-        if let endAt = context.state.restEndAt, endAt > .now {
-            HStack(spacing: WidgetSpacing.m) {
+        let resting = (context.state.restEndAt ?? .distantPast) > .now
+
+        if resting, let endAt = context.state.restEndAt {
+            HStack(alignment: .firstTextBaseline, spacing: WidgetSpacing.m) {
                 Image(systemName: "timer")
-                    .font(.subheadline.weight(.semibold))
-                Text("レスト")
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                Text(endAt, style: .timer)
-                    .font(.subheadline.monospacedDigit().weight(.bold))
-            }
-            .foregroundStyle(WidgetColor.brand)
-            .padding(.horizontal, WidgetSpacing.s)
-            .padding(.vertical, WidgetSpacing.s)
-            .background(
-                WidgetColor.brand.opacity(0.15),
-                in: RoundedRectangle(cornerRadius: WidgetRadius.chip, style: .continuous)
-            )
-        } else if let name = context.state.currentExerciseName {
-            HStack(spacing: WidgetSpacing.s) {
-                Image(systemName: "figure.strengthtraining.traditional")
-                    .font(.subheadline)
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(WidgetColor.brand)
-                Text(name)
-                    .font(.subheadline.weight(.medium))
+                Text(endAt, style: .timer)
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(WidgetColor.brand)
                     .lineLimit(1)
-                Spacer()
+                    .minimumScaleFactor(0.6)
+                Text("レスト残り")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(WidgetColor.brand.opacity(0.8))
+                Spacer(minLength: 0)
+            }
+        } else {
+            HStack(alignment: .firstTextBaseline, spacing: WidgetSpacing.s) {
+                Image(systemName: "timer")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(context.attributes.startedAt, style: .timer)
+                    .font(.headline.monospacedDigit().weight(.semibold))
+                    .lineLimit(1)
+                Text("経過")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if let name = context.state.currentExerciseName, !name.isEmpty {
+                    Spacer(minLength: WidgetSpacing.s)
+                    Text(name)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
             }
         }
     }
@@ -159,119 +164,81 @@ private struct FamilyAwareLiveActivityContent: View {
         }
     }
 
+    // MARK: - Shared helpers
+
+    private var isResting: Bool {
+        (context.state.restEndAt ?? .distantPast) > .now
+    }
+
+    /// "ベンチプレス · 3 セット完了" / "3 セット完了" 形式の 1 行サブタイトル。
+    private var subtitleText: String {
+        let setLabel = "\(context.state.setCount) セット完了"
+        if let name = context.state.currentExerciseName, !name.isEmpty {
+            return "\(name) · \(setLabel)"
+        }
+        return setLabel
+    }
+
     // MARK: - iOS Lock Screen / StandBy
 
     @ViewBuilder
     private var lockScreenBody: some View {
-        VStack(alignment: .leading, spacing: WidgetSpacing.l) {
-            HStack(spacing: WidgetSpacing.m) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: WidgetRadius.tile, style: .continuous)
-                        .fill(WidgetColor.brand.opacity(0.25))
-                    Image(systemName: "figure.strengthtraining.traditional")
-                        .font(.callout.weight(.bold))
-                        .foregroundStyle(WidgetColor.brand)
-                }
-                .frame(width: 32, height: 32)
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(context.attributes.routineName ?? "ワークアウト中")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                    Text("Oikomi セッション")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 0) {
-                    Text(context.attributes.startedAt, style: .timer)
-                        .font(.subheadline.monospacedDigit().weight(.semibold))
-                        .foregroundStyle(.white)
-                    Text("経過")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
+        VStack(alignment: .leading, spacing: WidgetSpacing.m) {
+            HStack(spacing: WidgetSpacing.s) {
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(WidgetColor.brand)
+                Text(context.attributes.routineName ?? "ワークアウト中")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
             }
 
-            if let endAt = context.state.restEndAt, endAt > .now {
-                restingBody(endAt: endAt, setCount: context.state.setCount)
-            } else {
-                idleBody(
-                    setCount: context.state.setCount,
-                    currentExerciseName: context.state.currentExerciseName
-                )
-            }
+            Text(subtitleText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            timerRow
         }
         .padding(WidgetSpacing.xl)
     }
 
+    /// レスト中は大型・ブランド色、そうでない時は経過時間を控えめに。
     @ViewBuilder
-    private func restingBody(endAt: Date, setCount: Int) -> some View {
-        HStack(alignment: .center, spacing: WidgetSpacing.l) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text("セット")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.6))
-                Text("\(setCount)")
-                    .font(.title2.monospacedDigit().weight(.bold))
-                    .foregroundStyle(.white)
-            }
-            .fixedSize(horizontal: true, vertical: false)
-
-            Divider()
-                .overlay(Color.white.opacity(0.2))
-
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    Image(systemName: "timer")
-                        .font(.caption2)
-                    Text("レスト残り")
-                        .font(.caption2.weight(.semibold))
-                }
-                .foregroundStyle(WidgetColor.brand)
-
+    private var timerRow: some View {
+        if isResting, let endAt = context.state.restEndAt {
+            HStack(alignment: .firstTextBaseline, spacing: WidgetSpacing.m) {
+                Image(systemName: "timer")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(WidgetColor.brand)
                 Text(endAt, style: .timer)
-                    .font(.title2.monospacedDigit().weight(.bold))
+                    .font(.system(size: 46, weight: .bold, design: .rounded))
+                    .monospacedDigit()
                     .foregroundStyle(WidgetColor.brand)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Text("レスト残り")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(WidgetColor.brand.opacity(0.8))
+                Spacer(minLength: 0)
             }
-            .fixedSize(horizontal: true, vertical: false)
-
-            Spacer()
-        }
-    }
-
-    @ViewBuilder
-    private func idleBody(setCount: Int, currentExerciseName: String?) -> some View {
-        HStack(alignment: .center, spacing: WidgetSpacing.l) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text("セット")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.6))
-                Text("\(setCount)")
-                    .font(.title2.monospacedDigit().weight(.bold))
-                    .foregroundStyle(.white)
+            .padding(.top, WidgetSpacing.xs)
+        } else {
+            HStack(alignment: .firstTextBaseline, spacing: WidgetSpacing.s) {
+                Image(systemName: "timer")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(context.attributes.startedAt, style: .timer)
+                    .font(.headline.monospacedDigit().weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Text("経過")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
             }
-            .fixedSize(horizontal: true, vertical: false)
-
-            if let name = currentExerciseName {
-                Divider()
-                    .overlay(Color.white.opacity(0.2))
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("直近")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.6))
-                    Text(name)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                }
-            }
-
-            Spacer()
         }
     }
 
@@ -279,8 +246,8 @@ private struct FamilyAwareLiveActivityContent: View {
 
     @ViewBuilder
     private var watchSmallBody: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 3) {
                 Image(systemName: "figure.strengthtraining.traditional")
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(WidgetColor.brand)
@@ -290,33 +257,37 @@ private struct FamilyAwareLiveActivityContent: View {
                 Spacer(minLength: 0)
             }
 
-            if let endAt = context.state.restEndAt, endAt > .now {
-                HStack(spacing: 4) {
+            Text(subtitleText)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            if isResting, let endAt = context.state.restEndAt {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Image(systemName: "timer")
-                        .font(.caption2.weight(.semibold))
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(WidgetColor.brand)
                     Text(endAt, style: .timer)
-                        .font(.title3.monospacedDigit().weight(.bold))
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .monospacedDigit()
                         .foregroundStyle(WidgetColor.brand)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                    Spacer(minLength: 0)
                 }
-                Text("\(context.state.setCount) セット完了")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
             } else {
                 HStack(spacing: 4) {
-                    Text("\(context.state.setCount)")
-                        .font(.title3.monospacedDigit().weight(.bold))
-                    Text("セット")
+                    Image(systemName: "timer")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(context.attributes.startedAt, style: .timer)
+                        .font(.caption.monospacedDigit().weight(.semibold))
+                        .lineLimit(1)
+                    Text("経過")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     Spacer(minLength: 0)
                 }
-                Text(context.attributes.startedAt, style: .timer)
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
             }
         }
         .padding(8)

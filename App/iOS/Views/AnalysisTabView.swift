@@ -205,7 +205,7 @@ struct AnalysisTabView: View {
                             weightUnit.fromKilograms(point.total))
                     )
                     .foregroundStyle(OikomiColor.brandPrimary)
-                    .cornerRadius(4)
+                    .clipShape(.rect(cornerRadius: 4))
                 }
                 .frame(height: 200)
                 .chartXAxis {

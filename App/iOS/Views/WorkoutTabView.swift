@@ -285,7 +285,7 @@ struct WorkoutTabView: View {
     @ViewBuilder
     private func sessionHero(_ session: WorkoutSession) -> some View {
         let totalSets = session.sets?.count ?? 0
-        let completedSets = session.sets?.filter(\.isCompleted).count ?? 0
+        let completedSets = session.sets?.count(where: \.isCompleted) ?? 0
 
         HStack(spacing: OikomiSpacing.l) {
             VStack(alignment: .leading, spacing: 4) {

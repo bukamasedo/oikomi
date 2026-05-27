@@ -33,42 +33,54 @@ struct ExercisePickerSheet: View {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private var filtered: [Exercise] {
+    /// 873 種をキー入力ごとに 3 重に走査していた箇所をワンパス化して入力遅延を解消する。
+    /// `muscleGroups` getter は内部で compactMap が走るので、フィルタ時は raw value で比較する。
+    private var filterResult: (favorites: [Exercise], others: [Exercise]) {
         let excludedIds = Set(excluding.map(\.id))
-        return allExercises.filter { exercise in
-            if excludedIds.contains(exercise.id) { return false }
-            if favoritesOnly && !exercise.isFavorite { return false }
-            if let filter = selectedFilter, !exercise.muscleGroups.contains(filter) { return false }
-            if searchText.isEmpty { return true }
-            let query = searchText.lowercased()
-            return exercise.name.lowercased().contains(query)
-                || exercise.nameEn.lowercased().contains(query)
+        let query = trimmedSearch
+        let hasQuery = !query.isEmpty
+        let filterRaw = selectedFilter?.rawValue
+
+        var favorites: [Exercise] = []
+        var others: [Exercise] = []
+        favorites.reserveCapacity(32)
+        others.reserveCapacity(allExercises.count)
+
+        for exercise in allExercises {
+            if excludedIds.contains(exercise.id) { continue }
+            if favoritesOnly && !exercise.isFavorite { continue }
+            if let filterRaw, !exercise.muscleGroupRawValues.contains(filterRaw) { continue }
+            if hasQuery {
+                if !exercise.name.localizedCaseInsensitiveContains(query)
+                    && !exercise.nameEn.localizedCaseInsensitiveContains(query)
+                {
+                    continue
+                }
+            }
+            if exercise.isFavorite {
+                favorites.append(exercise)
+            } else {
+                others.append(exercise)
+            }
         }
+        return (favorites, others)
     }
 
-    private var favorites: [Exercise] {
-        filtered.filter { $0.isFavorite }
-    }
-
-    private var nonFavorites: [Exercise] {
-        filtered.filter { !$0.isFavorite }
-    }
-
-    private var availableMuscleFilters: [MuscleGroup] {
-        // データに存在する部位のみを表示
-        let all = Set(allExercises.flatMap(\.muscleGroups))
-        return MuscleGroup.allCases.filter { all.contains($0) }
-    }
+    /// データに存在する部位のみを表示。allExercises 変更時にだけ更新し、毎キー走査を避ける。
+    @State private var availableMuscleFilters: [MuscleGroup] = []
 
     var body: some View {
-        NavigationStack {
+        let result = filterResult
+        let isEmpty = result.favorites.isEmpty && result.others.isEmpty
+
+        return NavigationStack {
             VStack(spacing: 0) {
                 filterChips
                     .padding(.vertical, 8)
-                    .background(Color(uiColor: .systemBackground))
+                    .background(.background)
 
                 Group {
-                    if filtered.isEmpty {
+                    if isEmpty {
                         OikomiEmptyState(
                             title: "種目が見つかりません",
                             message: trimmedSearch.isEmpty
@@ -89,15 +101,15 @@ struct ExercisePickerSheet: View {
                         }
                     } else {
                         List {
-                            if !favorites.isEmpty {
+                            if !result.favorites.isEmpty {
                                 Section("お気に入り") {
-                                    ForEach(favorites) { exercise in
+                                    ForEach(result.favorites) { exercise in
                                         exerciseRowButton(exercise)
                                     }
                                 }
                             }
-                            Section(favorites.isEmpty ? "" : "すべての種目") {
-                                ForEach(nonFavorites) { exercise in
+                            Section(result.favorites.isEmpty ? "" : "すべての種目") {
+                                ForEach(result.others) { exercise in
                                     exerciseRowButton(exercise)
                                 }
                             }
@@ -120,6 +132,8 @@ struct ExercisePickerSheet: View {
                     }
                 }
             }
+            .onAppear { refreshAvailableMuscleFilters() }
+            .onChange(of: allExercises.count) { _, _ in refreshAvailableMuscleFilters() }
             .sheet(isPresented: $showingCreateForm) {
                 CustomExerciseFormSheet(initialName: trimmedSearch) { created in
                     // 作成済み Exercise を呼び出し元に返し、ピッカー自身も閉じる
@@ -128,6 +142,16 @@ struct ExercisePickerSheet: View {
                 }
             }
         }
+    }
+
+    private func refreshAvailableMuscleFilters() {
+        var seen: Set<String> = []
+        for exercise in allExercises {
+            for raw in exercise.muscleGroupRawValues {
+                seen.insert(raw)
+            }
+        }
+        availableMuscleFilters = MuscleGroup.allCases.filter { seen.contains($0.rawValue) }
     }
 
     @ViewBuilder

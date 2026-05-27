@@ -139,7 +139,7 @@ struct ConditionAnalysisSection: View {
         case "bpm", "ms":
             return "\(Int(value.rounded()))"
         default:
-            return String(format: "%.1f", value)
+            return value.formatted(.number.precision(.fractionLength(1)))
         }
     }
 

@@ -106,7 +106,7 @@ struct NumericStepperField: View {
         holdInterval = 0.3
         holdTask = Task { @MainActor in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: UInt64(holdInterval * 1_000_000_000))
+                try? await Task.sleep(for: .seconds(holdInterval))
                 if Task.isCancelled { break }
                 action()
                 holdInterval = max(0.05, holdInterval * 0.85)

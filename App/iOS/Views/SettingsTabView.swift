@@ -29,10 +29,12 @@ struct SettingsTabView: View {
         NotificationTimePreset.morning.rawValue
     @State private var showResetConfirm = false
     @State private var showProSheet = false
+    @State private var showTipSheet = false
     @State private var showOnboarding = false
     @State private var errorMessage: String?
     @State private var showCloudKitChangeAlert = false
     @State private var exportedURL: URL?
+    @State private var tipJar = TipJarManager.shared
 
     #if DEBUG
         @State private var mockIsRunning = false
@@ -43,13 +45,24 @@ struct SettingsTabView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section { proHeroRow }
-                    .listRowInsets(
-                        EdgeInsets(
-                            top: OikomiSpacing.s, leading: OikomiSpacing.l, bottom: OikomiSpacing.s,
-                            trailing: OikomiSpacing.l)
-                    )
-                    .listRowBackground(Color.clear)
+                Section {
+                    proHeroRow
+                        .listRowInsets(
+                            EdgeInsets(
+                                top: OikomiSpacing.s, leading: OikomiSpacing.l,
+                                bottom: OikomiSpacing.s, trailing: OikomiSpacing.l)
+                        )
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    tipJarRow
+                        .listRowInsets(
+                            EdgeInsets(
+                                top: 0, leading: OikomiSpacing.l,
+                                bottom: OikomiSpacing.s, trailing: OikomiSpacing.l)
+                        )
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
                 preferenceSection
                 notificationsSection
                 iCloudSection
@@ -74,6 +87,9 @@ struct SettingsTabView: View {
             }
             .sheet(isPresented: $showProSheet) {
                 ProUpgradeSheet()
+            }
+            .sheet(isPresented: $showTipSheet) {
+                TipJarSheet()
             }
             .fullScreenCover(isPresented: $showOnboarding) {
                 OnboardingView(isPresented: $showOnboarding)
@@ -134,6 +150,49 @@ struct SettingsTabView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var tipJarRow: some View {
+        Button {
+            showTipSheet = true
+        } label: {
+            HStack(spacing: OikomiSpacing.m) {
+                ZStack {
+                    Circle().fill(OikomiColor.brandPrimary.opacity(0.18))
+                    Image(systemName: "heart.fill")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(OikomiColor.brandPrimary)
+                }
+                .frame(width: 44, height: 44)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("開発者を支援")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(tipJarSubtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(OikomiSpacing.l)
+            .background(
+                RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                    .fill(OikomiColor.cardBackground)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var tipJarSubtitle: String {
+        if tipJar.totalCount > 0 {
+            return "これまで \(tipJar.totalCount) 回・¥\(tipJar.totalAmountJPY) ありがとうございます"
+        }
+        return "気が向いたらお気持ちで応援を"
     }
 
     @ViewBuilder
@@ -581,6 +640,7 @@ private struct ProUpgradeSheet: View {
     @State private var subscriptionManager = SubscriptionManager.shared
     @State private var selectedProductID: String = ProductIDs.proYearly
     @State private var showRestoredAlert = false
+    @State private var showError = false
 
     private var monthlyProduct: Product? {
         subscriptionManager.products.first(where: { $0.id == ProductIDs.proMonthly })
@@ -617,16 +677,13 @@ private struct ProUpgradeSheet: View {
                         ? "Pro が有効になりました。"
                         : "復元可能な購入が見つかりませんでした。")
             }
-            .alert(
-                "エラー",
-                isPresented: Binding(
-                    get: { subscriptionManager.lastError != nil },
-                    set: { _ in subscriptionManager.clearLastError() }
-                )
-            ) {
-                Button("OK") {}
+            .alert("エラー", isPresented: $showError) {
+                Button("OK") { subscriptionManager.clearLastError() }
             } message: {
                 Text(subscriptionManager.lastError ?? "")
+            }
+            .onChange(of: subscriptionManager.lastError) { _, newValue in
+                showError = newValue != nil
             }
             .task {
                 if subscriptionManager.products.isEmpty {

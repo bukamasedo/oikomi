@@ -42,7 +42,7 @@ public enum DataExporter {
                 let reps = set.reps.map { "\($0)" } ?? ""
                 let duration = set.durationSeconds.map { "\($0)" } ?? ""
                 let isWarmup = set.isWarmup ? "1" : "0"
-                let oneRM = set.estimated1RM.map { String(format: "%.2f", $0) } ?? ""
+                let oneRM = set.estimated1RM.map { $0.formatted(.number.precision(.fractionLength(2))) } ?? ""
                 lines.append("\(date),\(exercise),\(weight),\(reps),\(duration),\(isWarmup),\(oneRM)")
             }
         }

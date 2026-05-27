@@ -19,7 +19,7 @@ struct ExerciseInSessionCard: View {
     /// ヘッダのメニューから「種目を削除」がタップされたとき呼ばれる。readOnly 時はメニューごと非表示。
     var onDeleteExercise: () -> Void = {}
 
-    private var completedCount: Int { sets.filter(\.isCompleted).count }
+    private var completedCount: Int { sets.count(where: \.isCompleted) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

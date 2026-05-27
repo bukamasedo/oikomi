@@ -259,7 +259,7 @@ public final class WorkoutSessionRepository {
 
         if WorkoutActivityController.shared.isActive, let exercise = set.exercise {
             let name = exercise.name
-            let count = set.session?.sets?.filter { $0.isCompleted }.count ?? 0
+            let count = set.session?.sets?.count(where: { $0.isCompleted }) ?? 0
             Task { @MainActor in
                 await WorkoutActivityController.shared.update(
                     currentExerciseName: name,
@@ -471,11 +471,19 @@ public final class WorkoutSessionRepository {
     }
 
     /// セッションを削除する（途中で破棄したい場合）。
-    public func deleteSession(_ session: WorkoutSession) throws {
+    ///
+    /// 削除対象が現在 Live Activity を持っているセッションなら、Live Activity も即座に閉じる。
+    /// 別セッションを誤って end しないよう `currentSessionId` と ID 照合する。
+    public func deleteSession(_ session: WorkoutSession) async throws {
+        let sessionId = session.id
         context.delete(session)
         try context.save()
         reloadStatsWidgetTimelines()
         ForgottenSessionNotifier.cancel()
+
+        if WorkoutActivityController.shared.currentSessionId == sessionId {
+            await WorkoutActivityController.shared.end()
+        }
     }
 
     private func reloadStatsWidgetTimelines() {

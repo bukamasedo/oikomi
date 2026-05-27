@@ -5,6 +5,8 @@ import SwiftUI
 /// 履歴タブ。Apple Fitness History + ヘルスケアの期間セグメントに着想を得た構成。
 struct HistoryView: View {
 
+    @Environment(\.modelContext) private var modelContext
+
     @Query(
         filter: #Predicate<WorkoutSession> { $0.endedAt != nil },
         sort: \WorkoutSession.startedAt,
@@ -14,6 +16,8 @@ struct HistoryView: View {
 
     @State private var period: PeriodSegment.Period = .week
     @State private var selectedDate: Date?
+    @State private var sessionPendingDeletion: WorkoutSession?
+    @State private var navigationTarget: WorkoutSession?
 
     @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
     private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
@@ -67,19 +71,46 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: OikomiSpacing.l) {
+            List {
+                Section {
                     PeriodSegment(selection: $period)
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(
+                    EdgeInsets(
+                        top: OikomiSpacing.l, leading: OikomiSpacing.l,
+                        bottom: 0, trailing: OikomiSpacing.l)
+                )
+                .listRowSeparator(.hidden)
 
+                Section {
                     summaryCard
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(
+                    EdgeInsets(
+                        top: OikomiSpacing.l, leading: OikomiSpacing.l,
+                        bottom: 0, trailing: OikomiSpacing.l)
+                )
+                .listRowSeparator(.hidden)
 
+                Section {
                     HistoryCalendarView(activeDates: activeDates, selectedDate: $selectedDate)
                         .padding(OikomiSpacing.l)
                         .background(
                             OikomiColor.cardBackground,
                             in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(
+                    EdgeInsets(
+                        top: OikomiSpacing.l, leading: OikomiSpacing.l,
+                        bottom: 0, trailing: OikomiSpacing.l)
+                )
+                .listRowSeparator(.hidden)
 
-                    if periodSessions.isEmpty {
+                if periodSessions.isEmpty {
+                    Section {
                         OikomiEmptyState(
                             title: "この期間の記録はありません",
                             message: "期間を切り替えるか、カレンダーで別の日付を選んでください。",
@@ -87,35 +118,104 @@ struct HistoryView: View {
                             tint: OikomiColor.brandPrimary
                         )
                         .frame(minHeight: 200)
-                    } else {
-                        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-                            SectionHeader(
-                                title: sessionsSectionTitle,
-                                trailing: {
-                                    if selectedDate != nil {
-                                        Button("すべて") { selectedDate = nil }
-                                            .font(.subheadline.weight(.medium))
-                                    }
-                                }
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(
+                        EdgeInsets(
+                            top: OikomiSpacing.l, leading: OikomiSpacing.l,
+                            bottom: OikomiSpacing.xxl, trailing: OikomiSpacing.l)
+                    )
+                    .listRowSeparator(.hidden)
+                } else {
+                    Section {
+                        ForEach(periodSessions) { session in
+                            Button {
+                                navigationTarget = session
+                            } label: {
+                                WorkoutHistoryCard(session: session)
+                            }
+                            .buttonStyle(.plain)
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: 0, leading: OikomiSpacing.l,
+                                    bottom: OikomiSpacing.m, trailing: OikomiSpacing.l)
                             )
-                            VStack(spacing: OikomiSpacing.m) {
-                                ForEach(periodSessions) { session in
-                                    NavigationLink(value: session) {
-                                        WorkoutHistoryCard(session: session)
-                                    }
-                                    .buttonStyle(.plain)
+                            .listRowSeparator(.hidden)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    sessionPendingDeletion = session
+                                } label: {
+                                    Label("削除", systemImage: "trash")
                                 }
                             }
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    sessionPendingDeletion = session
+                                } label: {
+                                    Label("セッションを削除", systemImage: "trash")
+                                }
+                            } preview: {
+                                WorkoutHistoryCard(session: session)
+                            }
                         }
+                    } header: {
+                        SectionHeader(
+                            title: sessionsSectionTitle,
+                            trailing: {
+                                if selectedDate != nil {
+                                    Button("すべて") { selectedDate = nil }
+                                        .font(.subheadline.weight(.medium))
+                                }
+                            }
+                        )
+                        .listRowInsets(
+                            EdgeInsets(
+                                top: OikomiSpacing.l, leading: OikomiSpacing.l,
+                                bottom: OikomiSpacing.s, trailing: OikomiSpacing.l)
+                        )
+                        .textCase(nil)
                     }
+
+                    Section {
+                        Color.clear.frame(height: OikomiSpacing.xxl)
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
                 }
-                .padding(.horizontal, OikomiSpacing.l)
-                .padding(.bottom, OikomiSpacing.xxl)
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
             .background(OikomiColor.appBackground)
             .navigationTitle("履歴")
-            .navigationDestination(for: WorkoutSession.self) { session in
+            .navigationDestination(item: $navigationTarget) { session in
                 SessionDetailView(session: session)
+            }
+            .alert(
+                "このセッションを削除しますか？",
+                isPresented: Binding(
+                    get: { sessionPendingDeletion != nil },
+                    set: { if !$0 { sessionPendingDeletion = nil } }
+                ),
+                presenting: sessionPendingDeletion
+            ) { session in
+                Button("削除", role: .destructive) { deleteSession(session) }
+                Button("キャンセル", role: .cancel) { sessionPendingDeletion = nil }
+            } message: { _ in
+                Text("セット記録もすべて削除されます。この操作は取り消せません。")
+            }
+        }
+    }
+
+    private func deleteSession(_ session: WorkoutSession) {
+        let repo = WorkoutSessionRepository(context: modelContext)
+        sessionPendingDeletion = nil
+        Task { @MainActor in
+            do {
+                try await repo.deleteSession(session)
+            } catch {
+                print("[HistoryView] failed to delete session: \(error)")
             }
         }
     }
