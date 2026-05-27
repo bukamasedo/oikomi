@@ -16,7 +16,7 @@ struct WorkoutLiveActivityWidget: Widget {
                 // 純正アプリと同様に system material（白っぽい）。`.primary` / `.secondary` を
                 // 使うことで Light/Dark の壁紙どちらでも読める。
                 .activityBackgroundTint(Color.white.opacity(0.18))
-                .activitySystemActionForegroundColor(WidgetColor.brand)
+                .activitySystemActionForegroundColor(Color.primary)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -34,10 +34,10 @@ struct WorkoutLiveActivityWidget: Widget {
                 compactTrailing(context: context)
             } minimal: {
                 Image(systemName: "figure.strengthtraining.traditional")
-                    .foregroundStyle(WidgetColor.brand)
+                    .foregroundStyle(Color.primary)
             }
             .widgetURL(URL(string: "oikomi://workout"))
-            .keylineTint(WidgetColor.brand)
+            .keylineTint(Color.primary)
         }
         .supplementalActivityFamilies([.small])
     }
@@ -51,7 +51,7 @@ struct WorkoutLiveActivityWidget: Widget {
         HStack(spacing: WidgetSpacing.s) {
             Image(systemName: "figure.strengthtraining.traditional")
                 .font(.caption.weight(.bold))
-                .foregroundStyle(WidgetColor.brand)
+                .foregroundStyle(Color.primary)
             Text(context.attributes.routineName ?? "ワークアウト")
                 .font(.caption.weight(.semibold))
                 .lineLimit(1)
@@ -79,16 +79,16 @@ struct WorkoutLiveActivityWidget: Widget {
             HStack(alignment: .firstTextBaseline, spacing: WidgetSpacing.m) {
                 Image(systemName: "timer")
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(WidgetColor.brand)
+                    .foregroundStyle(Color.primary)
                 Text(endAt, style: .timer)
                     .font(.system(size: 40, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                    .foregroundStyle(WidgetColor.brand)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 Text("レスト残り")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(WidgetColor.brand.opacity(0.8))
+                    .foregroundStyle(.secondary)
                 Spacer(minLength: 0)
             }
         } else {
@@ -119,7 +119,7 @@ struct WorkoutLiveActivityWidget: Widget {
         -> some View
     {
         Image(systemName: "figure.strengthtraining.traditional")
-            .foregroundStyle(WidgetColor.brand)
+            .foregroundStyle(Color.primary)
     }
 
     @ViewBuilder
@@ -129,7 +129,7 @@ struct WorkoutLiveActivityWidget: Widget {
         if let endAt = context.state.restEndAt, endAt > .now {
             Text(endAt, style: .timer)
                 .monospacedDigit()
-                .foregroundStyle(WidgetColor.brand)
+                .foregroundStyle(Color.primary)
                 .frame(width: 48)
         } else {
             HStack(spacing: 2) {
@@ -187,7 +187,7 @@ private struct FamilyAwareLiveActivityContent: View {
             HStack(spacing: WidgetSpacing.s) {
                 Image(systemName: "figure.strengthtraining.traditional")
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(WidgetColor.brand)
+                    .foregroundStyle(Color.primary)
                 Text(context.attributes.routineName ?? "ワークアウト中")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
@@ -212,16 +212,16 @@ private struct FamilyAwareLiveActivityContent: View {
             HStack(alignment: .firstTextBaseline, spacing: WidgetSpacing.m) {
                 Image(systemName: "timer")
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(WidgetColor.brand)
+                    .foregroundStyle(Color.primary)
                 Text(endAt, style: .timer)
                     .font(.system(size: 46, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                    .foregroundStyle(WidgetColor.brand)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 Text("レスト残り")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(WidgetColor.brand.opacity(0.8))
+                    .foregroundStyle(.secondary)
                 Spacer(minLength: 0)
             }
             .padding(.top, WidgetSpacing.xs)
@@ -250,7 +250,7 @@ private struct FamilyAwareLiveActivityContent: View {
             HStack(spacing: 3) {
                 Image(systemName: "figure.strengthtraining.traditional")
                     .font(.caption2.weight(.bold))
-                    .foregroundStyle(WidgetColor.brand)
+                    .foregroundStyle(Color.primary)
                 Text(context.attributes.routineName ?? "ワークアウト")
                     .font(.caption2.weight(.semibold))
                     .lineLimit(1)
@@ -266,11 +266,11 @@ private struct FamilyAwareLiveActivityContent: View {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Image(systemName: "timer")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(WidgetColor.brand)
+                        .foregroundStyle(Color.primary)
                     Text(endAt, style: .timer)
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .monospacedDigit()
-                        .foregroundStyle(WidgetColor.brand)
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
                     Spacer(minLength: 0)
