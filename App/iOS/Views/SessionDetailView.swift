@@ -67,10 +67,9 @@ struct SessionDetailView: View {
         .background(OikomiColor.appBackground)
         .navigationTitle(session.startedAt.formatted(date: .abbreviated, time: .omitted))
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog(
+        .alert(
             "このセッションをコピーして開始しますか？",
-            isPresented: $showingCopyConfirmation,
-            titleVisibility: .visible
+            isPresented: $showingCopyConfirmation
         ) {
             Button("コピーして開始") { copySession() }
             Button("キャンセル", role: .cancel) {}
