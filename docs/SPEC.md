@@ -21,7 +21,7 @@
 
 ## 1. 概要
 
-Apple エコシステムにフル特化した筋トレ記録アプリ。Apple Watch を主役に、HealthKit / Live Activity / Apple Intelligence を統合し、**「Apple Watchだけで完結する、ヘルスデータと連動した筋トレ記録」** を提供する。
+Apple エコシステムにフル特化した筋トレ記録アプリ。HealthKit / Live Activity / Apple Intelligence を統合し、**「iPhone で組み立て、Apple Watch で追い込む、ヘルスデータと連動した筋トレ記録」** を提供する。役割分担: iPhone でルーティンと種目を計画し、ジムでは Apple Watch をスタンドアロン記録デバイスとして使う。
 
 - プロダクト名: **Oikomi**（追い込み）
   - App Store 表記: **Oikomi - 筋トレ記録 & Apple Watch**
@@ -78,11 +78,11 @@ Apple エコシステムにフル特化した筋トレ記録アプリ。Apple Wa
 
 ### コア訴求
 
-> **「Apple Watch だけで完結する、ヘルスデータ駆動の筋トレ記録」**
+> **「iPhone で組み立て、Apple Watch で追い込む、ヘルスデータ駆動の筋トレ記録」**
 
 3つの体験価値：
 
-1. **手首だけで完結** — Apple Watch スタンドアロン動作 + Live Activity / Dynamic Island
+1. **手首だけで実行** — iPhone で作成したルーティンを Apple Watch スタンドアロンで実行・記録（ジムで iPhone を取り出さない）。Live Activity / Dynamic Island で進行中表示
 2. **賢い** — HRV・睡眠・生理周期と連動した負荷自動調整
 3. **日本語ネイティブ** — UI・種目名・コーチング文言すべて自然な日本語
 

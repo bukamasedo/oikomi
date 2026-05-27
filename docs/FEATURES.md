@@ -98,7 +98,7 @@ NavigationSplitView のプレースホルダ実装。本格対応は v2.0 以降
 
 ## 2. Apple Watch（`App/Watch/`）
 
-**スタンドアロン動作**。iPhone がなくても完結。
+**実行専用デバイス**。iPhone で作成済みのルーティンを Apple Watch スタンドアロンで実行・記録する設計（watchOS standalone app）。計画系操作（ルーティン作成・種目追加）は iPhone 専任。
 
 ### 2.1 ホーム（`WatchHomeView.swift`）
 
@@ -250,7 +250,7 @@ iOS 側で BGTaskScheduler (`com.shuhirouchi.oikomi.coaching.refresh`) により
 |---|---|---|
 | 基本記録 | ✅ | ✅ |
 | 履歴・カレンダー | ✅ 無制限 | ✅ |
-| Apple Watch スタンドアロン記録 | ✅ | ✅ |
+| Apple Watch でのセッション実行・記録 | ✅ | ✅ |
 | HealthKit 書き込み（HKWorkout） | ✅ | ✅ |
 | Live Activity / Dynamic Island | ✅ | ✅ |
 | ウィジェット / Smart Stack | ✅ | ✅ |

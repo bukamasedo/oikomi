@@ -37,10 +37,10 @@ HRVと睡眠で読む筋トレ習慣
 別案:
 
 ```
-Apple Watchで完結する筋トレ記録
+iPhoneで計画、Watchで追い込む
 ```
 
-(18 字)
+(15 字)
 
 ```
 孤独な追い込みのための筋トレ
@@ -53,29 +53,31 @@ Apple Watchで完結する筋トレ記録
 ## Promotional Text (170 字 / 動的更新可)
 
 ```
-Apple Watchだけで完結する筋トレ記録アプリ。HRV・睡眠・心拍からAIが今日の負荷を提案し、Live Activityで進捗を常時表示。1RM自動計算、ルーティン管理、873種の種目ライブラリ。データは端末内で完結し外部送信ゼロのプライバシー設計。
+iPhoneでルーティンを組み立て、Apple Watchでジムで追い込む筋トレ記録アプリ。HRV・睡眠・心拍からAIが今日の負荷を提案し、Live Activityで進捗を常時表示。1RM自動計算、873種の種目ライブラリ。データは端末内で処理し外部送信ゼロのプライバシー設計。
 ```
 
-(118 字)
+(125 字)
 
 ---
 
 ## Description (4000 字)
 
 ```
-■ Apple Watch だけで完結する、筋トレに本気の人のための記録アプリ
+■ iPhone で組み立て、Apple Watch で追い込む。本気のトレーニーのための記録アプリ
 
 Oikomi は「追い込み」という名のとおり、中〜上級トレーニーが
 セッションの質に集中できるよう設計された筋トレ記録アプリです。
-iPhone を取り出さず手首で完結する記録、HRV と睡眠スコアを読み解く
+家では iPhone でルーティンを組み立てて履歴を分析、ジムでは
+Apple Watch だけでセットを記録。HRV と睡眠スコアを読み解く
 コーチング、Apple 純正フレームワークだけで作られたプライバシー設計。
-ジムでも自宅でも、孤独に重ねた一本を確実に積み上げます。
+孤独に重ねた一本を、確実に積み上げます。
 
 
 ■ 主な特徴
 
-◇ Apple Watch スタンドアロン記録
-iPhone がなくても、Apple Watch だけで全ての記録が完結します。
+◇ Apple Watch でジム記録、iPhone は持ち込まない
+iPhone であらかじめルーティンを作成しておけば、ジムでは
+Apple Watch だけでセッションを実行・記録できます。
 Digital Crown でレップ・重量を素早く入力。1〜3 タップで 1 セット保存。
 Live Activity / Dynamic Island で進行中のセット数・経過時間・
 レストタイマーを常時表示。
@@ -181,7 +183,7 @@ workout,gym,strength,training,log,tracker,HRV,sleep,recovery,1RM,fitness,powerli
 ```
 Oikomi 初回リリース
 
-・Apple Watch スタンドアロン記録
+・Apple Watch でのセッション実行（iPhone でルーティン作成）
 ・Live Activity / Dynamic Island で進行中表示
 ・HealthKit 双方向連携 (HRV / 睡眠 / 体組成)
 ・AI コーチング 3 種 (ディロード / PR 予測 / ボリューム警告)
