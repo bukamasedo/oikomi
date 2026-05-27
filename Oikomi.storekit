@@ -8,7 +8,27 @@
       "internalID" : "T0000001",
       "localizations" : [
         {
-          "description" : "プロテイン 1 杯分の応援。ありがとうございます！",
+          "description" : "ポカリ 1 本分の応援。ありがとうございます！",
+          "displayName" : "🥤 ポカリ 1 本",
+          "locale" : "ja_JP"
+        },
+        {
+          "description" : "Buy the developer a sports drink.",
+          "displayName" : "🥤 Sports Drink",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.shuhirouchi.oikomi.tip.pocari",
+      "referenceName" : "Tip - Pocari",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "250",
+      "familyShareable" : false,
+      "internalID" : "T0000002",
+      "localizations" : [
+        {
+          "description" : "プロテイン 1 杯分の応援。励みになります。",
           "displayName" : "🥛 プロテイン 1 杯",
           "locale" : "ja_JP"
         },
@@ -23,43 +43,23 @@
       "type" : "Consumable"
     },
     {
-      "displayPrice" : "250",
-      "familyShareable" : false,
-      "internalID" : "T0000002",
-      "localizations" : [
-        {
-          "description" : "鶏胸肉 200g 分の応援。励みになります。",
-          "displayName" : "🍙 鶏胸肉 200g",
-          "locale" : "ja_JP"
-        },
-        {
-          "description" : "Buy the developer 200g of chicken breast.",
-          "displayName" : "🍙 Chicken Breast 200g",
-          "locale" : "en_US"
-        }
-      ],
-      "productID" : "com.shuhirouchi.oikomi.tip.chicken",
-      "referenceName" : "Tip - Chicken",
-      "type" : "Consumable"
-    },
-    {
       "displayPrice" : "500",
       "familyShareable" : false,
       "internalID" : "T0000003",
       "localizations" : [
         {
-          "description" : "ステーキ 1 枚分の応援。本当にありがとう！",
-          "displayName" : "🥩 ステーキ 1 枚",
+          "description" : "鶏胸肉 200g 分の応援。本当にありがとう！",
+          "displayName" : "🍗 鶏胸肉 200g",
           "locale" : "ja_JP"
         },
         {
-          "description" : "Buy the developer a steak.",
-          "displayName" : "🥩 Steak",
+          "description" : "Buy the developer 200g of chicken breast.",
+          "displayName" : "🍗 Chicken Breast 200g",
           "locale" : "en_US"
         }
       ],
-      "productID" : "com.shuhirouchi.oikomi.tip.steak",
-      "referenceName" : "Tip - Steak",
+      "productID" : "com.shuhirouchi.oikomi.tip.chicken",
+      "referenceName" : "Tip - Chicken",
       "type" : "Consumable"
     },
     {
@@ -69,12 +69,12 @@
       "localizations" : [
         {
           "description" : "焼肉チートデイ級の大応援。最高です！",
-          "displayName" : "🍗 焼肉チートデイ",
+          "displayName" : "🥩 焼肉チートデイ",
           "locale" : "ja_JP"
         },
         {
           "description" : "Treat the developer to a cheat day BBQ.",
-          "displayName" : "🍗 BBQ Cheat Day",
+          "displayName" : "🥩 BBQ Cheat Day",
           "locale" : "en_US"
         }
       ],

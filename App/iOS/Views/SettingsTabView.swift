@@ -34,7 +34,6 @@ struct SettingsTabView: View {
     @State private var errorMessage: String?
     @State private var showCloudKitChangeAlert = false
     @State private var exportedURL: URL?
-    @State private var tipJar = TipJarManager.shared
 
     #if DEBUG
         @State private var mockIsRunning = false
@@ -189,10 +188,7 @@ struct SettingsTabView: View {
     }
 
     private var tipJarSubtitle: String {
-        if tipJar.totalCount > 0 {
-            return "これまで \(tipJar.totalCount) 回・¥\(tipJar.totalAmountJPY) ありがとうございます"
-        }
-        return "気が向いたらお気持ちで応援を"
+        "気が向いたらお気持ちで応援を"
     }
 
     @ViewBuilder

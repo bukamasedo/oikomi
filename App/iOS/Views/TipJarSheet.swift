@@ -21,8 +21,6 @@ struct TipJarSheet: View {
                 if showThankYou {
                     TipThankYouView(
                         purchasedKind: lastPurchasedKind,
-                        totalCount: tipJar.totalCount,
-                        totalAmountJPY: tipJar.totalAmountJPY,
                         onClose: { dismiss() },
                         onBack: { showThankYou = false }
                     )
@@ -72,9 +70,6 @@ struct TipJarSheet: View {
                     }
                     .padding(.horizontal, 16)
                 }
-                if tipJar.totalCount > 0 {
-                    totalsFooter
-                }
                 noteSection
             }
             .padding(.vertical, 16)
@@ -105,12 +100,10 @@ struct TipJarSheet: View {
             Task { await purchase(product: product, kind: kind) }
         } label: {
             HStack(spacing: 14) {
-                Text(kind.emoji)
-                    .font(.system(size: 32))
+                Image(kind.imageName)
+                    .resizable()
+                    .scaledToFit()
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle().fill(Color.secondary.opacity(0.10))
-                    )
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(kind.displayName)
@@ -138,29 +131,11 @@ struct TipJarSheet: View {
 
     private func tipRowSubtitle(for kind: TipProductKind) -> String {
         switch kind {
-        case .protein: "ライトな応援"
-        case .chicken: "ちょっと多めの応援"
-        case .steak: "ガッツリ応援"
+        case .pocari: "ライトな応援"
+        case .protein: "ちょっと多めの応援"
+        case .chicken: "ガッツリ応援"
         case .cheatday: "最大級の応援"
         }
-    }
-
-    @ViewBuilder
-    private var totalsFooter: some View {
-        VStack(spacing: 4) {
-            Text("これまでのご支援")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text("\(tipJar.totalCount) 回 ・ ¥\(tipJar.totalAmountJPY)")
-                .font(.headline.monospacedDigit())
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 20)
-        .background(
-            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
-                .fill(OikomiColor.brandPrimary.opacity(0.10))
-        )
-        .padding(.horizontal, 16)
     }
 
     @ViewBuilder
@@ -207,8 +182,6 @@ struct TipJarSheet: View {
 struct TipThankYouView: View {
 
     let purchasedKind: TipProductKind?
-    let totalCount: Int
-    let totalAmountJPY: Int
     let onClose: () -> Void
     let onBack: () -> Void
 
@@ -218,9 +191,11 @@ struct TipThankYouView: View {
             ZStack {
                 Circle()
                     .fill(OikomiColor.brandPrimary.opacity(0.18))
-                    .frame(width: 140, height: 140)
-                Text(purchasedKind?.emoji ?? "🥛")
-                    .font(.system(size: 72))
+                    .frame(width: 160, height: 160)
+                Image(purchasedKind?.imageName ?? TipProductKind.pocari.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 120, height: 120)
                     .accessibilityHidden(true)
             }
             VStack(spacing: 8) {
@@ -234,19 +209,6 @@ struct TipThankYouView: View {
                         .padding(.horizontal, 24)
                 }
             }
-            VStack(spacing: 4) {
-                Text("累計サポート")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("\(totalCount) 回 ・ ¥\(totalAmountJPY)")
-                    .font(.title2.weight(.semibold).monospacedDigit())
-            }
-            .padding(.vertical, 14)
-            .padding(.horizontal, 28)
-            .background(
-                RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
-                    .fill(OikomiColor.brandPrimary.opacity(0.10))
-            )
             Text("追い込みの日々を続けます。")
                 .font(.footnote)
                 .foregroundStyle(.secondary)

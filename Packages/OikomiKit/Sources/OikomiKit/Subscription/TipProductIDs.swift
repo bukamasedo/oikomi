@@ -5,34 +5,36 @@ import Foundation
 /// Pro サブスクリプションとは独立した支援機構。購入しても機能解放は伴わない。
 /// App Store Connect / `Oikomi.storekit` の Product ID と完全一致させること。
 public enum TipProductKind: String, CaseIterable, Sendable {
+    case pocari
     case protein
     case chicken
-    case steak
     case cheatday
 
     public var productID: String {
         switch self {
+        case .pocari: "com.shuhirouchi.oikomi.tip.pocari"
         case .protein: "com.shuhirouchi.oikomi.tip.protein"
         case .chicken: "com.shuhirouchi.oikomi.tip.chicken"
-        case .steak: "com.shuhirouchi.oikomi.tip.steak"
         case .cheatday: "com.shuhirouchi.oikomi.tip.cheatday"
         }
     }
 
-    public var emoji: String {
+    /// アプリ側 Asset Catalog（App/iOS/Assets.xcassets）に登録した PNG 名。
+    /// 絵文字フォントに依存しない描画のため、各 kind に対応した手描きキャラ画像を使う。
+    public var imageName: String {
         switch self {
-        case .protein: "🥛"
-        case .chicken: "🍙"
-        case .steak: "🥩"
-        case .cheatday: "🍗"
+        case .pocari: "TipPocari"
+        case .protein: "TipProtein"
+        case .chicken: "TipChicken"
+        case .cheatday: "TipCheatday"
         }
     }
 
     public var displayName: String {
         switch self {
+        case .pocari: "ポカリ 1 本"
         case .protein: "プロテイン 1 杯"
         case .chicken: "鶏胸肉 200g"
-        case .steak: "ステーキ 1 枚"
         case .cheatday: "焼肉チートデイ"
         }
     }
@@ -41,9 +43,9 @@ public enum TipProductKind: String, CaseIterable, Sendable {
     /// アプリ内の累計金額の計算と、商品ロード失敗時のフォールバック表示に使う。
     public var amountJPY: Int {
         switch self {
-        case .protein: 120
-        case .chicken: 250
-        case .steak: 500
+        case .pocari: 120
+        case .protein: 250
+        case .chicken: 500
         case .cheatday: 1_000
         }
     }

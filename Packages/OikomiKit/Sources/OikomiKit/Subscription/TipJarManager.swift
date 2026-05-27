@@ -6,8 +6,7 @@ import StoreKit
 /// 設計方針:
 /// - Consumable は `Transaction.currentEntitlements` に残らないため、購入完了の確定は
 ///   `Transaction.updates` / `Transaction.unfinished` 経由で `finish()` するときに行う
-/// - 累計サポート回数・金額は UserDefaults と `NSUbiquitousKeyValueStore` の両方に書く。
-///   後者は同一 Apple ID のデバイス間で同期される（容量 1MB 制限の中で十分軽い）
+/// - 累計サポート回数・金額は UserDefaults にのみ保存（UI では非表示。内部記録用途）
 /// - `SubscriptionManager` とは独立。Pro 解放には一切影響しない
 @MainActor
 @Observable
@@ -15,9 +14,9 @@ public final class TipJarManager {
 
     public static let shared = TipJarManager()
 
-    /// 累計サポート回数（UserDefaults / iCloud KVS キー）。
+    /// 累計サポート回数（UserDefaults キー）。
     public static let totalCountKey = "OikomiTipTotalCount"
-    /// 累計サポート金額（JPY、UserDefaults / iCloud KVS キー）。
+    /// 累計サポート金額（JPY、UserDefaults キー）。
     public static let totalAmountKey = "OikomiTipTotalAmountJPY"
 
     public private(set) var products: [Product] = []
@@ -32,12 +31,11 @@ public final class TipJarManager {
 
     private init() {}
 
-    /// App 起動時に 1 度呼ぶ。商品ロード + Transaction listener 開始 + 未完了処理 + KVS 購読。
+    /// App 起動時に 1 度呼ぶ。商品ロード + Transaction listener 開始 + 未完了処理。
     public func start() async {
         if !didStart {
             didStart = true
             loadTotalsFromStorage()
-            subscribeToCloudChanges()
             listenerTask = Task.detached { [weak self] in
                 for await update in Transaction.updates {
                     await self?.handle(update: update)
@@ -45,9 +43,6 @@ public final class TipJarManager {
             }
             // 直近の購入完了直後にアプリが終了していた場合の救済
             await processUnfinishedTransactions()
-            // iCloud KVS の最新値を取り寄せる（初回起動時のシード）
-            NSUbiquitousKeyValueStore.default.synchronize()
-            mergeFromCloudIfNewer()
         }
         await loadProducts()
     }
@@ -156,42 +151,5 @@ public final class TipJarManager {
         let defaults = UserDefaults.standard
         defaults.set(totalCount, forKey: Self.totalCountKey)
         defaults.set(totalAmountJPY, forKey: Self.totalAmountKey)
-
-        let kvs = NSUbiquitousKeyValueStore.default
-        kvs.set(Int64(totalCount), forKey: Self.totalCountKey)
-        kvs.set(Int64(totalAmountJPY), forKey: Self.totalAmountKey)
-        kvs.synchronize()
-    }
-
-    private func subscribeToCloudChanges() {
-        NotificationCenter.default.addObserver(
-            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
-            object: NSUbiquitousKeyValueStore.default,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in
-                self?.mergeFromCloudIfNewer()
-            }
-        }
-    }
-
-    /// iCloud KVS の値がローカルより大きければ採用する（消耗型は単調増加のため max でマージ）。
-    private func mergeFromCloudIfNewer() {
-        let kvs = NSUbiquitousKeyValueStore.default
-        let cloudCount = Int(kvs.longLong(forKey: Self.totalCountKey))
-        let cloudAmount = Int(kvs.longLong(forKey: Self.totalAmountKey))
-        var changed = false
-        if cloudCount > totalCount {
-            totalCount = cloudCount
-            changed = true
-        }
-        if cloudAmount > totalAmountJPY {
-            totalAmountJPY = cloudAmount
-            changed = true
-        }
-        if changed {
-            UserDefaults.standard.set(totalCount, forKey: Self.totalCountKey)
-            UserDefaults.standard.set(totalAmountJPY, forKey: Self.totalAmountKey)
-        }
     }
 }

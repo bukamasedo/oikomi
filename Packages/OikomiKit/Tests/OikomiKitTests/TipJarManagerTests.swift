@@ -9,9 +9,9 @@ struct TipJarManagerTests {
     @Test("TipProductIDs.all は 4 件の Consumable で構成される")
     func tipProductIDsCount() {
         #expect(TipProductIDs.all.count == 4)
+        #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.pocari"))
         #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.protein"))
         #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.chicken"))
-        #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.steak"))
         #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.cheatday"))
     }
 
@@ -25,16 +25,17 @@ struct TipJarManagerTests {
 
     @Test("TipProductKind: 金額が仕様通り（120 / 250 / 500 / 1000 JPY）")
     func tipKindAmounts() {
-        #expect(TipProductKind.protein.amountJPY == 120)
-        #expect(TipProductKind.chicken.amountJPY == 250)
-        #expect(TipProductKind.steak.amountJPY == 500)
+        #expect(TipProductKind.pocari.amountJPY == 120)
+        #expect(TipProductKind.protein.amountJPY == 250)
+        #expect(TipProductKind.chicken.amountJPY == 500)
         #expect(TipProductKind.cheatday.amountJPY == 1_000)
     }
 
-    @Test("TipProductKind: 各 kind に絵文字と displayName が定義されている")
+    @Test("TipProductKind: 各 kind に画像名と displayName が定義されている")
     func tipKindMetadata() {
         for kind in TipProductKind.allCases {
-            #expect(!kind.emoji.isEmpty)
+            #expect(!kind.imageName.isEmpty)
+            #expect(kind.imageName.hasPrefix("Tip"))
             #expect(!kind.displayName.isEmpty)
             #expect(!kind.productID.isEmpty)
         }
