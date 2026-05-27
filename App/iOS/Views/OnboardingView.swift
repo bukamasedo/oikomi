@@ -287,13 +287,9 @@ private struct HealthKitStep: View {
                         action: onContinue
                     )
                 } else {
-                    OnboardingPrimaryButton(title: "HealthKit を許可", action: onRequest)
-
-                    Button("後で設定", action: onContinue)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    OnboardingPrimaryButton(title: "次へ", action: onRequest)
                 }
-                Text("権限は後から「設定 → ヘルスケア連携」で変更できます")
+                Text("「次へ」を選ぶと、ヘルスケアの権限を確認します。許可は後から「設定 → ヘルスケア連携」で変更できます")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)

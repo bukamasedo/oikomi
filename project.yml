@@ -42,7 +42,7 @@ targets:
       path: App/iOS/Info.plist
       properties:
         CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "7"
+        CFBundleVersion: "8"
         ITSAppUsesNonExemptEncryption: false
         NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。データはオンデバイスでのみ処理され、外部送信はありません。"
         NSHealthUpdateUsageDescription: "完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。"
@@ -113,7 +113,7 @@ targets:
       properties:
         CFBundleDisplayName: Oikomi Widgets
         CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "7"
+        CFBundleVersion: "8"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
@@ -142,7 +142,7 @@ targets:
       path: App/Watch/Info.plist
       properties:
         CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "7"
+        CFBundleVersion: "8"
         ITSAppUsesNonExemptEncryption: false
         WKApplication: true
         WKRunsIndependentlyOfCompanionApp: true
@@ -179,7 +179,7 @@ targets:
       properties:
         CFBundleDisplayName: Oikomi Watch Widgets
         CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "7"
+        CFBundleVersion: "8"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:

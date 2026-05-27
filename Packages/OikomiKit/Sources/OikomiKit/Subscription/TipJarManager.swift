@@ -19,11 +19,19 @@ public final class TipJarManager {
     /// 累計サポート金額（JPY、UserDefaults キー）。
     public static let totalAmountKey = "OikomiTipTotalAmountJPY"
 
+    public enum LoadState: Sendable, Equatable {
+        case idle
+        case loading
+        case loaded
+        case failed(message: String)
+    }
+
     public private(set) var products: [Product] = []
     public private(set) var totalCount: Int = 0
     public private(set) var totalAmountJPY: Int = 0
     public private(set) var purchaseInProgress: Bool = false
     public private(set) var lastError: String?
+    public private(set) var loadState: LoadState = .idle
 
     private var didStart: Bool = false
     private var listenerTask: Task<Void, Never>?
@@ -49,12 +57,16 @@ public final class TipJarManager {
 
     /// App Store から Product 情報を取得して `products` を更新する。
     public func loadProducts() async {
+        loadState = .loading
         do {
             let fetched = try await Product.products(for: TipProductIDs.all)
             // 金額昇順に並べる
             self.products = fetched.sorted { lhs, rhs in lhs.price < rhs.price }
+            loadState = .loaded
         } catch {
-            lastError = "商品情報の取得に失敗: \(error.localizedDescription)"
+            let message = error.localizedDescription
+            lastError = "商品情報の取得に失敗: \(message)"
+            loadState = .failed(message: message)
             print("[Oikomi.tip] loadProducts failed: \(error)")
         }
     }

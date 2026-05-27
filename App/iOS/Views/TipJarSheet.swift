@@ -44,7 +44,7 @@ struct TipJarSheet: View {
                 showError = newValue != nil
             }
             .task {
-                if tipJar.products.isEmpty {
+                if tipJar.loadState == .idle {
                     await tipJar.loadProducts()
                 }
             }
@@ -58,22 +58,67 @@ struct TipJarSheet: View {
         ScrollView {
             VStack(spacing: 24) {
                 introCard
-                if tipJar.products.isEmpty {
+                switch tipJar.loadState {
+                case .idle, .loading:
                     ProgressView().padding(.vertical, 40)
-                } else {
-                    VStack(spacing: 12) {
-                        ForEach(orderedKinds(), id: \.rawValue) { kind in
-                            if let product = product(for: kind) {
-                                tipRow(kind: kind, product: product)
+                case .loaded:
+                    if tipJar.products.isEmpty {
+                        emptyStateCard
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(orderedKinds(), id: \.rawValue) { kind in
+                                if let product = product(for: kind) {
+                                    tipRow(kind: kind, product: product)
+                                }
                             }
                         }
+                        .padding(.horizontal, 16)
                     }
-                    .padding(.horizontal, 16)
+                case .failed:
+                    errorStateCard
                 }
                 noteSection
             }
             .padding(.vertical, 16)
         }
+    }
+
+    @ViewBuilder
+    private var emptyStateCard: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "tray")
+                .font(.largeTitle)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            Text("現在チップ商品をご利用いただけません")
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+            Button("再試行") {
+                Task { await tipJar.loadProducts() }
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(.vertical, 32)
+        .padding(.horizontal, 24)
+    }
+
+    @ViewBuilder
+    private var errorStateCard: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.largeTitle)
+                .foregroundStyle(.orange)
+                .accessibilityHidden(true)
+            Text("商品情報の取得に失敗しました")
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+            Button("再試行") {
+                Task { await tipJar.loadProducts() }
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(.vertical, 32)
+        .padding(.horizontal, 24)
     }
 
     @ViewBuilder
