@@ -54,7 +54,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>0.1.0</string>
 	<key>CFBundleVersion</key>
-	<string>3</string>
+	<string>4</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。データはオンデバイスでのみ処理され、外部送信はありません。</string>
 	<key>NSHealthUpdateUsageDescription</key>
