@@ -7,10 +7,11 @@ let package = Package(
     platforms: [
         .iOS(.v26),
         .watchOS(.v26),
+        // macOS は配布対象ではないが、`swift test` をホストの macOS で実行するために必要。
         .macOS(.v26),
     ],
     products: [
-        .library(name: "OikomiKit", targets: ["OikomiKit"]),
+        .library(name: "OikomiKit", targets: ["OikomiKit"])
     ],
     targets: [
         .target(

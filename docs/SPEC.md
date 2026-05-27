@@ -25,7 +25,7 @@ Apple エコシステムにフル特化した筋トレ記録アプリ。HealthKi
 
 - プロダクト名: **Oikomi**（追い込み）
   - App Store 表記: **Oikomi - 筋トレ記録 & Apple Watch**
-- 対応 OS: iOS 26+ / watchOS 26+ / iPadOS 26+ / macOS 26+（Tahoe）
+- 対応 OS: iOS 26+ / watchOS 26+ / iPadOS 26+
 - 提供形態: Freemium（広告なし）+ サブスクリプション
   - Pro 月額: ¥780
   - Pro 年額: ¥5,800（実質 ¥483/月）
