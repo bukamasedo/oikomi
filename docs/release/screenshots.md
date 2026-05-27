@@ -7,7 +7,7 @@ permalink: /release/screenshots/
 # App Store Connect — スクリーンショット撮影台本 (v1.0)
 
 最終更新: 2026-05-27
-対象: iPhone 6.9" / iPad 13" / Apple Watch 49mm 用スクリーンショット
+対象: iPhone 6.9" / Apple Watch 49mm 用スクリーンショット（iPhone 専用アプリ）
 配信地域: 日本（v1.0）
 
 ---
@@ -17,12 +17,11 @@ permalink: /release/screenshots/
 | デバイス | 解像度 (Portrait) | ASC 必須？ | 最大枚数 |
 |---|---|---|---|
 | iPhone 6.9" (17 Pro Max / 16 Pro Max) | **1320 × 2868** | ✅ 必須 | 10 |
-| iPad 13" (iPad Pro M4 / M5) | **2064 × 2752** | ✅ 必須 | 10 |
 | Apple Watch 49mm (Series 10 / 11) | **410 × 502** | 任意（watchOS バイナリ申請時推奨） | 10 |
 
 > iPhone 6.9" を提出すれば 6.7" / 6.5" / 5.5" は自動的に同じスクショが流用される。
-> iPad 13" を提出すれば iPad Pro 12.9" / 11" / mini 等にも流用される。
 > 別解像度の提出は不要（ASC が自動スケール）。
+> iPad スクショは不要（`TARGETED_DEVICE_FAMILY: "1"` で iPhone 専用配信）。
 
 ---
 
@@ -32,7 +31,6 @@ permalink: /release/screenshots/
 
 ```
 iPhone 17 Pro Max  (iOS 26.x)         — メイン
-iPad Pro 13"       (iPadOS 26.x)      — タブレット
 Apple Watch 49mm   (watchOS 26.x)     — Watch 用
 ```
 
@@ -132,23 +130,6 @@ xcrun simctl io booted screenshot --type=png ~/Desktop/oikomi-iphone-01.png
 
 ---
 
-## iPad 13" 撮影リスト（5 枚で十分）
-
-iPad は閲覧用途に強み。ハイライトを絞る。
-
-| # | 画面 | 備考 |
-|---|---|---|
-| 1 | ホーム（横画面 Master-Detail 想定、現状 v1.0 は iPhone 流用なら Portrait） | iPad で UI が破綻していないことを示す |
-| 2 | 分析・推移（大画面でグラフが映える） | 部位別ボリュームと推移ラインを一画面に |
-| 3 | 履歴カレンダー（カレンダーがフル幅で広い） | iPad の画面の広さを活かす |
-| 4 | Pro アップグレード | 課金 UI が iPad でも崩れない確認 |
-| 5 | ルーティン管理 | 大画面で複数ルーティンを並べる |
-
-> v1.0 では iPad は iPhone レイアウトの流用が中心。撮影時に大きな破綻が
-> なければそのまま提出。破綻があれば D-1 終了時に Issue 化して v1.0.1 で対応。
-
----
-
 ## Apple Watch 49mm 撮影リスト（任意・3〜5 枚）
 
 | # | 画面 | 備考 |
@@ -177,22 +158,19 @@ xcrun simctl io booted screenshot --type=png \
 1. **ASC → My Apps → Oikomi → iOS App → Version 1.0**
 2. **App Previews and Screenshots** セクション
 3. デバイス選択タブで **6.9" Display** → 10 枚をドラッグ＆ドロップ
-4. 同じく **iPad Pro 13"** → 5 枚をドラッグ＆ドロップ
-5. （任意）**Apple Watch Ultra (49mm)** → 3〜5 枚
-6. 順序は ASC 上でドラッグ並べ替え可。1 枚目が "Hero" として検索結果に出る
+4. （任意）**Apple Watch Ultra (49mm)** → 3〜5 枚
+5. 順序は ASC 上でドラッグ並べ替え可。1 枚目が "Hero" として検索結果に出る
 
 ---
 
 ## チェックリスト
 
 - [ ] iPhone 17 Pro Max シミュレータでステータスバー化粧
-- [ ] iPad Pro 13" シミュレータでステータスバー化粧
 - [ ] Apple Watch 49mm シミュレータでステータスバー化粧（時計のみ）
 - [ ] デモデータ投入（8 週分のセッション履歴）
 - [ ] HealthKit に HRV / 睡眠 / 心拍を手入力
 - [ ] Pro 状態を ON にする
 - [ ] iPhone 6.9" 10 枚撮影
-- [ ] iPad 13" 5 枚撮影
 - [ ] Watch 49mm 3〜5 枚撮影
 - [ ] **IAP Review Screenshot 撮影**（→ [iap-products.md](./iap-products.md) 参照、Pro 課金画面 + Tip Jar）
 - [ ] ファイル命名規則に従ってリネーム

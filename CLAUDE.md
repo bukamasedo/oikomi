@@ -10,7 +10,7 @@
 **Oikomi（追い込み）** — Apple Watch を主役とした筋トレ記録アプリ。
 HealthKit / Live Activity / Apple Intelligence と統合し「iPhone で組み立て、Apple Watch で追い込む、ヘルスデータ駆動の筋トレ記録」を提供する Freemium サブスクアプリ。役割分担: iPhone = 計画・分析・管理、Apple Watch = ジムでのセッション実行・記録。
 
-- 対応 OS: iOS 26+ / watchOS 26+ / iPadOS 26+
+- 対応 OS: iOS 26+ / watchOS 26+（iPhone 専用）
 - 開発期間目安: 8ヶ月（個人開発、リリース目標 2026年末〜2027年初）
 - 課金: Pro 月額 ¥780 / 年額 ¥5,800（14日トライアル）
 
@@ -42,7 +42,7 @@ oikomi/
 ├── project.yml                ← XcodeGen 設定（iOS / watchOS）
 ├── Oikomi.xcodeproj/          ← 自動生成・gitignore 対象
 ├── App/
-│   ├── iOS/                   ← iOS / iPadOS ターゲット
+│   ├── iOS/                   ← iOS ターゲット（iPhone 専用）
 │   └── Watch/                 ← watchOS ターゲット
 ├── Packages/OikomiKit/        ← 共有ビジネスロジック（SPM）
 │   └── Sources/OikomiKit/

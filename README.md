@@ -33,7 +33,7 @@ open Oikomi.xcodeproj
 | `docs/SPEC.md` | 仕様書（一次ソース） |
 | `CLAUDE.md` | AI コーディングハーネス向け開発ガイド |
 | `project.yml` | XcodeGen 設定 |
-| `App/iOS` | iOS / iPadOS アプリ |
+| `App/iOS` | iOS アプリ（iPhone 専用） |
 | `App/Watch` | watchOS アプリ |
 | `Packages/OikomiKit` | 共有ビジネスロジック（Swift Package） |
 | `.claude/` | Claude Code 用設定・スラッシュコマンド |

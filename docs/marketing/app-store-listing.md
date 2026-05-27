@@ -1,6 +1,6 @@
 # App Store Connect 入力テキスト (v1.0)
 
-最終更新: 2026-05-24
+最終更新: 2026-05-27
 配信地域: 日本 (v1.0 ローンチ時点)
 
 各セクションを App Store Connect の対応フィールドにコピペ。
@@ -144,8 +144,7 @@ iCloud 同期は Pro プラン限定のオプトイン機能で、Apple ID で
 
 ■ 対応デバイス
 
-iPhone (iOS 26 以降) / Apple Watch (watchOS 26 以降) /
-iPad (iPadOS 26 以降) / Mac (macOS 26 以降)
+iPhone (iOS 26 以降) / Apple Watch (watchOS 26 以降)
 
 
 ■ 医療上の免責
@@ -286,4 +285,4 @@ Sandbox アカウントで以下フローを確認いただけます:
 - **Description / Keywords** は新バージョン申請時に変更可能
 - **App Name / Subtitle / Bundle ID** は変更時に Apple Review 経由が必要
 - 英語ロケールは v2.0 で追加予定 (SPEC §8.2)
-- スクリーンショットは別途撮影 (iPhone 17 Pro Max 6.9" / iPad / Apple Watch 49mm)
+- スクリーンショットは別途撮影 (iPhone 17 Pro Max 6.9" / Apple Watch 49mm) — iPhone 専用なので iPad スクショは不要
