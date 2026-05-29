@@ -679,7 +679,13 @@ private struct ProUpgradeSheet: View {
                 Text(subscriptionManager.lastError ?? "")
             }
             .onChange(of: subscriptionManager.lastError) { _, newValue in
-                showError = newValue != nil
+                // 商品ロード失敗時は本体 UI に LoadFailureView が出るのでアラートでは出さない。
+                // 購入経路のエラーのみアラートで拾う。
+                if case .failed = subscriptionManager.loadState {
+                    showError = false
+                } else {
+                    showError = newValue != nil
+                }
             }
             .task {
                 if subscriptionManager.products.isEmpty {
@@ -724,10 +730,18 @@ private struct ProUpgradeSheet: View {
     @ViewBuilder
     private var pricingSection: some View {
         VStack(spacing: 12) {
-            if subscriptionManager.products.isEmpty {
+            switch subscriptionManager.loadState {
+            case .idle, .loading:
                 ProgressView()
                     .padding(.vertical, 24)
-            } else {
+            case .failed(let message):
+                LoadFailureView(
+                    title: "価格情報を取得できませんでした",
+                    message: message,
+                    onRetry: { Task { await subscriptionManager.loadProducts() } }
+                )
+                .padding(.vertical, 16)
+            case .loaded:
                 if let yearly = yearlyProduct {
                     priceRow(
                         product: yearly,
@@ -765,7 +779,11 @@ private struct ProUpgradeSheet: View {
         }
         .buttonStyle(.borderedProminent)
         .padding(.horizontal, 24)
-        .disabled(subscriptionManager.purchaseInProgress || selectedProduct == nil)
+        .disabled(
+            subscriptionManager.purchaseInProgress
+                || selectedProduct == nil
+                || subscriptionManager.loadState != .loaded
+        )
     }
 
     private var ctaLabel: String {

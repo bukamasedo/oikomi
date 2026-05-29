@@ -19,8 +19,20 @@ public final class SubscriptionManager {
     /// 直近の値をキャッシュする。リネーム時は SharedContainer 側と合わせて変更すること。
     public static let lastKnownProActiveKey = "OikomiLastKnownProActive"
 
+    /// 商品ロードの状態。「未取得」「取得中」「取得済み」「失敗」を区別することで、
+    /// ペイウォール UI が無音で固まる事象を防ぐ（App Review 2.1(b) 対策）。
+    public enum LoadState: Sendable, Equatable {
+        case idle
+        case loading
+        case loaded
+        case failed(message: String)
+    }
+
     /// App Store から取得済みの Product 一覧（月額 / 年額）。
     public private(set) var products: [Product] = []
+
+    /// 商品ロードの状態。UI 分岐に使う。
+    public private(set) var loadState: LoadState = .idle
 
     /// Pro サブスクリプションが現在有効か。
     /// `Transaction.currentEntitlements` を評価して導出する。
@@ -57,8 +69,9 @@ public final class SubscriptionManager {
     }
 
     /// App Store から Product 情報を取得して `products` を更新する。
-    /// 失敗しても致命的ではない（再試行可能）。
+    /// 失敗しても致命的ではない（UI から再試行可能）。
     public func loadProducts() async {
+        loadState = .loading
         do {
             let fetched = try await Product.products(for: ProductIDs.all)
             // 年額 → 月額 の順で並べる（UI で年額をハイライトしたいため）
@@ -66,8 +79,20 @@ public final class SubscriptionManager {
                 lhs.id == ProductIDs.proYearly && rhs.id == ProductIDs.proMonthly
             }
             await updateIntroEligibility()
+            // 商品 ID 群を投げたのに 1 件も返ってこないのは設定ミス（ASC 側）に相当するため、
+            // `.loaded` ではなく `.failed` にして UI が無音で固まらないようにする。
+            if fetched.isEmpty {
+                let message = "商品情報を取得できませんでした"
+                lastError = message
+                loadState = .failed(message: message)
+                print("[Oikomi.sub] loadProducts returned empty result for IDs: \(ProductIDs.all)")
+            } else {
+                loadState = .loaded
+            }
         } catch {
-            lastError = "商品情報の取得に失敗: \(error.localizedDescription)"
+            let message = error.localizedDescription
+            lastError = "商品情報の取得に失敗: \(message)"
+            loadState = .failed(message: message)
             print("[Oikomi.sub] loadProducts failed: \(error)")
         }
     }

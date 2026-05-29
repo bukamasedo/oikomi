@@ -554,11 +554,8 @@ private struct OnboardingProStep: View {
         manager.isEligibleForIntroOffer ? "14 日間無料で試す" : "Pro を購入する"
     }
 
-    private var priceLabel: String {
-        if let yearly {
-            return "\(yearly.displayPrice)/年 ・ いつでも解約可"
-        }
-        return "¥5,800/年 ・ いつでも解約可"
+    private var isPurchaseAvailable: Bool {
+        yearly != nil && manager.loadState == .loaded
     }
 
     var body: some View {
@@ -605,19 +602,18 @@ private struct OnboardingProStep: View {
             Spacer()
 
             VStack(spacing: OikomiSpacing.m) {
-                Text(priceLabel)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                OnboardingProPricingStatus(
+                    loadState: manager.loadState,
+                    yearly: yearly,
+                    onRetry: reloadProducts
+                )
 
                 OnboardingPrimaryButton(
                     title: ctaLabel,
-                    isLoading: manager.purchaseInProgress
-                ) {
-                    Task {
-                        guard let yearly else { return }
-                        _ = try? await manager.purchase(yearly)
-                    }
-                }
+                    isLoading: manager.purchaseInProgress,
+                    action: purchaseYearly
+                )
+                .disabled(!isPurchaseAvailable || manager.purchaseInProgress)
 
                 Button("今はしない", action: onFinish)
                     .font(.subheadline)
@@ -637,7 +633,12 @@ private struct OnboardingProStep: View {
             if isActive { onFinish() }
         }
         .onChange(of: manager.lastError) { _, error in
-            showError = error != nil
+            // 商品ロード失敗時は本体 UI に出すのでアラートでは出さない。購入経路のエラーのみ拾う。
+            if case .failed = manager.loadState {
+                showError = false
+            } else {
+                showError = error != nil
+            }
         }
         .alert(
             "購入できませんでした",
@@ -647,6 +648,54 @@ private struct OnboardingProStep: View {
             Button("OK") { manager.clearLastError() }
         } message: { message in
             Text(message)
+        }
+    }
+
+    private func purchaseYearly() {
+        Task {
+            guard let yearly else { return }
+            _ = try? await manager.purchase(yearly)
+        }
+    }
+
+    private func reloadProducts() {
+        Task { await manager.loadProducts() }
+    }
+}
+
+private struct OnboardingProPricingStatus: View {
+    let loadState: SubscriptionManager.LoadState
+    let yearly: Product?
+    let onRetry: () -> Void
+
+    var body: some View {
+        switch loadState {
+        case .idle, .loading:
+            HStack(spacing: OikomiSpacing.s) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("価格を取得中…")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        case .failed(let message):
+            LoadFailureView(
+                title: "価格情報を取得できませんでした",
+                message: message,
+                onRetry: onRetry
+            )
+        case .loaded:
+            if let yearly {
+                Text("\(yearly.displayPrice)/年 ・ いつでも解約可")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else {
+                LoadFailureView(
+                    title: "価格情報が見つかりませんでした",
+                    message: "もう一度お試しください。",
+                    onRetry: onRetry
+                )
+            }
         }
     }
 }

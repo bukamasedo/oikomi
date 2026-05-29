@@ -37,6 +37,24 @@ struct SubscriptionManagerTests {
         #expect(a.products.isEmpty)
     }
 
+    @Test("LoadState は Equatable で .failed のメッセージも比較できる")
+    func loadStateEquality() {
+        let idle: SubscriptionManager.LoadState = .idle
+        let loading: SubscriptionManager.LoadState = .loading
+        let loaded: SubscriptionManager.LoadState = .loaded
+        let failedA: SubscriptionManager.LoadState = .failed(message: "ネットワークエラー")
+        let failedB: SubscriptionManager.LoadState = .failed(message: "ネットワークエラー")
+        let failedC: SubscriptionManager.LoadState = .failed(message: "別エラー")
+
+        #expect(idle == .idle)
+        #expect(loading == .loading)
+        #expect(loaded == .loaded)
+        #expect(failedA == failedB)
+        #expect(failedA != failedC)
+        #expect(idle != loading)
+        #expect(loaded != failedA)
+    }
+
     @Test("ProGate: Free プランの上限定数")
     @MainActor
     func proGateLimits() {
