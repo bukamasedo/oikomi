@@ -36,18 +36,26 @@ struct ExerciseInSessionCard: View {
                     InlineSetRow(
                         set: set,
                         indexInGroup: index + 1,
-                        onToggleComplete: readOnly ? nil : { onToggleSet(set) },
-                        onEditTap: readOnly ? nil : { onEditSet(set) }
+                        onToggleComplete: readOnly ? nil : { onToggleSet(set) }
                     )
                     .padding(.horizontal, OikomiSpacing.l)
                     .contentShape(Rectangle())
                     .contextMenu {
                         if !readOnly {
+                            // 編集を上、削除を下に。色は全体の brandPrimary(オレンジ) tint を継承するため、
+                            // 編集はアイコン=オレンジ・文字=黒(primary)。削除は role の赤文字に加え
+                            // .tint(.red) でアイコンも赤に揃える。
+                            Button {
+                                onEditSet(set)
+                            } label: {
+                                Label("編集", systemImage: "pencil")
+                            }
                             Button(role: .destructive) {
                                 onDeleteSet(set)
                             } label: {
                                 Label("セットを削除", systemImage: "trash")
                             }
+                            .tint(.red)
                         }
                     }
                     if index < sets.count - 1 {

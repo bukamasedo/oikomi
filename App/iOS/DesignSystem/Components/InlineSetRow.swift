@@ -6,13 +6,13 @@ import SwiftUI
 /// - 左端: 完了チェックマーク（タップで markSetCompleted を呼ぶ想定）
 /// - 中央: 「(順番)  重量 × レップ」または「(順番) Xレップ（自重）」
 /// - 右端: 未完了は実施予定のレスト時間（⏱90秒）/ 完了は推定 1RM
+///
+/// タップは行のどこでも「完了トグル」。編集・削除は長押しメニュー側で行う。
 struct InlineSetRow: View {
 
     let set: SetRecord
     let indexInGroup: Int
     var onToggleComplete: (() -> Void)? = nil
-    /// 重量・レップ部分をタップしたとき呼ばれる。編集シート起動用。nil なら無反応。
-    var onEditTap: (() -> Void)? = nil
 
     @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
     private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
@@ -33,10 +33,10 @@ struct InlineSetRow: View {
             .buttonStyle(.plain)
             .accessibilityLabel(set.isCompleted ? "完了済み。タップで未完了に戻す" : "未完了。タップで完了")
 
-            // 値部分のタップで編集起動。チェックマークと領域を分離することで、
-            // 「ワンタップで完了」と「値を編集」を視覚的に区別する。
+            // 値部分のタップでも完了トグル。行のどこをタップしても完了できるよう、
+            // チェックマークと同じ onToggleComplete を呼ぶ（編集は長押しメニューへ）。
             Button {
-                onEditTap?()
+                onToggleComplete?()
             } label: {
                 HStack(spacing: OikomiSpacing.m) {
                     Text("\(indexInGroup)")
@@ -54,8 +54,8 @@ struct InlineSetRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .disabled(onEditTap == nil)
-            .accessibilityLabel("セット \(indexInGroup) を編集")
+            .disabled(onToggleComplete == nil)
+            .accessibilityLabel("セット \(indexInGroup)。タップで完了切り替え")
         }
         .padding(.vertical, OikomiSpacing.s)
     }
