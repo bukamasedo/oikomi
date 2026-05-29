@@ -12,7 +12,7 @@ public enum TipProductKind: String, CaseIterable, Sendable {
 
     public var productID: String {
         switch self {
-        case .pocari: "com.shuhirouchi.oikomi.tip.pocari"
+        case .pocari: "com.shuhirouchi.oikomi.tip.sportsdrink"
         case .protein: "com.shuhirouchi.oikomi.tip.protein"
         case .chicken: "com.shuhirouchi.oikomi.tip.chicken"
         case .cheatday: "com.shuhirouchi.oikomi.tip.cheatday"

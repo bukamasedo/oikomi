@@ -9,7 +9,7 @@ struct TipJarManagerTests {
     @Test("TipProductIDs.all は 4 件の Consumable で構成される")
     func tipProductIDsCount() {
         #expect(TipProductIDs.all.count == 4)
-        #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.pocari"))
+        #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.sportsdrink"))
         #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.protein"))
         #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.chicken"))
         #expect(TipProductIDs.all.contains("com.shuhirouchi.oikomi.tip.cheatday"))
