@@ -31,7 +31,7 @@ struct LogSetIntent: AppIntent {
         let sessionRepo = WorkoutSessionRepository(context: context)
         let session = try ensureActiveSession(repo: sessionRepo, in: context)
 
-        let useBodyweight = exercise.measurementType == .bodyweightReps || weight == 0
+        let useBodyweight = !exercise.usesWeight || weight == 0
         try sessionRepo.addSet(
             to: session,
             exercise: exercise,

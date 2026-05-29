@@ -256,15 +256,14 @@ struct RoutineEditorView: View {
     private func appendDraft(for exercise: Exercise) {
         let repo = WorkoutSessionRepository(context: modelContext)
         let lastSet = try? repo.lastCompletedSet(for: exercise)
-        let isBodyweight = exercise.measurementType == .bodyweightReps
         drafts.append(
             RoutineExerciseDraft(
                 id: UUID(),
                 exercise: exercise,
                 plannedSets: 3,
                 plannedReps: lastSet?.reps ?? 8,
-                plannedWeight: isBodyweight
-                    ? nil : (lastSet?.weight ?? UnitPreference.current().defaultInitialKilograms),
+                plannedWeight: exercise.usesWeight
+                    ? (lastSet?.weight ?? UnitPreference.current().defaultInitialKilograms) : nil,
                 plannedRestSeconds: nil
             )
         )
@@ -285,13 +284,12 @@ struct RoutineEditorView: View {
                 routine = try repo.createRoutine(name: name, exercises: [])
             }
             for draft in drafts {
-                let isBodyweight = draft.exercise.measurementType == .bodyweightReps
                 try repo.addExercise(
                     to: routine,
                     exercise: draft.exercise,
                     plannedSets: draft.plannedSets,
                     plannedReps: draft.plannedReps,
-                    plannedWeight: isBodyweight ? nil : draft.plannedWeight,
+                    plannedWeight: draft.exercise.usesWeight ? draft.plannedWeight : nil,
                     plannedRestSeconds: draft.plannedRestSeconds
                 )
             }
@@ -321,8 +319,8 @@ private struct RoutineExerciseDraftCard: View {
         WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
     }
 
-    private var isBodyweight: Bool {
-        draft.exercise.measurementType == .bodyweightReps
+    private var showsWeight: Bool {
+        draft.exercise.usesWeight
     }
 
     var body: some View {
@@ -334,7 +332,7 @@ private struct RoutineExerciseDraftCard: View {
 
             Divider().padding(.horizontal, OikomiSpacing.l)
 
-            if !isBodyweight {
+            if showsWeight {
                 valueRow(
                     label: "重量",
                     valueText: WeightFormatter.string(

@@ -43,12 +43,15 @@ public final class WorkoutSessionRepository {
                 for routineEx in routine.orderedExercises {
                     guard let exercise = routineEx.exercise else { continue }
                     let plannedReps = routineEx.plannedReps > 0 ? routineEx.plannedReps : nil
+                    // 自重種目には重量を載せない。旧バグで plannedWeight が残った
+                    // ルーティンを展開しても、ここで弾くことで重量付きセットを作らない。
+                    let plannedWeight = exercise.usesWeight ? routineEx.plannedWeight : nil
                     for _ in 0..<max(routineEx.plannedSets, 0) {
                         let plannedSet = SetRecord(
                             exercise: exercise,
                             session: session,
                             order: order,
-                            weight: routineEx.plannedWeight,
+                            weight: plannedWeight,
                             reps: plannedReps,
                             isCompleted: false
                         )

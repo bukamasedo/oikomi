@@ -40,7 +40,8 @@ struct AddSetSheet: View {
     }
 
     private var useBodyweight: Bool {
-        selectedExercise?.measurementType == .bodyweightReps
+        guard let selectedExercise else { return false }
+        return !selectedExercise.usesWeight
     }
 
     private var navTitle: String {

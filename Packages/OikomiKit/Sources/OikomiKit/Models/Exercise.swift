@@ -81,4 +81,13 @@ extension Exercise {
         get { MeasurementType(rawValue: measurementTypeRawValue) ?? .weightReps }
         set { measurementTypeRawValue = newValue.rawValue }
     }
+
+    /// 重量入力・記録が必要な種目か。
+    /// 自重 (equipment == .bodyweight) や時間 / 距離計測は外部重量を持たない。
+    /// 旧フォームで equipment と measurementType が不整合に作成された
+    /// カスタム自重種目（.bodyweight + .weightReps）に対しても、equipment を
+    /// 見ることで堅牢に false を返す（シードでは .bodyweight は必ず重量なし計測）。
+    public var usesWeight: Bool {
+        equipment != .bodyweight && measurementType == .weightReps
+    }
 }

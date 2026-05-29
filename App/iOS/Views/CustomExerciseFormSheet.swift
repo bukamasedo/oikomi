@@ -145,10 +145,16 @@ struct CustomExerciseFormSheet: View {
     private func save() {
         let repo = ExerciseRepository(context: modelContext)
         do {
+            // 器具が「自重」なら重量を持たない種目として計測方法を確定する。
+            // これを怠ると既定の .weightReps のまま保存され、ルーティンや
+            // セット入力で不要な重量入力欄が出てしまう。
+            let measurementType: MeasurementType =
+                equipment == .bodyweight ? .bodyweightReps : .weightReps
             let exercise = try repo.addCustomExercise(
                 name: trimmedName,
                 muscleGroups: MuscleGroup.allCases.filter(selectedMuscleGroups.contains),
                 equipment: equipment,
+                measurementType: measurementType,
                 defaultRestSeconds: defaultRestSeconds
             )
             onCreated(exercise)
