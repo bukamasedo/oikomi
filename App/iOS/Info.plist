@@ -58,11 +58,9 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。データはオンデバイスでのみ処理され、外部送信はありません。</string>
+	<string>トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。読み取ったデータはオンデバイスで処理され、iCloud 同期を有効にした場合のみご自身のプライベート iCloud に保存されます。第三者への送信は行いません。</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。</string>
-	<key>NSMotionUsageDescription</key>
-	<string>Apple Watch のセンサーでレップ自動カウントに使用します</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
@@ -72,8 +70,7 @@
 	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>remote-notification</string>
-		<string>processing</string>
+		<string>fetch</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict>

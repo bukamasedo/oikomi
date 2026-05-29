@@ -44,13 +44,11 @@ targets:
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "9"
         ITSAppUsesNonExemptEncryption: false
-        NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。データはオンデバイスでのみ処理され、外部送信はありません。"
+        NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。読み取ったデータはオンデバイスで処理され、iCloud 同期を有効にした場合のみご自身のプライベート iCloud に保存されます。第三者への送信は行いません。"
         NSHealthUpdateUsageDescription: "完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。"
-        NSMotionUsageDescription: "Apple Watch のセンサーでレップ自動カウントに使用します"
         NSSupportsLiveActivities: true
         UIBackgroundModes:
-          - remote-notification
-          - processing
+          - fetch
         BGTaskSchedulerPermittedIdentifiers:
           - com.shuhirouchi.oikomi.coaching.refresh
         UILaunchScreen:
@@ -145,10 +143,12 @@ targets:
         CFBundleVersion: "9"
         ITSAppUsesNonExemptEncryption: false
         WKApplication: true
+        WKBackgroundModes:
+          - workout-processing
         WKRunsIndependentlyOfCompanionApp: true
         WKCompanionAppBundleIdentifier: com.shuhirouchi.oikomi
         WKSupportsLiveActivities: true
-        NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。データはオンデバイスでのみ処理され、外部送信はありません。"
+        NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。読み取ったデータはオンデバイスで処理され、iCloud 同期を有効にした場合のみご自身のプライベート iCloud に保存されます。第三者への送信は行いません。"
         NSHealthUpdateUsageDescription: "完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。"
     entitlements:
       path: App/Watch/OikomiWatch.entitlements

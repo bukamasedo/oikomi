@@ -605,6 +605,7 @@ private struct OnboardingProStep: View {
                 OnboardingProPricingStatus(
                     loadState: manager.loadState,
                     yearly: yearly,
+                    isEligibleForIntroOffer: manager.isEligibleForIntroOffer,
                     onRetry: reloadProducts
                 )
 
@@ -615,10 +616,31 @@ private struct OnboardingProStep: View {
                 )
                 .disabled(!isPurchaseAvailable || manager.purchaseInProgress)
 
+                // Guideline 3.1.1: 購入導線と同一画面に「購入を復元」を提供する。
+                Button("購入を復元", action: restorePurchases)
+                    .font(.subheadline)
+                    .disabled(manager.purchaseInProgress)
+                    .padding(.top, OikomiSpacing.xs)
+
                 Button("今はしない", action: onFinish)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.top, OikomiSpacing.xs)
+
+                // Guideline 3.1.2: 購入導線と同一画面に自動更新条件と法的リンクを明示する。
+                Text(Self.autoRenewDisclosure)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, OikomiSpacing.xs)
+
+                HStack(spacing: OikomiSpacing.l) {
+                    Link("利用規約", destination: URL(string: "https://bukamasedo.github.io/oikomi/legal/terms/")!)
+                    Link("プライバシーポリシー", destination: URL(string: "https://bukamasedo.github.io/oikomi/legal/privacy/")!)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
             .padding(.horizontal, OikomiSpacing.xxl)
             .padding(.bottom, OikomiSpacing.xxxl)
@@ -661,11 +683,22 @@ private struct OnboardingProStep: View {
     private func reloadProducts() {
         Task { await manager.loadProducts() }
     }
+
+    /// 復元に成功して Pro が有効化されると `onChange(isProActive)` 経由で `onFinish()` が走る。
+    private func restorePurchases() {
+        Task { try? await manager.restore() }
+    }
+
+    /// 自動更新サブスクリプションの定型開示文（年額トライアル前提）。
+    static let autoRenewDisclosure =
+        "サブスクリプションは期間終了の 24 時間前までに解約しない限り自動更新され、Apple ID に課金されます。"
+        + "無料トライアル中に解約した場合は課金されません。購入後は App Store の「サブスクリプション」からいつでも管理・解約できます。"
 }
 
 private struct OnboardingProPricingStatus: View {
     let loadState: SubscriptionManager.LoadState
     let yearly: Product?
+    let isEligibleForIntroOffer: Bool
     let onRetry: () -> Void
 
     var body: some View {
@@ -686,9 +719,15 @@ private struct OnboardingProPricingStatus: View {
             )
         case .loaded:
             if let yearly {
-                Text("\(yearly.displayPrice)/年 ・ いつでも解約可")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                // Guideline 3.1.2: トライアル長と「終了後に課金される金額・期間」を一文で結びつける。
+                Text(
+                    isEligibleForIntroOffer
+                        ? "14日間無料、その後 \(yearly.displayPrice)/年 ・ いつでも解約可"
+                        : "\(yearly.displayPrice)/年 ・ いつでも解約可"
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
             } else {
                 LoadFailureView(
                     title: "価格情報が見つかりませんでした",

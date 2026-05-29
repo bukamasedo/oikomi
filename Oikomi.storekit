@@ -8,8 +8,8 @@
       "internalID" : "T0000001",
       "localizations" : [
         {
-          "description" : "ポカリ 1 本分の応援。ありがとうございます！",
-          "displayName" : "🥤 ポカリ 1 本",
+          "description" : "スポーツドリンク 1 本分の応援。ありがとうございます！",
+          "displayName" : "🥤 スポーツドリンク 1 本",
           "locale" : "ja_JP"
         },
         {
@@ -19,7 +19,7 @@
         }
       ],
       "productID" : "com.shuhirouchi.oikomi.tip.pocari",
-      "referenceName" : "Tip - Pocari",
+      "referenceName" : "Tip - Sports Drink",
       "type" : "Consumable"
     },
     {

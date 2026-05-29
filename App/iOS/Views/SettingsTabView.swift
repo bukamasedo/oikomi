@@ -648,6 +648,14 @@ private struct ProUpgradeSheet: View {
         subscriptionManager.products.first(where: { $0.id == selectedProductID })
     }
 
+    /// Guideline 3.1.2: トライアル長と「終了後に課金される金額・期間」を一文で結びつける。
+    /// 価格は StoreKit の `displayPrice` から取得し、ストアフロント／通貨に追従させる。
+    private var trialTermsText: String? {
+        guard subscriptionManager.isEligibleForIntroOffer, let product = selectedProduct else { return nil }
+        let unit = product.id == ProductIDs.proYearly ? "年" : "月"
+        return "14日間無料、その後 \(product.displayPrice)/\(unit)"
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -746,7 +754,7 @@ private struct ProUpgradeSheet: View {
                     priceRow(
                         product: yearly,
                         label: "年額プラン",
-                        note: "実質 ¥483/月（月額比 38% オフ）"
+                        note: yearlyNote(yearly: yearly, monthly: monthlyProduct)
                     )
                 }
                 if let monthly = monthlyProduct {
@@ -763,27 +771,36 @@ private struct ProUpgradeSheet: View {
 
     @ViewBuilder
     private var ctaSection: some View {
-        Button {
-            Task { await purchaseSelected() }
-        } label: {
-            HStack {
-                if subscriptionManager.purchaseInProgress {
-                    ProgressView()
-                        .tint(.white)
+        VStack(spacing: 8) {
+            Button {
+                Task { await purchaseSelected() }
+            } label: {
+                HStack {
+                    if subscriptionManager.purchaseInProgress {
+                        ProgressView()
+                            .tint(.white)
+                    }
+                    Text(ctaLabel)
+                        .font(.headline)
                 }
-                Text(ctaLabel)
-                    .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .buttonStyle(.borderedProminent)
+            .disabled(
+                subscriptionManager.purchaseInProgress
+                    || selectedProduct == nil
+                    || subscriptionManager.loadState != .loaded
+            )
+
+            if let trialTermsText {
+                Text(trialTermsText)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
         }
-        .buttonStyle(.borderedProminent)
         .padding(.horizontal, 24)
-        .disabled(
-            subscriptionManager.purchaseInProgress
-                || selectedProduct == nil
-                || subscriptionManager.loadState != .loaded
-        )
     }
 
     private var ctaLabel: String {
@@ -804,6 +821,13 @@ private struct ProUpgradeSheet: View {
             }
             .disabled(subscriptionManager.purchaseInProgress)
 
+            // Guideline 3.1.2: 自動更新の条件を購入導線と同一画面に明示する。
+            Text(Self.autoRenewDisclosure)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
             HStack(spacing: 16) {
                 Link("利用規約", destination: URL(string: "https://bukamasedo.github.io/oikomi/legal/terms/")!)
                 Link("プライバシーポリシー", destination: URL(string: "https://bukamasedo.github.io/oikomi/legal/privacy/")!)
@@ -812,6 +836,24 @@ private struct ProUpgradeSheet: View {
             .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 24)
+    }
+
+    /// 自動更新サブスクリプションの定型開示文。月額/年額のどちらも対象。
+    static let autoRenewDisclosure =
+        "サブスクリプションは期間終了の 24 時間前までに解約しない限り自動更新され、Apple ID に課金されます。"
+        + "無料トライアル中に解約した場合は課金されません。購入後は App Store の「サブスクリプション」からいつでも管理・解約できます。"
+
+    /// 年額プランの「実質月額」と月額比割引率を StoreKit の価格から算出する。
+    /// ハードコードを避け、ストアフロント／通貨に追従させる（表記の正確性）。
+    private func yearlyNote(yearly: Product, monthly: Product?) -> String {
+        let perMonth = (yearly.price / 12).formatted(yearly.priceFormatStyle)
+        guard let monthly, monthly.price > 0 else {
+            return "実質 \(perMonth)/月"
+        }
+        let discountPercent = (1 - yearly.price / (monthly.price * 12)) * 100
+        let pct = NSDecimalNumber(decimal: discountPercent).intValue
+        guard pct > 0 else { return "実質 \(perMonth)/月" }
+        return "実質 \(perMonth)/月（月額比 \(pct)% オフ）"
     }
 
     @ViewBuilder
