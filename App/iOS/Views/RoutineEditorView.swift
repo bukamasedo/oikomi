@@ -159,6 +159,8 @@ struct RoutineEditorView: View {
                         OikomiColor.brandPrimary.opacity(0.35),
                         style: StrokeStyle(lineWidth: 1.5, dash: [5]))
             )
+            // 点線ボーダー内の余白（Spacer / padding）もタップ可能にする
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
