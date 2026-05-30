@@ -316,41 +316,30 @@ public enum Analytics {
         var advices: [CoachingAdvice] = []
 
         for pr in records {
-            guard let exercise = pr.exercise, pr.estimated1RM > 0 else { continue }
-            let exerciseId = exercise.id
+            guard let exercise = pr.exercise else { continue }
 
-            // 種目別のセットを「セッション単位」にまとめて、各セッションの最高 1RM を取り
-            // 古い順に並べる（線形回帰の X は 0..n-1）
-            let exerciseSets = sets.filter { !$0.isWarmup && $0.exercise?.id == exerciseId }
-            let bySession = Dictionary(grouping: exerciseSets) { $0.session?.id ?? UUID() }
-            let sessionMaxes =
-                bySession.values
-                .compactMap { setsInSession -> (date: Date, max: Double)? in
-                    let validRMs = setsInSession.compactMap(\.estimated1RM)
-                    guard let maxRM = validRMs.max(),
-                        let latest = setsInSession.map(\.completedAt).max()
-                    else { return nil }
-                    return (date: latest, max: maxRM)
-                }
-                .sorted { $0.date < $1.date }
-                .suffix(windowSize)
+            // RIR 補正つきのセッション別最高 1RM 系列（古い順）
+            let maxes = sessionMaxEstimateSeries(
+                sets: sets, forExerciseId: exercise.id, windowSize: windowSize)
+            guard maxes.count >= minSamples else { continue }
 
-            guard sessionMaxes.count >= minSamples else { continue }
-            let points = sessionMaxes.enumerated().map {
-                (x: Double($0.offset), y: $0.element.max)
-            }
+            let points = maxes.enumerated().map { (x: Double($0.offset), y: $0.element) }
             guard let fit = linearRegression(points) else { continue }
             guard fit.slope > 0, fit.r2 >= minR2 else { continue }
 
-            let predicted = fit.intercept + fit.slope * Double(points.count)
-            guard predicted > pr.estimated1RM else { continue }
+            let n = Double(points.count)
+            let predicted = fit.intercept + fit.slope * n
+            // 比較は同方式どうし（系列内の直近最高値）で apples-to-apples にする
+            let seriesMax = maxes.max() ?? 0
+            guard predicted > seriesMax else { continue }
 
-            let growth = predicted - pr.estimated1RM
+            let margin = max(1, predictionMargin(points: points, fit: fit).rounded())
+            let growth = predicted - seriesMax
             advices.append(
                 CoachingAdvice(
                     title: "PR 更新の可能性",
                     message:
-                        "次回\(exercise.name)で推定 \(WeightFormatter.oneRM(kilograms: predicted, in: weightUnit)) の PR を狙えます（直近\(points.count)セッションの上昇トレンドより）。",
+                        "次回\(exercise.name)で推定 \(WeightFormatter.oneRM(kilograms: predicted, in: weightUnit))（±\(Int(margin))kg）の PR を狙えます（直近\(points.count)セッションの上昇トレンドより）。",
                     severity: .info,
                     impact: predicted + growth
                 )
@@ -386,6 +375,51 @@ public enum Analytics {
         }
         let r2 = ssTot == 0 ? (ssRes == 0 ? 1 : 0) : 1 - ssRes / ssTot
         return (slope, intercept, r2)
+    }
+
+    /// 指定種目のセットを「セッション単位の最高推定 1RM（RIR 補正つき）」の時系列にする。古い順、直近 `windowSize` 件。
+    ///
+    /// 保存済み `estimated1RM`（Epley 固定）ではなく `OneRepMax.estimate(weight:reps:rpe:)` で都度算出することで、
+    /// レップ域別の式選択と RPE(RIR) 補正を効かせる。
+    static func sessionMaxEstimateSeries(
+        sets: [SetRecord],
+        forExerciseId exerciseId: UUID,
+        windowSize: Int
+    ) -> [Double] {
+        // 他のワーキングセット集計と同様、ウォームアップと計画のみ(未完了)セットは除外する。
+        let exerciseSets = sets.filter {
+            !$0.isWarmup && $0.isCompleted && $0.exercise?.id == exerciseId
+        }
+        let bySession = Dictionary(grouping: exerciseSets) { $0.session?.id ?? UUID() }
+        return
+            bySession.values
+            .compactMap { setsInSession -> (date: Date, max: Double)? in
+                let estimates = setsInSession.compactMap { set -> Double? in
+                    guard let w = set.weight, let r = set.reps, w > 0, r > 0 else { return nil }
+                    return OneRepMax.estimate(weight: w, reps: r, rpe: set.rpe)
+                }
+                guard let maxRM = estimates.max(),
+                    let latest = setsInSession.map(\.completedAt).max()
+                else { return nil }
+                return (date: latest, max: maxRM)
+            }
+            .sorted { $0.date < $1.date }
+            .suffix(windowSize)
+            .map(\.max)
+    }
+
+    /// 回帰の残差標準誤差を ± マージン（kg）として返す。点が 3 未満なら 0。
+    static func predictionMargin(
+        points: [(x: Double, y: Double)],
+        fit: (slope: Double, intercept: Double, r2: Double)
+    ) -> Double {
+        let n = Double(points.count)
+        guard n > 2 else { return 0 }
+        let ssRes = points.reduce(0) { acc, p in
+            let pred = fit.intercept + fit.slope * p.x
+            return acc + (p.y - pred) * (p.y - pred)
+        }
+        return (ssRes / (n - 2)).squareRoot()
     }
 
     /// 指定種目の「最大挙上重量の日次推移」を返す。古い順。

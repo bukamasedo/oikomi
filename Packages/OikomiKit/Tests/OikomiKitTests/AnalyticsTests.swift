@@ -571,6 +571,27 @@ struct AnalyticsTests {
         #expect(predictions.isEmpty)
     }
 
+    @Test("prPredictions: 予測メッセージに信頼レンジ（±）が含まれる")
+    func prPredictionShowsConfidenceRange() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<5 {
+            let weight = Double(80 + offset)
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: weight, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let predictions = Analytics.prPredictions(sets: allSets, records: records)
+        #expect(predictions.first?.message.contains("±") == true)
+    }
+
     @Test("linearRegression: 完全直線で R² == 1、slope と intercept が一致")
     func linearRegressionPerfectFit() {
         let points: [(x: Double, y: Double)] = (0..<5).map { (Double($0), Double($0) * 2 + 3) }
@@ -579,6 +600,28 @@ struct AnalyticsTests {
         #expect(abs((fit?.slope ?? 0) - 2) < 1e-9)
         #expect(abs((fit?.intercept ?? 0) - 3) < 1e-9)
         #expect(abs((fit?.r2 ?? 0) - 1) < 1e-9)
+    }
+
+    @Test("predictionMargin: 完全直線なら残差マージン 0")
+    func predictionMarginPerfectFit() {
+        let points: [(x: Double, y: Double)] = (0..<5).map { (Double($0), Double($0) * 2 + 3) }
+        let fit = Analytics.linearRegression(points)!
+        #expect(Analytics.predictionMargin(points: points, fit: fit) == 0)
+    }
+
+    @Test("predictionMargin: ばらつきのある系列は正の残差マージン")
+    func predictionMarginNoisy() {
+        // 直線から外れた点を含む → RSE > 0
+        let points: [(x: Double, y: Double)] = [(0, 0), (1, 2), (2, 1), (3, 5), (4, 3)]
+        let fit = Analytics.linearRegression(points)!
+        #expect(Analytics.predictionMargin(points: points, fit: fit) > 0)
+    }
+
+    @Test("predictionMargin: 点が 3 未満なら 0")
+    func predictionMarginTooFewPoints() {
+        let points: [(x: Double, y: Double)] = [(0, 1), (1, 3)]
+        let fit = Analytics.linearRegression(points)!
+        #expect(Analytics.predictionMargin(points: points, fit: fit) == 0)
     }
 
     // MARK: - deloadAdvice × readiness
