@@ -581,65 +581,21 @@ struct AnalyticsTests {
         #expect(abs((fit?.r2 ?? 0) - 1) < 1e-9)
     }
 
-    // MARK: - hrvDeloadAdvice
+    // MARK: - deloadAdvice × readiness
 
-    @Test("deloadAdvice: HRV が直近 14 日平均より 15% 以上低下で warning")
-    func hrvDeloadFires() {
-        let cal = Self.calendar
-        let now = cal.date(from: DateComponents(year: 2026, month: 5, day: 23))!
-
-        // 直近 3 日（0..-2）: 平均 40ms / 過去 14 日（-6..-13）: 平均 60ms → 33% 落ち → 警告
-        var series: [HealthTrendPoint] = []
-        for offset in 0..<3 {
-            let date = cal.date(byAdding: .day, value: -offset, to: now)!
-            series.append(HealthTrendPoint(date: date, value: 40))
-        }
-        for offset in 6...13 {
-            let date = cal.date(byAdding: .day, value: -offset, to: now)!
-            series.append(HealthTrendPoint(date: date, value: 60))
-        }
-
+    @Test("deloadAdvice: readiness が low なら回復優先 advice を含む")
+    func deloadIncludesReadinessLow() {
+        let r = ReadinessScore(value: 30, band: .low, confidence: .high, hrvZ: -1.5, usedSignals: [.hrv])
         let advices = Analytics.deloadAdvice(
-            sessions: [], sets: [], hrvSeries: series, referenceDate: now, calendar: cal)
-        #expect(advices.contains { $0.title.contains("HRV") })
+            sessions: [], sets: [], readiness: r, calendar: Self.calendar)
+        #expect(advices.contains { $0.title.contains("回復優先") })
     }
 
-    @Test("deloadAdvice: HRV が安定していれば警告を出さない")
-    func hrvDeloadStable() {
-        let cal = Self.calendar
-        let now = cal.date(from: DateComponents(year: 2026, month: 5, day: 23))!
-
-        // 直近 3 日も過去 14 日も同じ平均 60ms → 落ちなし
-        var series: [HealthTrendPoint] = []
-        for offset in 0..<3 {
-            let date = cal.date(byAdding: .day, value: -offset, to: now)!
-            series.append(HealthTrendPoint(date: date, value: 60))
-        }
-        for offset in 6...13 {
-            let date = cal.date(byAdding: .day, value: -offset, to: now)!
-            series.append(HealthTrendPoint(date: date, value: 60))
-        }
-
+    @Test("deloadAdvice: readiness が nil なら回復優先 advice は出ない")
+    func deloadNoReadinessWhenNil() {
         let advices = Analytics.deloadAdvice(
-            sessions: [], sets: [], hrvSeries: series, referenceDate: now, calendar: cal)
-        #expect(!advices.contains { $0.title.contains("HRV") })
-    }
-
-    @Test("deloadAdvice: HRV サンプルが少ない時は警告を出さない")
-    func hrvDeloadInsufficientSamples() {
-        let cal = Self.calendar
-        let now = cal.date(from: DateComponents(year: 2026, month: 5, day: 23))!
-
-        // 直近 3 日に 1 件しかない & ベースラインも 1 件 → 各ウィンドウ 3 件未満で警告対象外
-        let series: [HealthTrendPoint] = [
-            HealthTrendPoint(date: now, value: 30),
-            HealthTrendPoint(
-                date: cal.date(byAdding: .day, value: -7, to: now)!, value: 60),
-        ]
-
-        let advices = Analytics.deloadAdvice(
-            sessions: [], sets: [], hrvSeries: series, referenceDate: now, calendar: cal)
-        #expect(!advices.contains { $0.title.contains("HRV") })
+            sessions: [], sets: [], readiness: nil, calendar: Self.calendar)
+        #expect(!advices.contains { $0.title.contains("回復優先") })
     }
 
     @Test("currentWeekRange: 月曜開始の7日間 range")
@@ -651,5 +607,28 @@ struct AnalyticsTests {
         let duration = range.upperBound.timeIntervalSince(range.lowerBound)
         #expect(duration > 6 * 24 * 3600)
         #expect(duration < 7 * 24 * 3600)
+    }
+
+    // MARK: - readinessAdvice
+
+    @Test("readinessAdvice: low band で warning を返す")
+    func readinessAdviceLow() {
+        let r = ReadinessScore(value: 30, band: .low, confidence: .high, hrvZ: -1.5, usedSignals: [.hrv])
+        let advice = Analytics.readinessAdvice(readiness: r)
+        #expect(advice?.severity == .warning)
+    }
+
+    @Test("readinessAdvice: high band で success を返す")
+    func readinessAdviceHigh() {
+        let r = ReadinessScore(value: 85, band: .high, confidence: .high, hrvZ: 1.5, usedSignals: [.hrv])
+        let advice = Analytics.readinessAdvice(readiness: r)
+        #expect(advice?.severity == .success)
+    }
+
+    @Test("readinessAdvice: normal / nil では advice なし")
+    func readinessAdviceNormalNil() {
+        let r = ReadinessScore(value: 60, band: .normal, confidence: .high, hrvZ: 0, usedSignals: [.hrv])
+        #expect(Analytics.readinessAdvice(readiness: r) == nil)
+        #expect(Analytics.readinessAdvice(readiness: nil) == nil)
     }
 }

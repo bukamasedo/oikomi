@@ -191,14 +191,14 @@ public enum Analytics {
     /// 仕様書 §4.2.2 準拠。3 種類のシグナルを組み合わせる：
     /// - 連続 5 日以上トレーニング → 休息提案
     /// - 直近1週のボリュームが過去3週平均の 130% 以上 → ディロード提案
-    /// - HRV（直近 3 日平均）が過去 14 日のベースライン平均より 15% 以上低下 → 強度緩和提案
+    /// - レディネス（コンディション総合スコア）が low → 回復優先提案 / high → PR 狙い提案
     ///
-    /// HRV 系列は呼び出し側で `HealthStore.dailySeries(for: .hrv, days: 14)` を取得して渡す。
-    /// Pro 未契約や HealthKit 未認可など空配列の場合、HRV 判定はスキップして既存ロジックのみ動作する。
+    /// レディネス（コンディション総合スコア）は呼び出し側で `HealthStore.readinessSnapshot()` を取得して渡す。
+    /// Pro 未契約や HealthKit 未認可など readiness が nil の場合、レディネス判定はスキップして既存ロジックのみ動作する。
     public static func deloadAdvice(
         sessions: [WorkoutSession],
         sets: [SetRecord],
-        hrvSeries: [HealthTrendPoint] = [],
+        readiness: ReadinessScore? = nil,
         referenceDate: Date = Date(),
         calendar: Calendar = .current
     ) -> [CoachingAdvice] {
@@ -258,56 +258,39 @@ public enum Analytics {
             }
         }
 
-        // 3) HRV 低下判定（仕様書 §4.2.2）
-        //   現在値 = 直近 3 日 (参照日から逆算) の平均
-        //   ベースライン = 直近 14 日のうち、現在値ウィンドウより 4 日以上前のデータの平均
-        //   どちらも有効サンプル ≥3 件を要求。current ≤ baseline * 0.85 で warning。
-        if let advice = hrvDeloadAdvice(
-            hrvSeries: hrvSeries, referenceDate: referenceDate, calendar: calendar)
-        {
+        // 3) レディネス（HRV z-score 主・睡眠/安静時心拍 統合）判定
+        if let advice = readinessAdvice(readiness: readiness) {
             advices.append(advice)
         }
 
         return advices.sorted { $0.impact > $1.impact }
     }
 
-    /// HRV 低下シグナルから単発の `CoachingAdvice` を生成する。テスト容易性のため切り出し。
-    static func hrvDeloadAdvice(
-        hrvSeries: [HealthTrendPoint],
-        referenceDate: Date,
-        calendar: Calendar
-    ) -> CoachingAdvice? {
-        guard !hrvSeries.isEmpty else { return nil }
-        let today = calendar.startOfDay(for: referenceDate)
-        guard let recentWindowStart = calendar.date(byAdding: .day, value: -2, to: today),
-            let baselineCutoff = calendar.date(byAdding: .day, value: -3, to: recentWindowStart),
-            let baselineStart = calendar.date(byAdding: .day, value: -13, to: today)
-        else { return nil }
-
-        // recent: 直近 3 日 (today, today-1, today-2)
-        let recentValues =
-            hrvSeries
-            .filter { $0.date >= recentWindowStart && $0.date <= today && $0.value > 0 }
-            .map(\.value)
-        // baseline: 直近 14 日から recent ウィンドウを除外した期間
-        let baselineValues =
-            hrvSeries
-            .filter { $0.date >= baselineStart && $0.date <= baselineCutoff && $0.value > 0 }
-            .map(\.value)
-
-        guard recentValues.count >= 3, baselineValues.count >= 3 else { return nil }
-        let current = recentValues.reduce(0, +) / Double(recentValues.count)
-        let baseline = baselineValues.reduce(0, +) / Double(baselineValues.count)
-        guard baseline > 0, current <= baseline * 0.85 else { return nil }
-
-        let dropPercent = Int(((1 - current / baseline) * 100).rounded())
-        return CoachingAdvice(
-            title: "HRV 低下を検知",
-            message:
-                "今日は HRV が直近2週平均より \(dropPercent)% 低下しています。前回比 80% 程度の重量で組むことを検討してください。",
-            severity: .warning,
-            impact: (baseline - current) * 100
-        )
+    /// レディネススコアから単発の `CoachingAdvice` を生成する。
+    ///
+    /// low → 回復優先（warning）、high → PR 狙える日（success）、normal/nil → なし。
+    static func readinessAdvice(readiness: ReadinessScore?) -> CoachingAdvice? {
+        guard let readiness else { return nil }
+        switch readiness.band {
+        case .low:
+            return CoachingAdvice(
+                title: "今日は回復優先",
+                message:
+                    "コンディションスコアが \(readiness.value) と低めです。前回比 80% 程度の重量で軽めに組むことを検討してください。",
+                severity: .warning,
+                impact: Double(100 - readiness.value) * 100
+            )
+        case .high:
+            return CoachingAdvice(
+                title: "コンディション良好",
+                message: "コンディションスコアが \(readiness.value) と好調です。PR を狙える日です。",
+                severity: .success,
+                // .low と同スケールに揃える（×100）。そうしないと好調メッセージが他シグナルに埋もれて表示されない。
+                impact: Double(readiness.value) * 100
+            )
+        case .normal:
+            return nil
+        }
     }
 
     /// 自己ベスト更新の可能性が高い種目について、コーチングアドバイスを生成する。
