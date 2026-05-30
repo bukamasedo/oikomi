@@ -10,6 +10,9 @@ struct HomeView: View {
     /// 進行中ワークアウトカードのタップでトレーニングタブへ切替えるための Binding。
     @Binding var selectedTab: ContentView.Tab
 
+    /// フォアグラウンド復帰時にレディネスを取り直すためのシーンフェーズ監視。
+    @Environment(\.scenePhase) private var scenePhase
+
     @Query(filter: #Predicate<WorkoutSession> { $0.endedAt == nil })
     private var activeSessions: [WorkoutSession]
 
@@ -32,9 +35,9 @@ struct HomeView: View {
     @AppStorage(WeeklyTrainingTarget.storageKey) private var weeklyTargetDays: Int =
         WeeklyTrainingTarget.defaultDays
 
-    /// HealthStore から取得した直近 14 日の HRV 系列。Pro 未契約や HealthKit 未認可では空のまま。
-    /// 値が入ると `coachingAdvice` の HRV 低下判定が動作する。
-    @State private var hrvSeries: [HealthTrendPoint] = []
+    /// HealthStore から算出した今日のレディネス。Pro 未契約や HealthKit 未認可では nil のまま。
+    /// 値が入ると `coachingAdvice` のレディネス判定が動作し、TodayConditionCard にも表示される。
+    @State private var readiness: ReadinessScore?
 
     private var weeklyVolumeRange: ClosedRange<Date> { Analytics.currentWeekRange() }
 
@@ -71,11 +74,13 @@ struct HomeView: View {
         guard ProGate.canUseAICoaching else { return [] }
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
         let deload = Analytics.deloadAdvice(
-            sessions: completedSessions, sets: allSets, hrvSeries: hrvSeries)
+            sessions: completedSessions, sets: allSets, readiness: readiness)
         let volume = Analytics.volumeAdvice(from: allSets)
+        let autoreg = Analytics.autoregulationAdvice(sets: allSets, weightUnit: weightUnit)
         let prPredictions = Analytics.prPredictions(
             sets: allSets, records: personalRecords, weightUnit: weightUnit)
-        return Array((deload + prPredictions + volume).prefix(3))
+        let plateau = Analytics.plateauAdvice(sets: allSets, records: personalRecords)
+        return Array((deload + autoreg + prPredictions + plateau + volume).prefix(3))
     }
 
     private var activeSession: WorkoutSession? { activeSessions.first }
@@ -90,7 +95,7 @@ struct HomeView: View {
 
                     heroBlock
 
-                    TodayConditionCard()
+                    TodayConditionCard(readiness: readiness)
 
                     if !coachingAdvice.isEmpty {
                         coachingSection
@@ -112,19 +117,25 @@ struct HomeView: View {
                 ExerciseDetailView(exercise: exercise)
             }
             .task(id: ProGate.isProActive) {
-                await refreshHRVSeries()
+                await refreshHealthSignals()
+            }
+            // 「今日のコンディション」が陳腐化しないよう、フォアグラウンド復帰時に取り直す。
+            .task(id: scenePhase) {
+                if scenePhase == .active {
+                    await refreshHealthSignals()
+                }
             }
         }
     }
 
-    /// HealthStore から直近 14 日の HRV 推移を取り直す。Pro/権限がなければ空を返すだけ。
+    /// HealthStore から今日のレディネスを取り直す。Pro/権限がなければ nil。
     @MainActor
-    private func refreshHRVSeries() async {
+    private func refreshHealthSignals() async {
         guard ProGate.canReadHealthData else {
-            hrvSeries = []
+            readiness = nil
             return
         }
-        hrvSeries = await HealthStore.shared.dailySeries(for: .hrv, days: 14)
+        readiness = await HealthStore.shared.readinessSnapshot()
     }
 
     // MARK: - Resume card

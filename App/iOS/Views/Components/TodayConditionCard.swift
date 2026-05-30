@@ -8,6 +8,9 @@ import SwiftUI
 /// 自立カード（Section に依存しない）として ScrollView 内に直接配置できる。
 struct TodayConditionCard: View {
 
+    /// 親（HomeView）が算出して渡すレディネス。nil なら総合スコア行は出さない。
+    var readiness: ReadinessScore? = nil
+
     @State private var hrv: Double?
     @State private var rhr: Int?
     @State private var sleepHours: Double?
@@ -52,30 +55,66 @@ struct TodayConditionCard: View {
 
     @ViewBuilder
     private var proContent: some View {
-        HStack(alignment: .top, spacing: 0) {
-            metricCell(
-                title: "HRV",
-                value: hrv.map { "\(Int($0.rounded()))" } ?? "—",
-                unit: "ms",
-                systemImage: "waveform.path.ecg",
-                tint: OikomiColor.statPink
-            )
-            divider
-            metricCell(
-                title: "安静時心拍",
-                value: rhr.map { "\($0)" } ?? "—",
-                unit: "bpm",
-                systemImage: "heart.fill",
-                tint: OikomiColor.statRed
-            )
-            divider
-            metricCell(
-                title: "睡眠",
-                value: sleepHours.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
-                unit: "h",
-                systemImage: "moon.zzz.fill",
-                tint: OikomiColor.statIndigo
-            )
+        VStack(alignment: .leading, spacing: OikomiSpacing.m) {
+            if let readiness {
+                readinessRow(readiness)
+            }
+            HStack(alignment: .top, spacing: 0) {
+                metricCell(
+                    title: "HRV",
+                    value: hrv.map { "\(Int($0.rounded()))" } ?? "—",
+                    unit: "ms",
+                    systemImage: "waveform.path.ecg",
+                    tint: OikomiColor.statPink
+                )
+                divider
+                metricCell(
+                    title: "安静時心拍",
+                    value: rhr.map { "\($0)" } ?? "—",
+                    unit: "bpm",
+                    systemImage: "heart.fill",
+                    tint: OikomiColor.statRed
+                )
+                divider
+                metricCell(
+                    title: "睡眠",
+                    value: sleepHours.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
+                    unit: "h",
+                    systemImage: "moon.zzz.fill",
+                    tint: OikomiColor.statIndigo
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func readinessRow(_ readiness: ReadinessScore) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("コンディション")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text("\(readiness.value)")
+                    .font(OikomiFont.statValueCompact)
+                    .foregroundStyle(readinessColor(readiness.band))
+                Text("/ 100")
+                    .font(OikomiFont.metricUnit)
+                    .foregroundStyle(.secondary)
+            }
+            if let note = readiness.sourceNote {
+                Text(note)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func readinessColor(_ band: ReadinessScore.Band) -> Color {
+        switch band {
+        case .low: return OikomiColor.statRed
+        case .normal: return .primary
+        case .high: return OikomiColor.statGreen
         }
     }
 
