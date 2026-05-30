@@ -2,13 +2,10 @@ import OikomiKit
 import SwiftUI
 
 /// AI コーチング助言を 1 件表現するチップ。
-/// severity に応じて色とアイコンを切り替える。
-/// 既定は横並び ScrollView 用に幅 260pt 固定。`fillsWidth: true` で縦リスト用に全幅化する。
+/// severity に応じて色とアイコンを切り替え、横並びの ScrollView に並べる前提。
 struct CoachingChip: View {
 
     let advice: CoachingAdvice
-    /// true のとき幅を親いっぱいに広げる（縦リスト表示用）。false（既定）は 260pt 固定（横スクロール用）。
-    var fillsWidth: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
@@ -30,11 +27,10 @@ struct CoachingChip: View {
             Text(advice.message)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .lineLimit(fillsWidth ? nil : 3)
+                .lineLimit(3)
         }
         .padding(OikomiSpacing.l)
-        .frame(maxWidth: fillsWidth ? .infinity : nil, alignment: .leading)
-        .frame(width: fillsWidth ? nil : 260, alignment: .leading)
+        .frame(width: 260, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
                 .fill(OikomiColor.cardBackground)

@@ -3,8 +3,9 @@ import SwiftUI
 
 /// ホームの「コーチング」セクションから「すべて見る」で開く、全コーチング助言の一覧画面。
 ///
-/// ホーム側で算出済みの `[CoachingAdvice]`（severity → impact 順）をそのまま縦に並べて表示する。
-/// 表示専用のためデータ取得はせず、ホームのスナップショットを引き継ぐ。
+/// ホーム側で算出済みの `[CoachingAdvice]`（severity → impact 順）を、
+/// 1 枚のグループ化カード内に区切り線つきの行として並べる（iOS 設定/ヘルスケア風）。
+/// 1 件ごとにカード化すると断片的で読みにくいため、アプリ既存の「カード + インセット Divider」イディオムに揃える。
 struct CoachingListView: View {
 
     let advice: [CoachingAdvice]
@@ -14,11 +15,19 @@ struct CoachingListView: View {
             if advice.isEmpty {
                 emptyState
             } else {
-                VStack(alignment: .leading, spacing: OikomiSpacing.m) {
-                    ForEach(advice) { item in
-                        CoachingChip(advice: item, fillsWidth: true)
+                VStack(spacing: 0) {
+                    ForEach(Array(advice.enumerated()), id: \.element.id) { index, item in
+                        CoachingAdviceRow(advice: item)
+                        if index < advice.count - 1 {
+                            Divider()
+                                .padding(.leading, OikomiSpacing.l + 22 + OikomiSpacing.m)
+                        }
                     }
                 }
+                .background(
+                    OikomiColor.cardBackground,
+                    in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                )
                 .padding(.horizontal, OikomiSpacing.l)
                 .padding(.vertical, OikomiSpacing.l)
             }
@@ -41,6 +50,52 @@ struct CoachingListView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, OikomiSpacing.xxl)
+    }
+}
+
+/// 1 件の助言をコンパクトな行で表す。左端に severity 色のアイコン、右に見出し + 本文。
+/// 行ごとの枠線は持たず、色は控えめなアクセント（先頭アイコン）としてのみ使う。
+private struct CoachingAdviceRow: View {
+
+    let advice: CoachingAdvice
+
+    var body: some View {
+        HStack(alignment: .top, spacing: OikomiSpacing.m) {
+            Image(systemName: iconName)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(severityColor)
+                .frame(width: 22, alignment: .center)
+                .padding(.top, 1)
+
+            VStack(alignment: .leading, spacing: OikomiSpacing.xs) {
+                Text(advice.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Text(advice.message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, OikomiSpacing.l)
+        .padding(.vertical, OikomiSpacing.m)
+    }
+
+    private var iconName: String {
+        switch advice.severity {
+        case .warning: return "exclamationmark.triangle.fill"
+        case .success: return "checkmark.seal.fill"
+        case .info: return "info.circle.fill"
+        }
+    }
+
+    private var severityColor: Color {
+        switch advice.severity {
+        case .warning: return .orange
+        case .success: return .green
+        case .info: return .blue
+        }
     }
 }
 
