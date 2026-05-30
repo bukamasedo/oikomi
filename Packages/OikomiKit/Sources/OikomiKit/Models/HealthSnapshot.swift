@@ -12,6 +12,8 @@ public final class HealthSnapshot {
     public var hrvSDNN: Double?
     public var sleepScore: Int?
     public var restingHeartRate: Int?
+    /// コンディション総合スコア（0-100）のスナップショット。Spec 1 では予約のみ（populate は Spec 2）。
+    public var readinessScore: Int?
 
     /// `MenstrualPhase.rawValue`（v1.1〜）
     public var menstrualPhaseRawValue: String?
@@ -25,6 +27,7 @@ public final class HealthSnapshot {
         hrvSDNN: Double? = nil,
         sleepScore: Int? = nil,
         restingHeartRate: Int? = nil,
+        readinessScore: Int? = nil,
         menstrualPhase: MenstrualPhase? = nil,
         session: WorkoutSession? = nil
     ) {
@@ -33,6 +36,7 @@ public final class HealthSnapshot {
         self.hrvSDNN = hrvSDNN
         self.sleepScore = sleepScore
         self.restingHeartRate = restingHeartRate
+        self.readinessScore = readinessScore
         self.menstrualPhaseRawValue = menstrualPhase?.rawValue
         self.session = session
     }

@@ -822,4 +822,14 @@ struct AnalyticsTests {
         let advices = Analytics.autoregulationAdvice(sets: allSets, calendar: Self.calendar)
         #expect(advices.isEmpty)
     }
+
+    // MARK: - HealthSnapshot.readinessScore（予約フィールド）
+
+    @Test("HealthSnapshot: readinessScore は既定 nil・代入で保持される")
+    func healthSnapshotReadinessField() {
+        let snap = HealthSnapshot(date: Date())
+        #expect(snap.readinessScore == nil)
+        snap.readinessScore = 72
+        #expect(snap.readinessScore == 72)
+    }
 }
