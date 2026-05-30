@@ -624,6 +624,69 @@ struct AnalyticsTests {
         #expect(Analytics.predictionMargin(points: points, fit: fit) == 0)
     }
 
+    // MARK: - plateauAdvice
+
+    @Test("plateauAdvice: 横ばい 5 セッションで停滞 advice を出す")
+    func plateauFlat() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<5 {
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: 80, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.plateauAdvice(sets: allSets, records: records)
+        #expect(advices.contains { $0.title.contains("停滞") })
+    }
+
+    @Test("plateauAdvice: 明確な上昇トレンドでは停滞を出さない")
+    func plateauRisingNone() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<5 {
+            let weight = Double(80 + offset)
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: weight, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.plateauAdvice(sets: allSets, records: records)
+        #expect(advices.isEmpty)
+    }
+
+    @Test("plateauAdvice: サンプル不足では出さない")
+    func plateauInsufficient() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<4 {
+            let date = cal.date(byAdding: .day, value: -(3 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: 80, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.plateauAdvice(sets: allSets, records: records)
+        #expect(advices.isEmpty)
+    }
+
     // MARK: - deloadAdvice × readiness
 
     @Test("deloadAdvice: readiness が low なら回復優先 advice を含む")

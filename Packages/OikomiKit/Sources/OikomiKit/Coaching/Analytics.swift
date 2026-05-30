@@ -5,6 +5,11 @@ import Foundation
 /// SwiftData クエリ結果を渡して呼ぶ前提で、副作用なし・テスト容易。
 public enum Analytics {
 
+    /// 「意味のある伸び」とみなす最小傾き（kg/セッション）。
+    /// PR 予測（これ以上の上昇）と停滞検出（絶対値がこれ未満でほぼ横ばい）の境界を共有し、
+    /// `0 < slope < ε` の弱い上昇で両者が同時発火して矛盾するのを防ぐ。
+    public static let meaningfulSlopeKgPerSession = 0.25
+
     /// 指定週内のユニークなトレーニング実施日数を返す。
     ///
     /// 筋トレは休養日を含むサイクルが前提なので「連続日数」ではなく「週あたり頻度」で進捗を測る。
@@ -301,7 +306,7 @@ public enum Analytics {
     ///
     /// フィルタ条件：
     /// - 直近 `windowSize` セッションを採用（デフォルト 10）。最低 `minSamples` (= 5) 必要。
-    /// - slope > 0（上昇トレンド）のみ予測
+    /// - slope >= `meaningfulSlopeKgPerSession`（意味のある上昇トレンド）のみ予測。停滞検出と排他。
     /// - R² >= `minR2`（デフォルト 0.3）でばらつきが大きすぎる系列は除外
     /// - 予測値 > 現 PR の場合のみ発行
     public static func prPredictions(
@@ -325,7 +330,7 @@ public enum Analytics {
 
             let points = maxes.enumerated().map { (x: Double($0.offset), y: $0.element) }
             guard let fit = linearRegression(points) else { continue }
-            guard fit.slope > 0, fit.r2 >= minR2 else { continue }
+            guard fit.slope >= meaningfulSlopeKgPerSession, fit.r2 >= minR2 else { continue }
 
             let n = Double(points.count)
             let predicted = fit.intercept + fit.slope * n
@@ -346,6 +351,40 @@ public enum Analytics {
             )
         }
 
+        return advices.sorted { $0.impact > $1.impact }
+    }
+
+    /// 停滞（プラトー）検出。種目別に最高推定 1RM 系列の傾きがほぼ 0 のとき助言する。
+    ///
+    /// PR 予測とは別関数。`slopeEpsilon`（kg/セッション）未満の絶対傾きを「停滞」とみなす。
+    /// 既定の閾値は `meaningfulSlopeKgPerSession` を共有するため、PR 予測（slope ≥ ε）とは排他になる。
+    public static func plateauAdvice(
+        sets: [SetRecord],
+        records: [PersonalRecord],
+        windowSize: Int = 10,
+        minSamples: Int = 5,
+        slopeEpsilon: Double = meaningfulSlopeKgPerSession,
+        calendar: Calendar = .current
+    ) -> [CoachingAdvice] {
+        var advices: [CoachingAdvice] = []
+        for pr in records {
+            guard let exercise = pr.exercise else { continue }
+            let maxes = sessionMaxEstimateSeries(
+                sets: sets, forExerciseId: exercise.id, windowSize: windowSize)
+            guard maxes.count >= minSamples else { continue }
+            let points = maxes.enumerated().map { (x: Double($0.offset), y: $0.element) }
+            guard let fit = linearRegression(points) else { continue }
+            guard abs(fit.slope) < slopeEpsilon else { continue }
+            advices.append(
+                CoachingAdvice(
+                    title: "停滞ぎみ",
+                    message:
+                        "\(exercise.name)はここ\(points.count)セッションほぼ横ばいです。レップ域・頻度・種目の変更を検討してください。",
+                    severity: .info,
+                    impact: Double(points.count)
+                )
+            )
+        }
         return advices.sorted { $0.impact > $1.impact }
     }
 
