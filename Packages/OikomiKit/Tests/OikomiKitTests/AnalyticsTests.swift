@@ -631,4 +631,89 @@ struct AnalyticsTests {
         #expect(Analytics.readinessAdvice(readiness: r) == nil)
         #expect(Analytics.readinessAdvice(readiness: nil) == nil)
     }
+
+    // MARK: - autoregulationAdvice
+
+    /// 同一種目で指定 RPE のセットを N セッション分作るヘルパー。
+    private func makeRPESessions(
+        context: ModelContext, exercise: Exercise, weight: Double, rpe: Double, sessions: Int
+    ) throws {
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<sessions {
+            let date = cal.date(byAdding: .day, value: -(sessions - offset) * 2, to: now)!
+            let s = try repo.startSession(at: date)
+            let set = try repo.addSet(to: s, exercise: exercise, weight: weight, reps: 8, completedAt: date)
+            set.rpe = rpe
+            s.endedAt = date
+        }
+    }
+
+    @Test("autoregulationAdvice: 直近2回とも RPE9 以上なら減量を提案")
+    func autoregHighRPEDecrease() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        try makeRPESessions(context: context, exercise: bench, weight: 100, rpe: 9.5, sessions: 2)
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.autoregulationAdvice(sets: allSets, calendar: Self.calendar)
+        #expect(advices.contains { $0.title.contains("下げ") })
+    }
+
+    @Test("autoregulationAdvice: 直近2回とも RPE6 以下なら増量を提案")
+    func autoregLowRPEIncrease() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        try makeRPESessions(context: context, exercise: bench, weight: 100, rpe: 6.0, sessions: 2)
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.autoregulationAdvice(sets: allSets, calendar: Self.calendar)
+        #expect(advices.contains { $0.title.contains("上げ") || $0.title.contains("増やし") })
+    }
+
+    @Test("autoregulationAdvice: RPE が適正（8前後）なら提案なし")
+    func autoregMidRPENone() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        try makeRPESessions(context: context, exercise: bench, weight: 100, rpe: 7.5, sessions: 2)
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.autoregulationAdvice(sets: allSets, calendar: Self.calendar)
+        #expect(advices.isEmpty)
+    }
+
+    @Test("autoregulationAdvice: RPE 未入力なら提案なし")
+    func autoregNoRPENone() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<2 {
+            let date = cal.date(byAdding: .day, value: -(2 - offset) * 2, to: now)!
+            let s = try repo.startSession(at: date)
+            try repo.addSet(to: s, exercise: bench, weight: 100, reps: 8, completedAt: date)  // rpe nil
+            s.endedAt = date
+        }
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.autoregulationAdvice(sets: allSets, calendar: Self.calendar)
+        #expect(advices.isEmpty)
+    }
+
+    @Test("autoregulationAdvice: 1 セッションだけならデータ不足で提案なし")
+    func autoregSingleSessionNone() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        try makeRPESessions(context: context, exercise: bench, weight: 100, rpe: 9.5, sessions: 1)
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.autoregulationAdvice(sets: allSets, calendar: Self.calendar)
+        #expect(advices.isEmpty)
+    }
 }

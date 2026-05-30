@@ -491,6 +491,80 @@ public enum Analytics {
 
         return advices.sorted { $0.impact > $1.impact }
     }
+
+    /// RPE オートレギュレーション（セッション間）。
+    ///
+    /// 種目ごとに直近 2 セッションの平均 RPE を見て、次回の推奨重量を提案する。
+    /// 目標 RPE を中心に、上限 = targetRPE+1（重すぎ→減量）、下限 = targetRPE-2（軽すぎ→増量）。
+    /// 既定 targetRPE=8 では上限 9・下限 6。RPE 未入力の種目・データ不足（< 2 セッション）はスキップ。提案は読み取り専用。
+    /// impact は同関数内（複数種目）の並び順用で、変化幅が大きい提案を上位にする。
+    public static func autoregulationAdvice(
+        sets: [SetRecord],
+        targetRPE: Double = 8,
+        minSessions: Int = 2,
+        calendar: Calendar = .current,
+        weightUnit: WeightUnit = .kg
+    ) -> [CoachingAdvice] {
+        let highThreshold = targetRPE + 1  // これ以上が続く → 重すぎ
+        let lowThreshold = targetRPE - 2  // これ以下が続く → 軽すぎ
+        let working = sets.filter {
+            !$0.isWarmup && $0.isCompleted && $0.rpe != nil && ($0.weight ?? 0) > 0
+        }
+        let byExercise = Dictionary(grouping: working) { $0.exercise?.id ?? UUID() }
+
+        var advices: [CoachingAdvice] = []
+        for (_, exSets) in byExercise {
+            guard let exercise = exSets.first?.exercise else { continue }
+
+            let bySession = Dictionary(grouping: exSets) { $0.session?.id ?? UUID() }
+            let summaries =
+                bySession.values
+                .compactMap { s -> (date: Date, avgRPE: Double, topWeight: Double)? in
+                    let rpes = s.compactMap(\.rpe)
+                    guard !rpes.isEmpty, let date = s.map(\.completedAt).max() else { return nil }
+                    let avg = rpes.reduce(0, +) / Double(rpes.count)
+                    let topWeight = s.compactMap(\.weight).max() ?? 0
+                    return (date, avg, topWeight)
+                }
+                .sorted { $0.date < $1.date }
+
+            guard summaries.count >= minSessions else { continue }
+            let recent = summaries.suffix(2)
+            guard let lastWeight = recent.last?.topWeight, lastWeight > 0 else { continue }
+
+            if recent.allSatisfy({ $0.avgRPE >= highThreshold }) {
+                let suggested = roundToPlate(lastWeight * 0.95)
+                guard suggested < lastWeight else { continue }
+                advices.append(
+                    CoachingAdvice(
+                        title: "重量を少し下げましょう",
+                        message:
+                            "\(exercise.name)は直近2回とも高強度（RPE \(Int(highThreshold)) 以上）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。",
+                        severity: .warning,
+                        impact: (lastWeight - suggested) + 50
+                    )
+                )
+            } else if recent.allSatisfy({ $0.avgRPE <= lowThreshold }) {
+                let suggested = roundToPlate(lastWeight * 1.025)
+                guard suggested > lastWeight else { continue }
+                advices.append(
+                    CoachingAdvice(
+                        title: "重量を上げてみましょう",
+                        message:
+                            "\(exercise.name)は直近2回とも余裕（RPE \(Int(lowThreshold)) 以下）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。",
+                        severity: .info,
+                        impact: (suggested - lastWeight) + 50
+                    )
+                )
+            }
+        }
+        return advices.sorted { $0.impact > $1.impact }
+    }
+
+    /// 2.5kg 刻みに丸める（プレート単位）。
+    static func roundToPlate(_ weight: Double) -> Double {
+        (weight / 2.5).rounded() * 2.5
+    }
 }
 
 /// 1週間分の集計データポイント。
