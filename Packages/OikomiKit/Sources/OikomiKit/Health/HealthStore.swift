@@ -267,6 +267,28 @@ public final class HealthStore {
         #endif
     }
 
+    /// 今日のレディネス（コンディション総合スコア）を算出する薄いラッパー。
+    ///
+    /// HRV / 安静時心拍の 60 日系列と今日の睡眠時間を取得し `ReadinessScore.compute` に渡す。
+    /// Pro 未契約・HealthKit 未認可なら（各 API が空/nil を返すため）結果は nil になりうる。
+    public func readinessSnapshot(
+        referenceDate: Date = Date(),
+        calendar: Calendar = .current
+    ) async -> ReadinessScore? {
+        guard ProGate.canReadHealthData else { return nil }
+        async let hrv = dailySeries(for: .hrv, days: 60)
+        async let rhr = dailySeries(for: .restingHeartRate, days: 60)
+        async let sleep = todayValue(for: .sleepHours)
+        let (hrvSeries, rhrSeries, sleepHours) = await (hrv, rhr, sleep)
+        return ReadinessScore.compute(
+            hrvSeries: hrvSeries,
+            rhrSeries: rhrSeries,
+            sleepHours: sleepHours,
+            referenceDate: referenceDate,
+            calendar: calendar
+        )
+    }
+
     #if canImport(HealthKit)
         /// `HealthMetric` を HealthKit の (identifier, unit) ペアにマップ。
         private func quantitySpec(
