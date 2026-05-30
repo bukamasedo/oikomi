@@ -887,4 +887,38 @@ struct AnalyticsTests {
         #expect(advices.contains { $0.title.contains("停滞") })
         #expect(!advices.contains { $0.title.contains("PR") })
     }
+
+    @Test("combinedCoachingAdvice: 大きい limit で全件返す（3件キャップを超える）")
+    func combinedLimitReturnsAll() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        // 連続5日 + 横ばい → 休息警告 / 停滞 / 「新しい部位」など4件以上のアドバイスが出る状況
+        for offset in 0..<5 {
+            let date = cal.date(byAdding: .day, value: -offset, to: now)!
+            let s = try repo.startSession(at: date)
+            try repo.addSet(to: s, exercise: bench, weight: 60, reps: 5, completedAt: date)
+            s.endedAt = date
+        }
+        let r = ReadinessScore(
+            value: 85, band: .high, confidence: .high, hrvZ: 1.5, usedSignals: [.hrv])
+        let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+        let sets = try context.fetch(FetchDescriptor<SetRecord>())
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+
+        let capped = Analytics.combinedCoachingAdvice(
+            sessions: sessions, sets: sets, records: records, readiness: r,
+            limit: 3, referenceDate: now, calendar: cal)
+        let full = Analytics.combinedCoachingAdvice(
+            sessions: sessions, sets: sets, records: records, readiness: r,
+            limit: .max, referenceDate: now, calendar: cal)
+
+        #expect(capped.count == 3)
+        #expect(full.count > 3)
+        // キャップ版は全件の先頭3件と同じ並び（id は毎回採番されるのでタイトル列で比較）
+        #expect(capped.map(\.title) == full.prefix(3).map(\.title))
+    }
 }

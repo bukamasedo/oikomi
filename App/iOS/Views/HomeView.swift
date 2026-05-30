@@ -70,7 +70,9 @@ struct HomeView: View {
         Array(personalRecords.prefix(5))
     }
 
-    private var coachingAdvice: [CoachingAdvice] {
+    /// コーチング助言の全件（severity → impact 順）。ホームは先頭3件のみ表示し、
+    /// 残りは見出しの「すべて見る」から `CoachingListView` で確認する。
+    private var allCoaching: [CoachingAdvice] {
         guard ProGate.canUseAICoaching else { return [] }
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
         return Analytics.combinedCoachingAdvice(
@@ -78,6 +80,7 @@ struct HomeView: View {
             sets: allSets,
             records: personalRecords,
             readiness: readiness,
+            limit: .max,
             weightUnit: weightUnit
         )
     }
@@ -96,7 +99,7 @@ struct HomeView: View {
 
                     TodayConditionCard(readiness: readiness)
 
-                    if !coachingAdvice.isEmpty {
+                    if !allCoaching.isEmpty {
                         coachingSection
                     }
 
@@ -230,10 +233,19 @@ struct HomeView: View {
     @ViewBuilder
     private var coachingSection: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-            SectionHeader(title: "コーチング")
+            SectionHeader(title: "コーチング") {
+                if allCoaching.count > 3 {
+                    NavigationLink {
+                        CoachingListView(advice: allCoaching)
+                    } label: {
+                        Text("すべて見る")
+                            .font(.subheadline.weight(.medium))
+                    }
+                }
+            }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: OikomiSpacing.m) {
-                    ForEach(coachingAdvice) { advice in
+                    ForEach(Array(allCoaching.prefix(3))) { advice in
                         CoachingChip(advice: advice)
                     }
                 }
