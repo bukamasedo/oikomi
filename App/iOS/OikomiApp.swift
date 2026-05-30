@@ -1,7 +1,6 @@
 import OikomiKit
 import SwiftData
 import SwiftUI
-import UIKit
 
 @main
 struct OikomiApp: App {
@@ -11,11 +10,10 @@ struct OikomiApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
-        // アラート/確認ダイアログのボタン色を標準ラベル色に揃える。
-        // ブランド tint（オレンジ）が UIAlertController にも継承され、キャンセルや
-        // 非破壊アクションがオレンジ表示になるため。destructive ボタンは UIKit が
-        // 赤を強制するので影響なし。
-        UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = .label
+        // 注: アラートのキャンセル/通常ボタンがブランド色（オレンジ）になる問題は、
+        // SwiftUI の環境 tint が UIAlertController の tintColor を上書きしてしまい
+        // UIView.appearance では効かないため、各 .alert を neutral tint の不可視
+        // ホスト（Color.clear.tint(.primary)）に載せる方式で対処している。
 
         do {
             let container = try SharedModelContainer.bootstrap()

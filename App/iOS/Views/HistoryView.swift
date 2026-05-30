@@ -192,18 +192,24 @@ struct HistoryView: View {
             .navigationDestination(item: $navigationTarget) { session in
                 SessionDetailView(session: session)
             }
-            .alert(
-                "このセッションを削除しますか？",
-                isPresented: Binding(
-                    get: { sessionPendingDeletion != nil },
-                    set: { if !$0 { sessionPendingDeletion = nil } }
-                ),
-                presenting: sessionPendingDeletion
-            ) { session in
-                Button("削除", role: .destructive) { deleteSession(session) }
-                Button("キャンセル", role: .cancel) { sessionPendingDeletion = nil }
-            } message: { _ in
-                Text("セット記録もすべて削除されます。この操作は取り消せません。")
+            // ブランド tint(オレンジ)がキャンセルボタンに流れ込むのを避けるため、
+            // アラートだけ neutral tint の不可視ホストに載せる(destructive は赤のまま)。
+            .background {
+                Color.clear
+                    .tint(.primary)
+                    .alert(
+                        "このセッションを削除しますか？",
+                        isPresented: Binding(
+                            get: { sessionPendingDeletion != nil },
+                            set: { if !$0 { sessionPendingDeletion = nil } }
+                        ),
+                        presenting: sessionPendingDeletion
+                    ) { session in
+                        Button("削除", role: .destructive) { deleteSession(session) }
+                        Button("キャンセル", role: .cancel) { sessionPendingDeletion = nil }
+                    } message: { _ in
+                        Text("セット記録もすべて削除されます。この操作は取り消せません。")
+                    }
             }
         }
     }

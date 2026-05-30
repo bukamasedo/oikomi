@@ -67,14 +67,20 @@ struct SessionDetailView: View {
         .background(OikomiColor.appBackground)
         .navigationTitle(session.startedAt.formatted(date: .abbreviated, time: .omitted))
         .navigationBarTitleDisplayMode(.inline)
-        .alert(
-            "このセッションをコピーして開始しますか？",
-            isPresented: $showingCopyConfirmation
-        ) {
-            Button("コピーして開始") { copySession() }
-            Button("キャンセル", role: .cancel) {}
-        } message: {
-            Text("\(session.sets?.count ?? 0) セットを複製して新しいワークアウトを開始します。")
+        // ブランド tint(オレンジ)がキャンセル/通常ボタンに流れ込むのを避けるため、
+        // アラートだけ neutral tint の不可視ホストに載せる。
+        .background {
+            Color.clear
+                .tint(.primary)
+                .alert(
+                    "このセッションをコピーして開始しますか？",
+                    isPresented: $showingCopyConfirmation
+                ) {
+                    Button("コピーして開始") { copySession() }
+                    Button("キャンセル", role: .cancel) {}
+                } message: {
+                    Text("\(session.sets?.count ?? 0) セットを複製して新しいワークアウトを開始します。")
+                }
         }
         .alert("進行中のセッションがあります", isPresented: $showingActiveBlockedAlert) {
             Button("OK") {}

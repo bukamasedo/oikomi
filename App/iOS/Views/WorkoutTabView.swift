@@ -220,31 +220,38 @@ struct WorkoutTabView: View {
                 }
             }
         }
-        .alert("ワークアウトを終了しますか？", isPresented: $confirmingFinish) {
-            Button("終了する", role: .destructive) { finishSession(session) }
-            Button("キャンセル", role: .cancel) {}
-        } message: {
-            Text("現在のセッションを完了します。")
-        }
-        .alert(
-            "種目を削除しますか？",
-            isPresented: Binding(
-                get: { pendingExerciseDeletion != nil },
-                set: { if !$0 { pendingExerciseDeletion = nil } }
-            ),
-            presenting: pendingExerciseDeletion
-        ) { pending in
-            Button("削除する", role: .destructive) {
-                deleteExerciseInSession(pending.exercise, in: session)
-                pendingExerciseDeletion = nil
-            }
-            Button("キャンセル", role: .cancel) {
-                pendingExerciseDeletion = nil
-            }
-        } message: { pending in
-            Text(
-                "「\(pending.exercise.name)」とこのセッション内の \(pending.setCount) 件のセットを削除します。"
-            )
+        // アプリ全体のブランド tint(オレンジ)がアラートのキャンセル/通常ボタンに
+        // 流れ込むのを避けるため、アラートだけ neutral tint(標準ラベル色)の
+        // 不可視ホストに載せる。destructive は OS が赤を強制するので影響なし。
+        .background {
+            Color.clear
+                .tint(.primary)
+                .alert("ワークアウトを終了しますか？", isPresented: $confirmingFinish) {
+                    Button("終了する", role: .destructive) { finishSession(session) }
+                    Button("キャンセル", role: .cancel) {}
+                } message: {
+                    Text("現在のセッションを完了します。")
+                }
+                .alert(
+                    "種目を削除しますか？",
+                    isPresented: Binding(
+                        get: { pendingExerciseDeletion != nil },
+                        set: { if !$0 { pendingExerciseDeletion = nil } }
+                    ),
+                    presenting: pendingExerciseDeletion
+                ) { pending in
+                    Button("削除する", role: .destructive) {
+                        deleteExerciseInSession(pending.exercise, in: session)
+                        pendingExerciseDeletion = nil
+                    }
+                    Button("キャンセル", role: .cancel) {
+                        pendingExerciseDeletion = nil
+                    }
+                } message: { pending in
+                    Text(
+                        "「\(pending.exercise.name)」とこのセッション内の \(pending.setCount) 件のセットを削除します。"
+                    )
+                }
         }
         .sheet(isPresented: $showingAddSetSheet) {
             AddSetSheet(

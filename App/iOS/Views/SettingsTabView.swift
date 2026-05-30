@@ -78,11 +78,17 @@ struct SettingsTabView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
-            .alert("全データを削除しますか？", isPresented: $showResetConfirm) {
-                Button("全て削除", role: .destructive) { resetAllData() }
-                Button("キャンセル", role: .cancel) {}
-            } message: {
-                Text("セッション・PR・ルーティン・カスタム種目をすべて削除します。シード種目は再投入されます。Apple Watch のローカルデータも削除されます。")
+            // ブランド tint(オレンジ)がキャンセルボタンに流れ込むのを避けるため、
+            // アラートだけ neutral tint の不可視ホストに載せる(destructive は赤のまま)。
+            .background {
+                Color.clear
+                    .tint(.primary)
+                    .alert("全データを削除しますか？", isPresented: $showResetConfirm) {
+                        Button("全て削除", role: .destructive) { resetAllData() }
+                        Button("キャンセル", role: .cancel) {}
+                    } message: {
+                        Text("セッション・PR・ルーティン・カスタム種目をすべて削除します。シード種目は再投入されます。Apple Watch のローカルデータも削除されます。")
+                    }
             }
             .sheet(isPresented: $showProSheet) {
                 ProUpgradeSheet()
@@ -94,13 +100,17 @@ struct SettingsTabView: View {
                 OnboardingView(isPresented: $showOnboarding)
             }
             #if DEBUG
-                .alert("テストデータを削除しますか？", isPresented: $showMockClearConfirm) {
-                    Button("削除", role: .destructive) {
-                        Task { await clearMockData() }
+                .background {
+                    Color.clear
+                    .tint(.primary)
+                    .alert("テストデータを削除しますか？", isPresented: $showMockClearConfirm) {
+                        Button("削除", role: .destructive) {
+                            Task { await clearMockData() }
+                        }
+                        Button("キャンセル", role: .cancel) {}
+                    } message: {
+                        Text("MockDataGenerator が生成したセッション・ルーティン・HealthKit データを削除します。実データは保持されます。")
                     }
-                    Button("キャンセル", role: .cancel) {}
-                } message: {
-                    Text("MockDataGenerator が生成したセッション・ルーティン・HealthKit データを削除します。実データは保持されます。")
                 }
             #endif
         }
