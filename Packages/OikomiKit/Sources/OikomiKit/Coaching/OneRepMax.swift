@@ -35,4 +35,21 @@ public enum OneRepMax {
         guard estimated1RM > 0 else { return 0 }
         return weight / estimated1RM
     }
+
+    /// レップ域に応じた式選択 + RIR 補正つきの 1RM 推定。
+    ///
+    /// - RIR 補正: 実効レップ = reps + (10 - rpe)。RPE8(RIR2) のセットは「あと2レップ可能」とみなす。
+    ///   rpe が nil のときは reps をそのまま使う（既存挙動互換）。
+    /// - 式選択: 実効レップ 1〜5 → Epley、6 以上 → Brzycki（高レップで精度が落ちる Epley を避ける）。
+    ///
+    /// RPE は定義域 [1, 10]。範囲外の入力は丸めて扱う（epley/brzycki が weight を guard するのと同じ防御）。
+    public static func estimate(weight: Double, reps: Int, rpe: Double?) -> Double {
+        guard reps >= 1, weight > 0 else { return 0 }
+        let rir = rpe.map { Int((10.0 - min(max($0, 1.0), 10.0)).rounded()) } ?? 0
+        let effectiveReps = max(1, reps + max(0, rir))
+        if effectiveReps <= 5 {
+            return epley(weight: weight, reps: effectiveReps)
+        }
+        return brzycki(weight: weight, reps: effectiveReps)
+    }
 }
