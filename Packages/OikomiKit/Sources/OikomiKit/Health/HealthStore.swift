@@ -83,6 +83,8 @@ public final class HealthStore {
                 .heartRateVariabilitySDNN,
                 .restingHeartRate,
                 .bodyMass,
+                .bodyFatPercentage,
+                .leanBodyMass,
             ]
             for identifier in quantityIdentifiers {
                 if let type = HKObjectType.quantityType(forIdentifier: identifier) {

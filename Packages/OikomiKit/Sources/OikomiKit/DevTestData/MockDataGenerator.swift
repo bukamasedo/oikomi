@@ -383,14 +383,44 @@ public enum MockDataGenerator {
                     )
                 )
             }
-            // 体重: 70.0kg から微減トレンド
+            // 体組成: 体重 70.0kg → 微減、体脂肪率 19% → 16% へ漸減。
+            // 体重・体脂肪率・除脂肪体重を数学的に一貫させる（LBM = 体重 × (1 - 体脂肪率)）。
+            let progress = Double(dayOffset) / Double(max(1, totalDays - 1))
+            let weight = 70.0 - 1.2 * progress + Double.random(in: -0.3...0.3)
+            let fatFraction = max(0.10, min(0.30, 0.19 - 0.03 * progress + Double.random(in: -0.004...0.004)))
+            let leanMass = weight * (1.0 - fatFraction)
+
             if let massType = HKQuantityType.quantityType(forIdentifier: .bodyMass) {
-                let progress = Double(dayOffset) / Double(max(1, totalDays - 1))
-                let weight = 70.0 - 1.2 * progress + Double.random(in: -0.3...0.3)
                 let quantity = HKQuantity(unit: HKUnit.gramUnit(with: .kilo), doubleValue: weight)
                 samples.append(
                     HKQuantitySample(
                         type: massType,
+                        quantity: quantity,
+                        start: morning,
+                        end: morning,
+                        metadata: [healthKitMetadataKey: true]
+                    )
+                )
+            }
+            // 体脂肪率: HKUnit.percent() は 0.0〜1.0 の比率で保存（0.18 = 18%）
+            if let fatType = HKQuantityType.quantityType(forIdentifier: .bodyFatPercentage) {
+                let quantity = HKQuantity(unit: HKUnit.percent(), doubleValue: fatFraction)
+                samples.append(
+                    HKQuantitySample(
+                        type: fatType,
+                        quantity: quantity,
+                        start: morning,
+                        end: morning,
+                        metadata: [healthKitMetadataKey: true]
+                    )
+                )
+            }
+            // 除脂肪体重 (LBM): 体重と体脂肪率から逆算
+            if let leanType = HKQuantityType.quantityType(forIdentifier: .leanBodyMass) {
+                let quantity = HKQuantity(unit: HKUnit.gramUnit(with: .kilo), doubleValue: leanMass)
+                samples.append(
+                    HKQuantitySample(
+                        type: leanType,
                         quantity: quantity,
                         start: morning,
                         end: morning,
@@ -480,6 +510,7 @@ public enum MockDataGenerator {
             var types: [HKSampleType] = [HKObjectType.workoutType()]
             let quantityIDs: [HKQuantityTypeIdentifier] = [
                 .heartRateVariabilitySDNN, .restingHeartRate, .bodyMass,
+                .bodyFatPercentage, .leanBodyMass,
             ]
             for id in quantityIDs {
                 if let t = HKQuantityType.quantityType(forIdentifier: id) {
