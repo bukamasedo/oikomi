@@ -73,14 +73,13 @@ struct HomeView: View {
     private var coachingAdvice: [CoachingAdvice] {
         guard ProGate.canUseAICoaching else { return [] }
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
-        let deload = Analytics.deloadAdvice(
-            sessions: completedSessions, sets: allSets, readiness: readiness)
-        let volume = Analytics.volumeAdvice(from: allSets)
-        let autoreg = Analytics.autoregulationAdvice(sets: allSets, weightUnit: weightUnit)
-        let prPredictions = Analytics.prPredictions(
-            sets: allSets, records: personalRecords, weightUnit: weightUnit)
-        let plateau = Analytics.plateauAdvice(sets: allSets, records: personalRecords)
-        return Array((deload + autoreg + prPredictions + plateau + volume).prefix(3))
+        return Analytics.combinedCoachingAdvice(
+            sessions: completedSessions,
+            sets: allSets,
+            records: personalRecords,
+            readiness: readiness,
+            weightUnit: weightUnit
+        )
     }
 
     private var activeSession: WorkoutSession? { activeSessions.first }

@@ -638,6 +638,43 @@ public enum Analytics {
     static func roundToPlate(_ weight: Double) -> Double {
         (weight / 2.5).rounded() * 2.5
     }
+
+    /// ホーム画面に出すコーチングを一本化して返す。
+    ///
+    /// 各ジェネレータ（ディロード/レディネス・RPE自動調整・PR予測・停滞・ボリューム）の出力を統合し、
+    /// **severity（warning を最優先）→ impact 降順**で並べ替えて上位 `limit` 件を返す。
+    /// UI 側で連結順に依存して警告が好調メッセージに埋もれるのを防ぐため、選択ロジックを OikomiKit に集約する。
+    /// PR 予測と停滞検出は共有閾値で排他なので、同一種目で矛盾するアドバイスは出ない。
+    public static func combinedCoachingAdvice(
+        sessions: [WorkoutSession],
+        sets: [SetRecord],
+        records: [PersonalRecord],
+        readiness: ReadinessScore?,
+        limit: Int = 3,
+        referenceDate: Date = Date(),
+        calendar: Calendar = .current,
+        weightUnit: WeightUnit = .kg
+    ) -> [CoachingAdvice] {
+        let all =
+            deloadAdvice(
+                sessions: sessions, sets: sets, readiness: readiness,
+                referenceDate: referenceDate, calendar: calendar)
+            + autoregulationAdvice(sets: sets, calendar: calendar, weightUnit: weightUnit)
+            + prPredictions(
+                sets: sets, records: records, calendar: calendar, weightUnit: weightUnit)
+            + plateauAdvice(sets: sets, records: records, calendar: calendar)
+            + volumeAdvice(from: sets, referenceDate: referenceDate, calendar: calendar)
+
+        // 警告（要対応）を最優先。同 rank 内は impact 降順。
+        let rank: (CoachingAdvice.Severity) -> Int = { $0 == .warning ? 1 : 0 }
+        let sorted = all.sorted { lhs, rhs in
+            if rank(lhs.severity) != rank(rhs.severity) {
+                return rank(lhs.severity) > rank(rhs.severity)
+            }
+            return lhs.impact > rhs.impact
+        }
+        return Array(sorted.prefix(limit))
+    }
 }
 
 /// 1週間分の集計データポイント。

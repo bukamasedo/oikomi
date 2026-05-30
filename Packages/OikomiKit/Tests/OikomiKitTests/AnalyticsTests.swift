@@ -832,4 +832,59 @@ struct AnalyticsTests {
         snap.readinessScore = 72
         #expect(snap.readinessScore == 72)
     }
+
+    // MARK: - combinedCoachingAdvice（統合パイプライン）
+
+    @Test("combinedCoachingAdvice: 警告は好調メッセージより先に並ぶ")
+    func combinedWarningsBeforeSuccess() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        // 直近5日連続トレ → ディロード警告が出る
+        for offset in 0..<5 {
+            let date = cal.date(byAdding: .day, value: -offset, to: now)!
+            let s = try repo.startSession(at: date)
+            try repo.addSet(to: s, exercise: bench, weight: 60, reps: 5, completedAt: date)
+            s.endedAt = date
+        }
+        // readiness high → 好調(success)
+        let r = ReadinessScore(
+            value: 85, band: .high, confidence: .high, hrvZ: 1.5, usedSignals: [.hrv])
+        let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+        let sets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.combinedCoachingAdvice(
+            sessions: sessions, sets: sets, records: [], readiness: r,
+            referenceDate: now, calendar: cal)
+
+        #expect(advices.first?.severity == .warning)
+        #expect(advices.contains { $0.severity == .success })
+    }
+
+    @Test("combinedCoachingAdvice: 同一種目で PR予測と停滞は同時に出ない")
+    func combinedPRPlateauExclusive() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        // 横ばい 5 セッション → 停滞のみ（PR予測は排他で出ない）
+        for offset in 0..<5 {
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: 80, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let sets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.combinedCoachingAdvice(
+            sessions: [], sets: sets, records: records, readiness: nil,
+            limit: 10, referenceDate: now, calendar: cal)
+
+        #expect(advices.contains { $0.title.contains("停滞") })
+        #expect(!advices.contains { $0.title.contains("PR") })
+    }
 }
