@@ -40,6 +40,11 @@ public struct ReadinessScore: Sendable, Hashable {
 
     // MARK: - 計算
 
+    /// スコア値からバンドを決める。compute() と月次集計で共有する。
+    public static func band(for value: Int) -> Band {
+        value < 40 ? .low : (value < 70 ? .normal : .high)
+    }
+
     /// 重み（HRV 主）。将来 goal 別に差し替え可能なよう定数化。
     static let hrvWeight = 0.5
     static let sleepWeight = 0.3
@@ -78,7 +83,7 @@ public struct ReadinessScore: Sendable, Hashable {
         let value = Int(weighted.rounded())
 
         // 暫定閾値（テストで調整可）
-        let band: Band = value < 40 ? .low : (value < 70 ? .normal : .high)
+        let band = Self.band(for: value)
         let confidence: Confidence =
             subscores.count >= 3 ? .high : (subscores.count == 2 ? .medium : .low)
 

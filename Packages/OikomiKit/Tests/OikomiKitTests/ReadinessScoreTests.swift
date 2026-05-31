@@ -94,4 +94,14 @@ struct ReadinessScoreTests {
         // HRV はあるので「Apple Watch 未接続」ではなく汎用の参考値文になる
         #expect(score?.sourceNote == "一部のデータが不足しているため、参考値です。")
     }
+
+    @Test("band(for:) の閾値: <40 low / 40..<70 normal / >=70 high")
+    func bandForValue() {
+        #expect(ReadinessScore.band(for: 0) == .low)
+        #expect(ReadinessScore.band(for: 39) == .low)
+        #expect(ReadinessScore.band(for: 40) == .normal)
+        #expect(ReadinessScore.band(for: 69) == .normal)
+        #expect(ReadinessScore.band(for: 70) == .high)
+        #expect(ReadinessScore.band(for: 100) == .high)
+    }
 }
