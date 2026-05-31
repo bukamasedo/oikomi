@@ -40,4 +40,14 @@ struct RelativeStrengthTests {
         let pr = PersonalRecord(exercise: bench, estimated1RM: 100)
         #expect(RelativeStrength.report(records: [pr], bodyweightKg: 0).isEmpty)
     }
+
+    @Test("同率は種目名昇順で安定ソート")
+    func tieBreakByName() {
+        let exB = Exercise(name: "Bプレス")
+        let exA = Exercise(name: "Aプレス")
+        let prB = PersonalRecord(exercise: exB, estimated1RM: 80)  // 1.0x
+        let prA = PersonalRecord(exercise: exA, estimated1RM: 80)  // 1.0x
+        let rows = RelativeStrength.report(records: [prB, prA], bodyweightKg: 80)
+        #expect(rows.map(\.exerciseName) == ["Aプレス", "Bプレス"])
+    }
 }

@@ -68,4 +68,13 @@ struct BodyPhaseTests {
         #expect(BodyPhase.phaseAdvice(BodyPhaseResult(phase: .maintenance, kgPerMonth: 0.1)).isEmpty)
         #expect(BodyPhase.phaseAdvice(nil).isEmpty)
     }
+
+    @Test("閾値境界: ±0.5kg/月 付近で bulk と maintenance を分ける")
+    func thresholdBoundary() {
+        // x は index*3 日。weights[i] = 70 + c*i のとき kgPerMonth = 10*c。
+        let nearBulk = series(start: start, weights: (0..<8).map { 70.0 + 0.06 * Double($0) })  // ≈ +0.6 kg/月
+        let nearFlat = series(start: start, weights: (0..<8).map { 70.0 + 0.04 * Double($0) })  // ≈ +0.4 kg/月
+        #expect(BodyPhase.detect(bodyMassSeries: nearBulk, calendar: Self.calendar)?.phase == .bulk)
+        #expect(BodyPhase.detect(bodyMassSeries: nearFlat, calendar: Self.calendar)?.phase == .maintenance)
+    }
 }
