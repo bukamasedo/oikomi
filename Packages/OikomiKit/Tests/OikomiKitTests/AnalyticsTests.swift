@@ -358,7 +358,7 @@ struct AnalyticsTests {
         ).first { $0.muscle == .chest }
 
         #expect(mid?.status == .excessive)  // 24 > 22
-        #expect(adv?.status != .excessive)  // 24 <= 26
+        #expect(adv?.status == .optimal)  // 10 <= 24 <= 26
     }
 
     @Test("weeklySetCountReport: count 降順ソート")

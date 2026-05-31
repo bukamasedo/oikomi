@@ -71,6 +71,12 @@ struct MuscleVolumeTargetsTests {
             }
             let fb = MuscleGroup.fullBody.weeklySetTarget(for: profile)
             #expect(fb.mev == 0 && fb.mav == 0)
+            // mev=0 設計の腹・腹斜筋は個人化後も tracked（mev0・mav>0）を維持する
+            for muscle in [MuscleGroup.abs, .obliques] {
+                let t = muscle.weeklySetTarget(for: profile)
+                #expect(t.mev == 0)
+                #expect(t.mav > 0)
+            }
         }
     }
 }
