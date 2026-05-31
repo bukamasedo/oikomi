@@ -49,6 +49,8 @@ struct HomeView: View {
     /// 値が入ると `coachingAdvice` のレディネス判定が動作し、TodayConditionCard にも表示される。
     @State private var readiness: ReadinessScore?
 
+    @State private var bodyPhase: BodyPhaseResult?
+
     private var weeklyVolumeRange: ClosedRange<Date> { Analytics.currentWeekRange() }
 
     private var weekSessionDays: Int {
@@ -92,7 +94,8 @@ struct HomeView: View {
             readiness: readiness,
             limit: .max,
             weightUnit: weightUnit,
-            profile: trainingProfile
+            profile: trainingProfile,
+            bodyPhase: bodyPhase
         )
     }
 
@@ -146,9 +149,11 @@ struct HomeView: View {
     private func refreshHealthSignals() async {
         guard ProGate.canReadHealthData else {
             readiness = nil
+            bodyPhase = nil
             return
         }
         readiness = await HealthStore.shared.readinessSnapshot()
+        bodyPhase = await HealthStore.shared.bodyPhase()
     }
 
     // MARK: - Resume card
