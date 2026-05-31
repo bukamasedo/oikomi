@@ -289,6 +289,18 @@ public final class HealthStore {
         )
     }
 
+    /// 直近 30 日の体重系列から増量/減量フェーズを判定する。
+    /// Pro 未契約や HealthKit 未認可（体重データなし）の場合は nil。
+    public func bodyPhase(
+        referenceDate: Date = Date(),
+        calendar: Calendar = .current
+    ) async -> BodyPhaseResult? {
+        guard ProGate.canReadHealthData else { return nil }
+        let series = await dailySeries(for: .bodyMass, days: 30)
+        return BodyPhase.detect(
+            bodyMassSeries: series, referenceDate: referenceDate, calendar: calendar)
+    }
+
     #if canImport(HealthKit)
         /// `HealthMetric` を HealthKit の (identifier, unit) ペアにマップ。
         private func quantitySpec(
