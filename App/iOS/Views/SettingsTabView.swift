@@ -17,6 +17,10 @@ struct SettingsTabView: View {
     @AppStorage(SharedModelContainer.cloudKitEnabledKey) private var cloudKitEnabled: Bool = true
     @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
     private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    @AppStorage(TrainingProfilePreference.experienceKey) private var experienceLevelRaw: String =
+        TrainingProfile.default.experience.rawValue
+    @AppStorage(TrainingProfilePreference.goalKey) private var trainingGoalRaw: String =
+        TrainingProfile.default.goal.rawValue
 
     // 通知トグル群（デフォルト全 ON / 朝 7:00）
     @AppStorage("OikomiNotif_Rest") private var notifRestEnabled: Bool = true
@@ -231,6 +235,22 @@ struct SettingsTabView: View {
                 }
             } label: {
                 Label("週次トレーニング目標", systemImage: "calendar.badge.checkmark")
+            }
+
+            Picker(selection: $experienceLevelRaw) {
+                ForEach(ExperienceLevel.allCases, id: \.rawValue) { level in
+                    Text(level.displayName).tag(level.rawValue)
+                }
+            } label: {
+                Label("経験レベル", systemImage: "figure.strengthtraining.traditional")
+            }
+
+            Picker(selection: $trainingGoalRaw) {
+                ForEach(TrainingGoal.allCases, id: \.rawValue) { goal in
+                    Text(goal.displayName).tag(goal.rawValue)
+                }
+            } label: {
+                Label("トレーニング目標", systemImage: "target")
             }
 
             NavigationLink {
