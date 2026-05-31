@@ -119,13 +119,14 @@ public enum Analytics {
     /// `weeklySetTarget.isTracked == false` の部位（fullBody）は含めない。
     public static func weeklySetCountReport(
         sets: [SetRecord],
+        profile: TrainingProfile = .default,
         referenceDate: Date = Date(),
         calendar: Calendar = .current
     ) -> [MuscleSetCountRow] {
         let range = currentWeekRange(referenceDate: referenceDate, calendar: calendar)
         let counts = setCountByMuscleGroup(sets: sets, in: range)
         let rows: [MuscleSetCountRow] = MuscleGroup.allCases.compactMap { muscle in
-            let target = muscle.weeklySetTarget
+            let target = muscle.weeklySetTarget(for: profile)
             guard target.isTracked else { return nil }
             let count = counts[muscle] ?? 0
             return MuscleSetCountRow(muscle: muscle, count: count, target: target)

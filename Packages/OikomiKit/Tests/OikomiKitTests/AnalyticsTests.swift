@@ -338,6 +338,29 @@ struct AnalyticsTests {
         #expect(chest?.status == .optimal)
     }
 
+    @Test("weeklySetCountReport: profile で MEV/MAV が個人化される")
+    func reportPersonalizesTarget() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let session = try repo.startSession()
+        // chest を 24 セット（中級 MAV22 → 過多、上級 MAV26 → 適正）
+        for _ in 0..<24 { try repo.addSet(to: session, exercise: bench, weight: 60, reps: 8) }
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+
+        let mid = Analytics.weeklySetCountReport(sets: allSets, calendar: Self.calendar)
+            .first { $0.muscle == .chest }
+        let adv = Analytics.weeklySetCountReport(
+            sets: allSets,
+            profile: TrainingProfile(experience: .advanced, goal: .hypertrophy),
+            calendar: Self.calendar
+        ).first { $0.muscle == .chest }
+
+        #expect(mid?.status == .excessive)  // 24 > 22
+        #expect(adv?.status != .excessive)  // 24 <= 26
+    }
+
     @Test("weeklySetCountReport: count 降順ソート")
     func weeklySetCountSortedDescending() throws {
         let context = try Self.makeContext()
