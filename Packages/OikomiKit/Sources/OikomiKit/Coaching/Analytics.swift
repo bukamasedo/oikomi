@@ -655,7 +655,8 @@ public enum Analytics {
         referenceDate: Date = Date(),
         calendar: Calendar = .current,
         weightUnit: WeightUnit = .kg,
-        profile: TrainingProfile = .default
+        profile: TrainingProfile = .default,
+        bodyPhase: BodyPhaseResult? = nil
     ) -> [CoachingAdvice] {
         let all =
             deloadAdvice(
@@ -670,6 +671,7 @@ public enum Analytics {
                 sets: sets, referenceDate: referenceDate, calendar: calendar)
             + ProgressiveOverload.progressiveOverloadAdvice(
                 sets: sets, profile: profile, referenceDate: referenceDate, calendar: calendar)
+            + BodyPhase.phaseAdvice(bodyPhase)
 
         // 警告（要対応）を最優先。同 rank 内は impact 降順。
         let rank: (CoachingAdvice.Severity) -> Int = { $0 == .warning ? 1 : 0 }

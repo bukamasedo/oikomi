@@ -996,4 +996,17 @@ struct AnalyticsTests {
             limit: 10, referenceDate: now, calendar: cal)
         #expect(advices.contains { $0.title == "回復済みの部位" })
     }
+
+    @Test("combinedCoachingAdvice: bodyPhase を渡すとフェーズ提案がマージされる")
+    func bodyPhaseMerged() {
+        let cut = BodyPhaseResult(phase: .cut, kgPerMonth: -1.2)
+        let withPhase = Analytics.combinedCoachingAdvice(
+            sessions: [], sets: [], records: [], readiness: nil,
+            limit: .max, bodyPhase: cut)
+        let withoutPhase = Analytics.combinedCoachingAdvice(
+            sessions: [], sets: [], records: [], readiness: nil,
+            limit: .max, bodyPhase: nil)
+        #expect(withPhase.contains { $0.title == "減量期" })
+        #expect(!withoutPhase.contains { $0.title == "減量期" })
+    }
 }
