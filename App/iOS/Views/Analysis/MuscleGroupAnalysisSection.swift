@@ -13,8 +13,18 @@ struct MuscleGroupAnalysisSection: View {
         WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
     }
 
+    @AppStorage(TrainingProfilePreference.experienceKey) private var experienceLevelRaw: String =
+        TrainingProfile.default.experience.rawValue
+    @AppStorage(TrainingProfilePreference.goalKey) private var trainingGoalRaw: String =
+        TrainingProfile.default.goal.rawValue
+    private var profile: TrainingProfile {
+        TrainingProfile(
+            experience: ExperienceLevel(rawValue: experienceLevelRaw) ?? .intermediate,
+            goal: TrainingGoal(rawValue: trainingGoalRaw) ?? .hypertrophy)
+    }
+
     private var report: [MuscleSetCountRow] {
-        Analytics.weeklySetCountReport(sets: sets)
+        Analytics.weeklySetCountReport(sets: sets, profile: profile)
     }
 
     private var recoveryReport: [MuscleRecoveryRow] {

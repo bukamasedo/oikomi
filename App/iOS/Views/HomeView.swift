@@ -32,6 +32,16 @@ struct HomeView: View {
         WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
     }
 
+    @AppStorage(TrainingProfilePreference.experienceKey) private var experienceLevelRaw: String =
+        TrainingProfile.default.experience.rawValue
+    @AppStorage(TrainingProfilePreference.goalKey) private var trainingGoalRaw: String =
+        TrainingProfile.default.goal.rawValue
+    private var trainingProfile: TrainingProfile {
+        TrainingProfile(
+            experience: ExperienceLevel(rawValue: experienceLevelRaw) ?? .intermediate,
+            goal: TrainingGoal(rawValue: trainingGoalRaw) ?? .hypertrophy)
+    }
+
     @AppStorage(WeeklyTrainingTarget.storageKey) private var weeklyTargetDays: Int =
         WeeklyTrainingTarget.defaultDays
 
@@ -81,7 +91,8 @@ struct HomeView: View {
             records: personalRecords,
             readiness: readiness,
             limit: .max,
-            weightUnit: weightUnit
+            weightUnit: weightUnit,
+            profile: trainingProfile
         )
     }
 
