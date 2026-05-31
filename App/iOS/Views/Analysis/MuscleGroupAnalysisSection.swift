@@ -17,6 +17,10 @@ struct MuscleGroupAnalysisSection: View {
         Analytics.weeklySetCountReport(sets: sets)
     }
 
+    private var recoveryReport: [MuscleRecoveryRow] {
+        MuscleRecovery.report(sets: sets)
+    }
+
     private var volumeByMuscle: [(muscle: MuscleGroup, total: Double)] {
         let range = Analytics.currentWeekRange()
         return Analytics.volumeByMuscleGroup(sets: sets, in: range)
@@ -27,6 +31,7 @@ struct MuscleGroupAnalysisSection: View {
     var body: some View {
         VStack(spacing: OikomiSpacing.l) {
             setsCard
+            recoveryCard
             volumeCard
             legendCard
         }
@@ -113,6 +118,91 @@ struct MuscleGroupAnalysisSection: View {
         case .insufficient: return OikomiColor.statOrange
         case .optimal: return OikomiColor.statGreen
         case .excessive: return OikomiColor.statRed
+        }
+    }
+
+    // MARK: - Recovery per muscle
+
+    @ViewBuilder
+    private var recoveryCard: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.m) {
+            HStack {
+                Label("部位の回復状態", systemImage: "bolt.heart.fill")
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+            }
+
+            VStack(spacing: OikomiSpacing.s) {
+                ForEach(recoveryReport) { row in
+                    HStack(spacing: OikomiSpacing.m) {
+                        Text(row.muscle.displayName)
+                            .font(.callout)
+                            .frame(width: 70, alignment: .leading)
+                        recoveryBar(for: row)
+                        Text(lastTrainedText(for: row))
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(width: 48, alignment: .trailing)
+                        recoveryChip(for: row)
+                    }
+                }
+            }
+
+            Text("基準回復時間にトレ量・強度を加味した目安です。")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .padding(OikomiSpacing.l)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            OikomiColor.cardBackground, in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func recoveryBar(for row: MuscleRecoveryRow) -> some View {
+        let displayFraction = row.state == .untrained ? 0 : row.recoveryFraction
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(OikomiColor.elevatedBackground)
+                Capsule()
+                    .fill(recoveryColor(for: row.state))
+                    .frame(width: max(0, CGFloat(displayFraction) * geo.size.width))
+            }
+        }
+        .frame(height: 10)
+    }
+
+    @ViewBuilder
+    private func recoveryChip(for row: MuscleRecoveryRow) -> some View {
+        Text(recoveryLabel(for: row.state))
+            .font(.caption2.weight(.medium))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(recoveryColor(for: row.state).opacity(0.15), in: Capsule())
+            .foregroundStyle(recoveryColor(for: row.state))
+    }
+
+    private func lastTrainedText(for row: MuscleRecoveryRow) -> String {
+        guard let days = row.daysSinceLastTrained else { return "—" }
+        return days == 0 ? "今日" : "\(days)日前"
+    }
+
+    private func recoveryLabel(for state: RecoveryState) -> String {
+        switch state {
+        case .recovered: return "回復済"
+        case .recovering: return "回復中"
+        case .fatigued: return "疲労"
+        case .untrained: return "未実施"
+        }
+    }
+
+    private func recoveryColor(for state: RecoveryState) -> Color {
+        switch state {
+        case .recovered: return OikomiColor.statGreen
+        case .recovering: return OikomiColor.statOrange
+        case .fatigued: return OikomiColor.statRed
+        case .untrained: return .secondary  // ダークモードでも視認できる適応色（.gray は固定値で埋もれる）
         }
     }
 
