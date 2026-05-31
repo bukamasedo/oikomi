@@ -21,7 +21,7 @@ public struct WeeklySetTarget: Sendable, Hashable {
 }
 
 extension MuscleGroup {
-    /// 部位別の週セット数ターゲット。`MuscleSetCountRow.status` の判定に使う。
+    /// 部位別の週セット数ターゲット（中級者・筋肥大ベースライン）。`MuscleSetCountRow.status` の判定に使う。
     public var weeklySetTarget: WeeklySetTarget {
         switch self {
         case .chest: return WeeklySetTarget(mev: 10, mav: 22)
@@ -38,5 +38,40 @@ extension MuscleGroup {
         case .calves: return WeeklySetTarget(mev: 8, mav: 16)
         case .fullBody: return WeeklySetTarget(mev: 0, mav: 0)
         }
+    }
+}
+
+extension ExperienceLevel {
+    /// (mev係数, mav係数)。中級者を基準(1.0)に、上級ほど MAV を上げる。
+    var volumeFactors: (mev: Double, mav: Double) {
+        switch self {
+        case .beginner: return (0.85, 0.70)
+        case .intermediate: return (1.0, 1.0)
+        case .advanced: return (1.0, 1.20)
+        }
+    }
+}
+
+extension TrainingGoal {
+    /// (mev係数, mav係数)。筋肥大を基準(1.0)に、筋力/維持は総量を下げる。
+    var volumeFactors: (mev: Double, mav: Double) {
+        switch self {
+        case .hypertrophy: return (1.0, 1.0)
+        case .strength: return (0.85, 0.80)
+        case .maintenance: return (0.85, 0.70)
+        }
+    }
+}
+
+extension MuscleGroup {
+    /// プロファイルで個人化した週セット数ターゲット。
+    /// 既定プロファイル（中級+筋肥大）では係数がすべて 1.0 となりベースライン定数に一致する。
+    public func weeklySetTarget(for profile: TrainingProfile) -> WeeklySetTarget {
+        let base = weeklySetTarget  // 既存の固定値（中級+筋肥大相当）
+        let e = profile.experience.volumeFactors
+        let g = profile.goal.volumeFactors
+        let mev = Int((Double(base.mev) * e.mev * g.mev).rounded())
+        let mav = max(mev, Int((Double(base.mav) * e.mav * g.mav).rounded()))
+        return WeeklySetTarget(mev: mev, mav: mav)
     }
 }
