@@ -51,6 +51,9 @@ struct HomeView: View {
 
     @State private var bodyPhase: BodyPhaseResult?
 
+    /// 「先月の振り返り」カードの表示可否（Pro + Apple Intelligence 可用 + 先月データ充実）。
+    @State private var showMonthlyCard = false
+
     private var weeklyVolumeRange: ClosedRange<Date> { Analytics.currentWeekRange() }
 
     private var weekSessionDays: Int {
@@ -113,6 +116,10 @@ struct HomeView: View {
 
                     TodayConditionCard(readiness: readiness)
 
+                    if showMonthlyCard {
+                        monthlyRetrospectiveCard
+                    }
+
                     if !allCoaching.isEmpty {
                         coachingSection
                     }
@@ -145,8 +152,13 @@ struct HomeView: View {
     }
 
     /// HealthStore から今日のレディネスを取り直す。Pro/権限がなければ nil。
+    /// あわせて「先月の振り返り」カードの表示可否も判定する。
     @MainActor
     private func refreshHealthSignals() async {
+        let allSets = completedSessions.flatMap { $0.sets ?? [] }
+        showMonthlyCard = MonthlySummaryCoordinator.shouldOffer(
+            sessions: completedSessions, sets: allSets, records: personalRecords,
+            snapshots: completedSessions.compactMap { $0.healthSnapshot })
         guard ProGate.canReadHealthData else {
             readiness = nil
             bodyPhase = nil
@@ -154,6 +166,41 @@ struct HomeView: View {
         }
         readiness = await HealthStore.shared.readinessSnapshot()
         bodyPhase = await HealthStore.shared.bodyPhase()
+    }
+
+    @ViewBuilder
+    private var monthlyRetrospectiveCard: some View {
+        let allSets = completedSessions.flatMap { $0.sets ?? [] }
+        let snapshots = completedSessions.compactMap { $0.healthSnapshot }
+        NavigationLink {
+            MonthlyRetrospectiveLoaderView(
+                sessions: completedSessions, sets: allSets, records: personalRecords,
+                snapshots: snapshots, bodyPhase: bodyPhase)
+        } label: {
+            HStack(spacing: OikomiSpacing.m) {
+                Image(systemName: "sparkles")
+                    .font(.title2)
+                    .foregroundStyle(OikomiColor.statBlue)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("先月の振り返り")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("Apple Intelligence が \(MonthlySummaryCoordinator.lastMonth()) をまとめます")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(OikomiSpacing.l)
+            .frame(maxWidth: .infinity)
+            .background(
+                OikomiColor.cardBackground,
+                in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Resume card

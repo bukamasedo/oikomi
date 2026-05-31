@@ -84,6 +84,18 @@ struct AnalysisTabView: View {
             }
             .background(OikomiColor.appBackground)
             .navigationTitle("分析")
+            .toolbar {
+                if ProGate.canUseAICoaching {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink {
+                            MonthlySummaryHistoryView()
+                        } label: {
+                            Image(systemName: "sparkles.rectangle.stack")
+                        }
+                        .accessibilityLabel("振り返り履歴")
+                    }
+                }
+            }
             .sheet(isPresented: $showingExercisePicker) {
                 ExercisePickerSheet { picked in
                     selectedExercise = picked
