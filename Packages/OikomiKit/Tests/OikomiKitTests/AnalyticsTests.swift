@@ -956,6 +956,30 @@ struct AnalyticsTests {
         #expect(advices.contains { $0.title == "MEV未達" })
     }
 
+    @Test("combinedCoachingAdvice: profile が漸進判定に反映される（end-to-end）")
+    func combinedProfileAffectsProgressive() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let s = try repo.startSession()
+        // chest 23 セット: 中級 MAV22 を超える（漸進候補外）が上級 MAV26 は未達（漸進候補）。
+        for _ in 0..<23 { try repo.addSet(to: s, exercise: bench, weight: 60, reps: 8) }
+        let sets = try context.fetch(FetchDescriptor<SetRecord>())
+        let now = Date()
+
+        let mid = Analytics.combinedCoachingAdvice(
+            sessions: [], sets: sets, records: [], readiness: nil,
+            limit: 20, referenceDate: now, calendar: Self.calendar, profile: .default)
+        let adv = Analytics.combinedCoachingAdvice(
+            sessions: [], sets: sets, records: [], readiness: nil,
+            limit: 20, referenceDate: now, calendar: Self.calendar,
+            profile: TrainingProfile(experience: .advanced, goal: .hypertrophy))
+
+        #expect(!mid.contains { $0.title == "漸進的に増やす" && $0.message.contains("胸") })
+        #expect(adv.contains { $0.title == "漸進的に増やす" && $0.message.contains("胸") })
+    }
+
     @Test("combinedCoachingAdvice: 回復済み部位の提案が統合される")
     func combinedIncludesRecovery() {
         let cal = Self.calendar
