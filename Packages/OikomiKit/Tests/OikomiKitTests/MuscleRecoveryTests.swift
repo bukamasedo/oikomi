@@ -133,4 +133,34 @@ struct MuscleRecoveryTests {
             sets: sets([.chest], hoursAgo: 48), referenceDate: now, calendar: Self.calendar)
         #expect(row(twoDays, .chest)?.daysSinceLastTrained == 2)
     }
+
+    @Test("recoveryAdvice: 回復済み（直近10日内）の筋群を1チップに集約")
+    func adviceListsRecovered() {
+        // biceps 回復済(48h前)、chest 疲労(6h前)
+        let s = sets([.biceps], hoursAgo: 48) + sets([.chest], hoursAgo: 6)
+        let advice = MuscleRecovery.recoveryAdvice(sets: s, referenceDate: now, calendar: Self.calendar)
+        #expect(advice.count == 1)
+        #expect(advice.first?.severity == .info)
+        #expect(advice.first?.message.contains("上腕二頭筋") == true)
+        #expect(advice.first?.message.contains("胸") == false)
+    }
+
+    @Test("recoveryAdvice: 未実施・10日超は対象外、対象ゼロで空")
+    func adviceExcludesUntrainedAndStale() {
+        // biceps を 300h(=12.5日)前 → recovered だが stale → 対象外
+        let advice = MuscleRecovery.recoveryAdvice(
+            sets: sets([.biceps], hoursAgo: 300), referenceDate: now, calendar: Self.calendar)
+        #expect(advice.isEmpty)
+    }
+
+    @Test("recoveryAdvice: ちょうど10日前は含む、11日前は除外（窓の境界）")
+    func adviceExactBoundary() {
+        // biceps base36h。10日=240h前(5/21 12:00)→days==10→含む。11日=264h前(5/20 12:00)→days==11→除外。
+        let borderIn = MuscleRecovery.recoveryAdvice(
+            sets: sets([.biceps], hoursAgo: 240), referenceDate: now, calendar: Self.calendar)
+        #expect(borderIn.count == 1)
+        let borderOut = MuscleRecovery.recoveryAdvice(
+            sets: sets([.biceps], hoursAgo: 264), referenceDate: now, calendar: Self.calendar)
+        #expect(borderOut.isEmpty)
+    }
 }

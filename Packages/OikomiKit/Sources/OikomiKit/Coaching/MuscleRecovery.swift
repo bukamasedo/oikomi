@@ -128,4 +128,33 @@ public enum MuscleRecovery {
             return lhs.muscle.rawValue < rhs.muscle.rawValue
         }
     }
+
+    /// 直近 `recentTrainingDays` 日に鍛えて今 `.recovered` の筋群を「次のトレ候補」として最大1件にまとめる。
+    /// 未実施・長期未トレは対象外（ボリューム不足は MEV/MAV 側の責務）。対象ゼロなら空配列。
+    public static func recoveryAdvice(
+        sets: [SetRecord],
+        referenceDate: Date = Date(),
+        calendar: Calendar = .current
+    ) -> [CoachingAdvice] {
+        let ready =
+            report(sets: sets, referenceDate: referenceDate, calendar: calendar)
+            .filter { row in
+                guard let days = row.daysSinceLastTrained else { return false }
+                return days <= recentTrainingDays && row.state == .recovered
+            }
+        guard !ready.isEmpty else { return [] }
+
+        let shown = ready.prefix(4)
+        var names = shown.map(\.muscle.displayName).joined(separator: "・")
+        if ready.count > 4 { names += " など" }
+
+        return [
+            CoachingAdvice(
+                title: "回復済みの部位",
+                message: "\(names) が回復済みです。次のトレーニング候補です。",
+                severity: .info,
+                impact: 100 + Double(ready.count) * 10
+            )
+        ]
+    }
 }
