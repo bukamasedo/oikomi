@@ -878,12 +878,21 @@ struct AnalyticsTests {
             value: 85, band: .high, confidence: .high, hrvZ: 1.5, usedSignals: [.hrv])
         let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
         let sets = try context.fetch(FetchDescriptor<SetRecord>())
+        // limit: .max で全件取得し「警告が好調より前」という順序性を検証する。
+        // （デフォルト limit:3 だと、週境界に依存して警告が3件以上出た日に success が
+        //   キャップ外へ押し出され、日付依存でフレーキーになるため）
         let advices = Analytics.combinedCoachingAdvice(
             sessions: sessions, sets: sets, records: [], readiness: r,
-            referenceDate: now, calendar: cal)
+            limit: .max, referenceDate: now, calendar: cal)
 
         #expect(advices.first?.severity == .warning)
         #expect(advices.contains { $0.severity == .success })
+        // 最後の警告は最初の好調より前に並ぶ
+        let lastWarning = advices.lastIndex { $0.severity == .warning }
+        let firstSuccess = advices.firstIndex { $0.severity == .success }
+        if let lastWarning, let firstSuccess {
+            #expect(lastWarning < firstSuccess)
+        }
     }
 
     @Test("combinedCoachingAdvice: 同一種目で PR予測と停滞は同時に出ない")
