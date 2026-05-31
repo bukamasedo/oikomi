@@ -5,9 +5,13 @@ import SwiftUI
 /// 分析タブ「ボディ」セグメント。
 struct BodyAnalysisSection: View {
 
+    let records: [PersonalRecord]
+
     @State private var weightSeries: [HealthTrendPoint] = []
     @State private var fatSeries: [HealthTrendPoint] = []
     @State private var lbmSeries: [HealthTrendPoint] = []
+    @State private var bodyweightKg: Double?
+    @State private var bodyPhase: BodyPhaseResult?
     @State private var isLoading = true
 
     @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
@@ -25,6 +29,8 @@ struct BodyAnalysisSection: View {
         let convertedLBM = lbmSeries.map {
             HealthTrendPoint(date: $0.date, value: weightUnit.fromKilograms($0.value))
         }
+        let relativeRows = Array(
+            RelativeStrength.report(records: records, bodyweightKg: bodyweightKg ?? 0).prefix(5))
         VStack(spacing: OikomiSpacing.l) {
             metricCard(
                 title: "体重",
@@ -32,8 +38,10 @@ struct BodyAnalysisSection: View {
                 unit: weightUnit.symbol,
                 series: convertedWeight,
                 tint: OikomiColor.textSecondary,
-                systemImage: "scalemass.fill"
+                systemImage: "scalemass.fill",
+                badge: bodyPhase?.phase.displayName
             )
+            relativeStrengthCard(rows: relativeRows)
             metricCard(
                 title: "体脂肪率",
                 subtitle: "直近 90 日",
@@ -64,7 +72,8 @@ struct BodyAnalysisSection: View {
         unit: String,
         series: [HealthTrendPoint],
         tint: Color,
-        systemImage: String
+        systemImage: String,
+        badge: String? = nil
     ) -> some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.m) {
             HStack {
@@ -72,6 +81,14 @@ struct BodyAnalysisSection: View {
                     .font(.subheadline.weight(.semibold))
                     .labelStyle(.titleAndIcon)
                     .foregroundStyle(tint)
+                if let badge {
+                    Text(badge)
+                        .font(.caption2.weight(.semibold))
+                        .padding(.horizontal, OikomiSpacing.s)
+                        .padding(.vertical, 2)
+                        .background(tint.opacity(0.15), in: Capsule())
+                        .foregroundStyle(tint)
+                }
                 Spacer()
                 Text(subtitle)
                     .font(.caption2)
@@ -162,6 +179,60 @@ struct BodyAnalysisSection: View {
     }
 
     @ViewBuilder
+    private func relativeStrengthCard(rows: [RelativeStrengthRow]) -> some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.m) {
+            HStack {
+                Label("相対筋力", systemImage: "figure.strengthtraining.functional")
+                    .font(.subheadline.weight(.semibold))
+                    .labelStyle(.titleAndIcon)
+                    .foregroundStyle(OikomiColor.statBlue)
+                Spacer()
+                Text("1RM ÷ 体重")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
+            if isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, OikomiSpacing.xl)
+            } else if rows.isEmpty {
+                HStack(spacing: OikomiSpacing.s) {
+                    Image(systemName: "figure.strengthtraining.functional")
+                        .font(.title2)
+                        .foregroundStyle(.tertiary)
+                    Text("体重と種目の自己ベストを記録すると、体重比が表示されます。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, OikomiSpacing.m)
+            } else {
+                VStack(spacing: OikomiSpacing.s) {
+                    ForEach(rows) { row in
+                        HStack {
+                            Text(row.exerciseName)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                            Spacer()
+                            Text(row.ratio, format: .number.precision(.fractionLength(2)))
+                                .font(.headline.monospacedDigit())
+                                .foregroundStyle(OikomiColor.statBlue)
+                            Text("×")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(OikomiSpacing.l)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            OikomiColor.cardBackground,
+            in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
+    }
+
+    @ViewBuilder
     private var healthAppLinkCard: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
             Link(destination: URL(string: "x-apple-health://")!) {
@@ -186,10 +257,14 @@ struct BodyAnalysisSection: View {
         async let weight = HealthStore.shared.dailySeries(for: .bodyMass, days: days)
         async let fat = HealthStore.shared.dailySeries(for: .bodyFatPercentage, days: days)
         async let lbm = HealthStore.shared.dailySeries(for: .leanBodyMass, days: days)
-        let (w, f, l) = await (weight, fat, lbm)
+        async let bw = HealthStore.shared.todayValue(for: .bodyMass)
+        async let phase = HealthStore.shared.bodyPhase()
+        let (w, f, l, b, p) = await (weight, fat, lbm, bw, phase)
         weightSeries = w
         fatSeries = f
         lbmSeries = l
+        bodyweightKg = b
+        bodyPhase = p
         isLoading = false
     }
 }

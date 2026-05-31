@@ -151,7 +151,7 @@ struct AnalysisTabView: View {
     @ViewBuilder
     private var bodyContent: some View {
         if ProGate.canReadHealthData {
-            BodyAnalysisSection()
+            BodyAnalysisSection(records: personalRecords)
         } else {
             ProLockTile(
                 title: "ボディ分析",
