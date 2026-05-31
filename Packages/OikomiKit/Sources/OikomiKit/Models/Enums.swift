@@ -66,3 +66,31 @@ public enum MenstrualPhase: String, Codable, CaseIterable, Sendable {
     case ovulation
     case luteal
 }
+
+public enum ExperienceLevel: String, Codable, CaseIterable, Sendable {
+    case beginner
+    case intermediate
+    case advanced
+
+    public var displayName: String {
+        switch self {
+        case .beginner: return "初心者"
+        case .intermediate: return "中級者"
+        case .advanced: return "上級者"
+        }
+    }
+}
+
+public enum TrainingGoal: String, Codable, CaseIterable, Sendable {
+    case hypertrophy
+    case strength
+    case maintenance
+
+    public var displayName: String {
+        switch self {
+        case .hypertrophy: return "筋肥大"
+        case .strength: return "筋力"
+        case .maintenance: return "維持"
+        }
+    }
+}
