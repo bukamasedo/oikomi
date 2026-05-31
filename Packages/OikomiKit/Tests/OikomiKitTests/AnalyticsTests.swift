@@ -921,4 +921,21 @@ struct AnalyticsTests {
         // キャップ版は全件の先頭3件と同じ並び（id は毎回採番されるのでタイトル列で比較）
         #expect(capped.map(\.title) == full.prefix(3).map(\.title))
     }
+
+    @Test("combinedCoachingAdvice: 回復済み部位の提案が統合される")
+    func combinedIncludesRecovery() {
+        let cal = Self.calendar
+        let now = cal.date(from: DateComponents(year: 2026, month: 5, day: 31, hour: 12))!
+        // biceps を 48h 前に 3 セット → 回復済（base 36h）・2日前 → recoveryAdvice 発火
+        let ex = Exercise(name: "カール", muscleGroups: [.biceps])
+        let bicepsSets = (0..<3).map { _ in
+            SetRecord(
+                exercise: ex, weight: 20, reps: 10,
+                completedAt: now.addingTimeInterval(-48 * 3600))
+        }
+        let advices = Analytics.combinedCoachingAdvice(
+            sessions: [], sets: bicepsSets, records: [], readiness: nil,
+            limit: 10, referenceDate: now, calendar: cal)
+        #expect(advices.contains { $0.title == "回復済みの部位" })
+    }
 }
