@@ -43,19 +43,20 @@ public struct MonthlyTrainingDigest: Sendable, Hashable {
     public let muscleVolume: [MonthlyMuscleVolume]   // 部位別 月間セット数 + 状態
     public let personalRecords: [MonthlyPR]          // 今月達成した PR
     public let readiness: MonthlyReadiness?          // 平均・低/普通/高の内訳（取得できた場合）
-    public let bodyPhase: BodyPhaseResult?           // 月末時点のフェーズ
-    public let progressedExercises: [String]         // 伸びた種目名
-    public let plateauedExercises: [String]          // 停滞した種目名
+    public let bodyPhase: BodyPhaseResult?           // 月末時点のフェーズ（呼び出し側が注入）
 
     public var isSubstantial: Bool { sessionCount >= 4 }  // 薄い月は振り返らない
 }
 ```
 
-補助型 `MonthlyMuscleVolume {muscle, setCount, mev, mav, status}` / `MonthlyPR {exerciseName, weight, reps, estimated1RM}` / `MonthlyReadiness {average, lowDays, normalDays, highDays}`。
+補助型 `MonthlyMuscleVolume {muscle, sets}` / `MonthlyPR {exerciseName, weight, reps, estimated1RM}` / `MonthlyReadiness {average, lowDays, normalDays, highDays}`。`underTrainedMuscles: [MuscleGroup]` は週平均（月セット数 ÷ 月の週数）が MEV 未満の tracked 部位。
+
+> YAGNI: 「伸びた種目/停滞種目」は PR 一覧が進捗を表し、単月の停滞判定はノイズが大きいため digest から外す。
 
 ```swift
 public enum MonthlyDigest {
-    /// 指定年月のデータからダイジェストを構築。対象月にセッションが無ければ nil。
+    /// 指定年月のデータからダイジェストを構築。対象月に完了セッションが無ければ nil。
+    /// bodyPhase は端末依存（HealthKit）のため呼び出し側で取得して渡す。
     public static func build(
         sessions: [WorkoutSession],
         sets: [SetRecord],
@@ -63,13 +64,13 @@ public enum MonthlyDigest {
         snapshots: [HealthSnapshot],
         yearMonth: String,
         profile: TrainingProfile = .default,
-        weightUnit: WeightUnit = .kg,
+        bodyPhase: BodyPhaseResult? = nil,
         calendar: Calendar = .current
     ) -> MonthlyTrainingDigest?
 }
 ```
 
-集計は既存 `Analytics` ヘルパー（`setCountByMuscleGroup` / `weeklySetCountReport` 相当の月版 / `sessionMaxEstimateSeries` / `BodyPhase` / `ReadinessScore` 由来の `HealthSnapshot.readinessScore`）を再利用する。月境界フィルタは `calendar` で行う。
+集計は既存ヘルパーを再利用: 部位別月間セット数は `Analytics.setCountByMuscleGroup(sets:in:)`（warmup/未完了/fullBody を除外）、MEV は `MuscleGroup.weeklySetTarget(for: profile).mev`、readiness は `HealthSnapshot.readinessScore`、フェーズは注入された `BodyPhaseResult`。月境界フィルタは `calendar` で行う。
 
 ### 3.2 `MonthlySummaryPrompt`（純粋・OikomiKit）
 
