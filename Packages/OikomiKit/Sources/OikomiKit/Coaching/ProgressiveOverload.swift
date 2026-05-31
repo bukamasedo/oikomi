@@ -40,7 +40,8 @@ public enum ProgressiveOverload {
             }
             advices.append(
                 CoachingAdvice(
-                    title: "ボリューム不足",
+                    // volumeAdvice の前週比「ボリューム不足」と区別するため、絶対 MEV 基準は「MEV未達」とする。
+                    title: "MEV未達",
                     message:
                         "\(names(ordered.map(\.muscle))) が今週 MEV 未満です。来週は各 +1〜2 セット増やしましょう。",
                     severity: .warning,

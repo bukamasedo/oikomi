@@ -949,11 +949,11 @@ struct AnalyticsTests {
     func combinedIncludesProgressiveOverload() {
         let cal = Self.calendar
         let now = cal.date(from: DateComponents(year: 2026, month: 5, day: 31, hour: 12))!
-        // 空セット → 全 mev>0 部位が MEV 未満 → ボリューム不足 warning
+        // 空セット → 全 mev>0 部位が MEV 未満 → MEV未達 warning
         let advices = Analytics.combinedCoachingAdvice(
             sessions: [], sets: [], records: [], readiness: nil,
             limit: 20, referenceDate: now, calendar: cal)
-        #expect(advices.contains { $0.title == "ボリューム不足" })
+        #expect(advices.contains { $0.title == "MEV未達" })
     }
 
     @Test("combinedCoachingAdvice: 回復済み部位の提案が統合される")
