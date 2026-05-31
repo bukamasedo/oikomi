@@ -14,7 +14,8 @@ public struct MuscleRecoveryRow: Sendable, Identifiable, Hashable {
     public let muscle: MuscleGroup
     /// 最終トレ日からの経過日数。未実施は nil。
     public let daysSinceLastTrained: Int?
-    /// 回復率 0...1（バー表示用）。
+    /// 回復率 0...1（バー表示用）。`.untrained` 行は便宜上 1.0。
+    /// この値を読む側は必ず `state` も確認すること（未実施を「完全回復」と誤解しないため）。
     public let recoveryFraction: Double
     public let state: RecoveryState
 
