@@ -13,6 +13,8 @@ struct HomeView: View {
     /// フォアグラウンド復帰時にレディネスを取り直すためのシーンフェーズ監視。
     @Environment(\.scenePhase) private var scenePhase
 
+    @Environment(\.modelContext) private var modelContext
+
     @Query(filter: #Predicate<WorkoutSession> { $0.endedAt == nil })
     private var activeSessions: [WorkoutSession]
 
@@ -157,6 +159,7 @@ struct HomeView: View {
     private func refreshHealthSignals() async {
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
         showMonthlyCard = MonthlySummaryCoordinator.shouldOffer(
+            context: modelContext,
             sessions: completedSessions, sets: allSets, records: personalRecords,
             snapshots: completedSessions.compactMap { $0.healthSnapshot })
         guard ProGate.canReadHealthData else {
@@ -423,6 +426,7 @@ struct HomeView: View {
             for: [
                 WorkoutSession.self, SetRecord.self, PersonalRecord.self, Exercise.self,
                 Routine.self, RoutineExercise.self, HealthSnapshot.self,
+                MonthlySummary.self,
             ], inMemory: true)
 }
 
@@ -432,6 +436,7 @@ struct HomeView: View {
             for: [
                 WorkoutSession.self, SetRecord.self, PersonalRecord.self, Exercise.self,
                 Routine.self, RoutineExercise.self, HealthSnapshot.self,
+                MonthlySummary.self,
             ], inMemory: true
         )
         .preferredColorScheme(.dark)

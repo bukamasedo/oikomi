@@ -65,6 +65,9 @@ struct MonthlyDigestTests {
         #expect(digest?.totalVolumeKg == 1200)  // 60*10 * 2、前月分は除外
         #expect(digest?.muscleSetCounts.first?.muscle == .chest)
         #expect(digest?.isSubstantial == false)  // セッション 2 < 4
+        // 胸しか鍛えていない → まったく鍛えていない部位（例: ハムストリング、0セット）も
+        // underTrained として検出される（setCountByMuscleGroup は出現部位しか返さないため要・全 case 走査）
+        #expect(digest?.underTrainedMuscles.contains(.hamstrings) == true)
     }
 
     @Test("当月達成 PR のみ抽出")

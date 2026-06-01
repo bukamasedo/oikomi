@@ -13,8 +13,11 @@ enum MonthlySummaryCoordinator {
         return String(format: "%04d-%02d", comps.year ?? 0, comps.month ?? 0)
     }
 
-    /// 先月の振り返りカードを出すべきか（Pro + AI 可用 + 先月データが充実）。
+    /// 先月の振り返りカードを出すべきか
+    /// （Pro + AI 可用 + 先月データが充実 + まだ生成していない）。
+    /// 生成済みの月はカードを出さず、履歴（分析タブ）から閲覧する。
     static func shouldOffer(
+        context: ModelContext,
         sessions: [WorkoutSession],
         sets: [SetRecord],
         records: [PersonalRecord],
@@ -22,9 +25,12 @@ enum MonthlySummaryCoordinator {
     ) -> Bool {
         guard ProGate.canUseAICoaching else { return false }
         guard case .available = MonthlySummaryGenerator.availability() else { return false }
+        let yearMonth = lastMonth()
+        let repo = MonthlySummaryRepository(context: context)
+        if ((try? repo.summary(forYearMonth: yearMonth)) ?? nil) != nil { return false }
         let digest = MonthlyDigest.build(
             sessions: sessions, sets: sets, records: records, snapshots: snapshots,
-            yearMonth: lastMonth())
+            yearMonth: yearMonth)
         return digest?.isSubstantial == true
     }
 

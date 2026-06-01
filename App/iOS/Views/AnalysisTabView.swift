@@ -379,6 +379,7 @@ struct AnalysisTabView: View {
             for: [
                 WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
                 RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
+                MonthlySummary.self,
             ], inMemory: true)
 }
 
@@ -388,6 +389,7 @@ struct AnalysisTabView: View {
             for: [
                 WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
                 RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
+                MonthlySummary.self,
             ], inMemory: true
         )
         .preferredColorScheme(.dark)

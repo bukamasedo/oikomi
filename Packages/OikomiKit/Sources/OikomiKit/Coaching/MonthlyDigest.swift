@@ -100,12 +100,14 @@ public enum MonthlyDigest {
             .map { MonthlyMuscleVolume(muscle: $0.key, sets: $0.value) }
             .sorted { $0.sets > $1.sets }
 
+        // 全 case を走査する。まったく鍛えなかった部位（counts に現れない）も
+        // 「放置」として検出するため（setCountByMuscleGroup は出現した部位しか返さない）。
         let weeks = max(1.0, weeksInMonth(range: range, calendar: calendar))
-        let underTrained = muscleSetCounts.compactMap { row -> MuscleGroup? in
-            let target = row.muscle.weeklySetTarget(for: profile)
+        let underTrained = MuscleGroup.allCases.compactMap { muscle -> MuscleGroup? in
+            let target = muscle.weeklySetTarget(for: profile)
             guard target.isTracked, target.mev > 0 else { return nil }
-            let weeklyAverage = Double(row.sets) / weeks
-            return weeklyAverage < Double(target.mev) ? row.muscle : nil
+            let weeklyAverage = Double(counts[muscle] ?? 0) / weeks
+            return weeklyAverage < Double(target.mev) ? muscle : nil
         }
 
         let monthPRs =
@@ -163,7 +165,12 @@ public enum MonthlyDigest {
     }
 
     private static func weeksInMonth(range: ClosedRange<Date>, calendar: Calendar) -> Double {
-        let days = (calendar.dateComponents([.day], from: range.lowerBound, to: range.upperBound).day ?? 29) + 1
+        // upperBound は「月末 23:59:59」なので、翌月頭（= upperBound + 1秒）まで数えて
+        // 31日月で正しく 31 日になるようにする（off-by-one 回避）。
+        guard let nextMonth = calendar.date(byAdding: .second, value: 1, to: range.upperBound) else {
+            return 4.0
+        }
+        let days = calendar.dateComponents([.day], from: range.lowerBound, to: nextMonth).day ?? 30
         return Double(days) / 7.0
     }
 }
