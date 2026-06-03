@@ -109,12 +109,12 @@ struct HomeView: View {
                         todayRoutineSection
                     }
 
-                    if !allCoaching.isEmpty {
-                        coachingSection
-                    }
-
                     if !recentPRs.isEmpty {
                         prHighlightsSection
+                    }
+
+                    if !allCoaching.isEmpty {
+                        coachingSection
                     }
                 }
                 .padding(.horizontal, OikomiSpacing.l)
