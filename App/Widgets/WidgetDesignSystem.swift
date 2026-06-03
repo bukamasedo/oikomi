@@ -9,6 +9,17 @@ enum WidgetColor {
     static let brand = Color(red: 0xE8 / 255, green: 0x5D / 255, blue: 0x04 / 255)
     static let brandSecondary = Color(red: 0xFA / 255, green: 0x82 / 255, blue: 0x2B / 255)
     static let proAccent = Color(red: 0xFF / 255, green: 0xB7 / 255, blue: 0x3D / 255)
+
+    /// 今日のコンディションのバンド色（本体 `TodayConditionCard.bandTint` と信号機マッピングを揃える）。
+    /// 低め = 赤 / ふつう = ブランド / 好調 = 緑。
+    static let bandLow = Color.red
+    static let bandNormal = brandSecondary
+    static let bandHigh = Color.green
+
+    /// 3 メトリクスのアイコン色（本体 `OikomiColor.statPink/statRed/statIndigo` と揃える）。
+    static let metricHRV = Color.pink
+    static let metricRHR = Color.red
+    static let metricSleep = Color.indigo
 }
 
 enum WidgetSpacing {

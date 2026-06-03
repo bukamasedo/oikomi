@@ -31,6 +31,14 @@ public enum WeightUnit: String, Codable, CaseIterable, Sendable {
         }
     }
 
+    /// 任意の kg 値を、表示単位のステッパー刻み（`displayStep`）の整数倍に丸めて kg で返す。
+    /// `NumericStepperField` の丸め（表示単位で step の整数倍）と整合させ、半端な推奨値が出ないようにする。
+    public func snappedKilograms(_ kilograms: Double) -> Double {
+        let display = fromKilograms(kilograms)
+        let snapped = (display / displayStep).rounded() * displayStep
+        return toKilograms(snapped)
+    }
+
     public var symbol: String {
         switch self {
         case .kg: return "kg"

@@ -51,4 +51,19 @@ struct WeightUnitTests {
         #expect(WeightUnit.kg.defaultRange == 0...500)
         #expect(WeightUnit.lb.defaultRange == 0...1100)
     }
+
+    @Test("snappedKilograms: kg は 2.5kg 刻みに丸める")
+    func snapKg() {
+        #expect(WeightUnit.kg.snappedKilograms(78.9) == 80.0)
+        #expect(WeightUnit.kg.snappedKilograms(81.2) == 80.0)
+        #expect(WeightUnit.kg.snappedKilograms(82.5) == 82.5)
+    }
+
+    @Test("snappedKilograms: lb は 5lb 刻みに丸めた値を kg で返す")
+    func snapLb() {
+        // 100kg ≈ 220.46lb → 最寄りの 5lb = 220lb → kg に戻すと ≈ 99.79kg
+        let snapped = WeightUnit.lb.snappedKilograms(100.0)
+        let lb = WeightUnit.lb.fromKilograms(snapped)
+        #expect(abs(lb - 220.0) < 1e-6)
+    }
 }

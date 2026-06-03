@@ -6,6 +6,7 @@ import SwiftUI
 struct SessionDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
 
     let session: WorkoutSession
 
@@ -14,6 +15,7 @@ struct SessionDetailView: View {
 
     @State private var showingCopyConfirmation = false
     @State private var showingActiveBlockedAlert = false
+    @State private var showingDeleteConfirmation = false
     @State private var errorMessage: String?
 
     @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
@@ -67,8 +69,18 @@ struct SessionDetailView: View {
         .background(OikomiColor.appBackground)
         .navigationTitle(session.startedAt.formatted(date: .abbreviated, time: .omitted))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(role: .destructive) {
+                    showingDeleteConfirmation = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .tint(.red)
+            }
+        }
         // ブランド tint(オレンジ)がキャンセル/通常ボタンに流れ込むのを避けるため、
-        // アラートだけ neutral tint の不可視ホストに載せる。
+        // アラートだけ neutral tint の不可視ホストに載せる(destructive は赤のまま)。
         .background {
             Color.clear
                 .tint(.primary)
@@ -80,6 +92,15 @@ struct SessionDetailView: View {
                     Button("キャンセル", role: .cancel) {}
                 } message: {
                     Text("\(session.sets?.count ?? 0) セットを複製して新しいワークアウトを開始します。")
+                }
+                .alert(
+                    "このセッションを削除しますか？",
+                    isPresented: $showingDeleteConfirmation
+                ) {
+                    Button("削除", role: .destructive) { deleteSession() }
+                    Button("キャンセル", role: .cancel) {}
+                } message: {
+                    Text("セット記録もすべて削除されます。この操作は取り消せません。")
                 }
         }
         .alert("進行中のセッションがあります", isPresented: $showingActiveBlockedAlert) {
@@ -182,6 +203,21 @@ struct SessionDetailView: View {
             try repo.startSessionByCopying(session)
         } catch {
             errorMessage = "コピーに失敗: \(error.localizedDescription)"
+        }
+    }
+
+    private func deleteSession() {
+        // 先に画面を閉じてから削除する。削除済みオブジェクトを参照したまま再描画して
+        // クラッシュするのを避けるため。
+        let repo = WorkoutSessionRepository(context: modelContext)
+        let target = session
+        dismiss()
+        Task { @MainActor in
+            do {
+                try await repo.deleteSession(target)
+            } catch {
+                print("[SessionDetailView] failed to delete session: \(error)")
+            }
         }
     }
 

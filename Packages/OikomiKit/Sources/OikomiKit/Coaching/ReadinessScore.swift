@@ -40,7 +40,7 @@ public struct ReadinessScore: Sendable, Hashable {
 
     // MARK: - 計算
 
-    /// スコア値からバンドを決める。compute() と月次集計で共有する。
+    /// スコア値からバンドを決める。
     public static func band(for value: Int) -> Band {
         value < 40 ? .low : (value < 70 ? .normal : .high)
     }

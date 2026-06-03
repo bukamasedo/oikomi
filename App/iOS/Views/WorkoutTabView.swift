@@ -13,6 +13,23 @@ struct WorkoutTabView: View {
     @Query(sort: [SortDescriptor(\Routine.lastUsedAt, order: .reverse), SortDescriptor(\Routine.createdAt)])
     private var routines: [Routine]
 
+    // PR 予測（重さ更新ボタン）算出用。HomeView と同じパターンで完了済みセッションと PR を観察する。
+    @Query(
+        filter: #Predicate<WorkoutSession> { $0.endedAt != nil },
+        sort: \WorkoutSession.startedAt,
+        order: .reverse
+    )
+    private var completedSessions: [WorkoutSession]
+
+    @Query(sort: \PersonalRecord.achievedAt, order: .reverse)
+    private var personalRecords: [PersonalRecord]
+
+    @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
+    private var weightUnitRaw: String = UnitPreference.defaultUnit.rawValue
+    private var weightUnit: WeightUnit {
+        WeightUnit(rawValue: weightUnitRaw) ?? UnitPreference.defaultUnit
+    }
+
     @State private var showingAddSetSheet = false
     @State private var preselectedExercise: Exercise?
     @State private var editingSetIntent: EditSetIntent?
@@ -58,7 +75,7 @@ struct WorkoutTabView: View {
     @ViewBuilder
     private var startView: some View {
         ScrollView {
-            VStack(spacing: OikomiSpacing.xl) {
+            VStack(spacing: OikomiSpacing.l) {
                 quickStartButton
 
                 if routines.isEmpty {
@@ -139,7 +156,6 @@ struct WorkoutTabView: View {
     @ViewBuilder
     private var routineGrid: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-            SectionHeader(title: "ルーティン")
             LazyVGrid(
                 columns: [
                     GridItem(.flexible(), spacing: OikomiSpacing.m),
@@ -176,6 +192,7 @@ struct WorkoutTabView: View {
             VStack(spacing: OikomiSpacing.l) {
                 sessionHero(session)
 
+                let weightSuggestions = weightUpdateSuggestions(for: session)
                 ForEach(groupedExercises(session), id: \.0.id) { exercise, sets in
                     ExerciseInSessionCard(
                         exercise: exercise,
@@ -200,6 +217,14 @@ struct WorkoutTabView: View {
                         onDeleteExercise: {
                             pendingExerciseDeletion = PendingExerciseDeletion(
                                 exercise: exercise, setCount: sets.count)
+                        },
+                        weightUpdateSuggestionKg: weightSuggestions[exercise.id]?.kilograms,
+                        weightUnit: weightUnit,
+                        weightUpdateReason: weightSuggestions[exercise.id]?.reason,
+                        onUpdateWeight: {
+                            if let newKg = weightSuggestions[exercise.id]?.kilograms {
+                                applyWeightUpdate(exercise: exercise, in: session, to: newKg)
+                            }
                         }
                     )
                 }
@@ -371,6 +396,71 @@ struct WorkoutTabView: View {
         }
         return byExercise.values.sorted { lhs, rhs in
             (firstAppearance[lhs.0.id] ?? 0) < (firstAppearance[rhs.0.id] ?? 0)
+        }
+    }
+
+    /// 「重さを更新」ボタン 1 件分。推奨ワーキング重量(kg)と、なぜ勧めるのかの根拠文を持つ。
+    private struct WeightUpdateSuggestion {
+        let kilograms: Double
+        let reason: String
+    }
+
+    /// PR 更新の可能性がある種目に対する「重さを更新」候補（exerciseId → 推奨重量 + 根拠）。
+    ///
+    /// 条件: Pro かつルーティン由来セッション。`Analytics.prPredictionDetails` の予測がある種目のうち、
+    /// 当セッションに未完了（計画）セットを持ち、ウェイト種目で、推奨値が現在の予定重量を上回るものだけ。
+    private func weightUpdateSuggestions(for session: WorkoutSession) -> [UUID: WeightUpdateSuggestion] {
+        guard ProGate.canUseAICoaching, session.routine != nil else { return [:] }
+
+        // 当セッションの種目別・未完了セット
+        let plannedBySExercise = Dictionary(
+            grouping: (session.sets ?? []).filter { !$0.isCompleted },
+            by: { $0.exercise?.id }
+        )
+        guard !plannedBySExercise.isEmpty else { return [:] }
+
+        let allSets = completedSessions.flatMap { $0.sets ?? [] }
+        let predictions = Analytics.prPredictionDetails(sets: allSets, records: personalRecords)
+
+        var result: [UUID: WeightUpdateSuggestion] = [:]
+        for prediction in predictions {
+            guard let plannedSets = plannedBySExercise[prediction.exerciseId],
+                let exercise = plannedSets.first?.exercise,
+                exercise.usesWeight
+            else { continue }
+
+            let reps = plannedSets.first?.reps ?? 8
+            let recommendedKg = weightUnit.snappedKilograms(
+                OneRepMax.workingWeight(forOneRM: prediction.predictedOneRM, reps: reps))
+
+            // 現在の予定重量を上回るときだけ提案（同等・以下なら更新する意味がない）
+            let currentMax = plannedSets.compactMap(\.weight).max() ?? 0
+            guard recommendedKg > currentMax else { continue }
+
+            // なぜ更新を勧めるのか: 上昇トレンドと、狙える推定 PR を根拠として明示する。
+            let predictedText = WeightFormatter.oneRM(
+                kilograms: prediction.predictedOneRM, in: weightUnit)
+            let reason =
+                "直近\(prediction.sessionCount)セッションが上昇トレンド。推定 \(predictedText) の PR を狙える重さです。"
+
+            result[prediction.exerciseId] = WeightUpdateSuggestion(
+                kilograms: recommendedKg, reason: reason)
+        }
+        return result
+    }
+
+    /// 当セッションの当種目の未完了セットの重量を、推奨ワーキング重量へ一括更新する。
+    private func applyWeightUpdate(exercise: Exercise, in session: WorkoutSession, to newKg: Double) {
+        let repo = WorkoutSessionRepository(context: modelContext)
+        let targets = (session.sets ?? []).filter {
+            $0.exercise?.id == exercise.id && !$0.isCompleted
+        }
+        do {
+            for set in targets {
+                try repo.updateSet(set, weight: newKg, reps: set.reps)
+            }
+        } catch {
+            errorMessage = "重さの更新に失敗: \(error.localizedDescription)"
         }
     }
 

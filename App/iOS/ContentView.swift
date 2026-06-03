@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var showingOnboarding = !OnboardingState.isCompleted
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var modelContext
 
     @Query(filter: #Predicate<WorkoutSession> { $0.endedAt == nil })
     private var activeSessions: [WorkoutSession]
@@ -15,7 +16,7 @@ struct ContentView: View {
     /// `WorkoutTabView` のローカル State ではなくここで観察する。
     @State private var restStore = RestTimerStore.shared
 
-    @State private var selectedTab: Tab = .home
+    @State private var selectedTab: Tab = .history
 
     enum Tab: Hashable {
         case home, workout, history, analysis, settings
@@ -57,9 +58,39 @@ struct ContentView: View {
                 restStore.expireIfPast()
             }
         }
+        .onOpenURL { url in
+            handleDeepLink(url)
+        }
         .fullScreenCover(isPresented: $showingOnboarding) {
             OnboardingView(isPresented: $showingOnboarding)
         }
+    }
+
+    /// ウィジェット / Live Activity からのディープリンクを処理する。
+    /// `oikomi://routine/start?id=<UUID>` は該当ルーティンでセッションを開始し、
+    /// それ以外（`oikomi://workout` 含む）は単にトレーニングタブを開く。
+    /// 開始失敗時もタブ遷移は行う（ウィジェット起点でアラート提示の手段が乏しいため）。
+    private func handleDeepLink(_ url: URL) {
+        guard url.scheme == "oikomi" else { return }
+
+        if url.host == "routine", url.pathComponents.contains("start"),
+            let idString = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                .queryItems?.first(where: { $0.name == "id" })?.value,
+            let id = UUID(uuidString: idString)
+        {
+            startRoutine(id: id)
+        }
+
+        selectedTab = .workout
+    }
+
+    private func startRoutine(id: UUID) {
+        let descriptor = FetchDescriptor<Routine>(
+            predicate: #Predicate { $0.id == id }
+        )
+        guard let routine = try? modelContext.fetch(descriptor).first else { return }
+        let repo = WorkoutSessionRepository(context: modelContext)
+        try? repo.startSession(routine: routine)
     }
 
     private func skipRestTimer() {

@@ -319,7 +319,35 @@ public enum Analytics {
         calendar: Calendar = .current,
         weightUnit: WeightUnit = .kg
     ) -> [CoachingAdvice] {
-        var advices: [CoachingAdvice] = []
+        let predictions = prPredictionDetails(
+            sets: sets, records: records,
+            windowSize: windowSize, minSamples: minSamples, minR2: minR2)
+        return predictions.map { p in
+            CoachingAdvice(
+                title: "PR 更新の可能性",
+                message:
+                    "次回\(p.exerciseName)で推定 \(WeightFormatter.oneRM(kilograms: p.predictedOneRM, in: weightUnit))（±\(Int(p.margin))kg）の PR を狙えます（直近\(p.sessionCount)セッションの上昇トレンドより）。",
+                severity: .info,
+                impact: p.impact,
+                subject: p.exerciseName,
+                detail: "\(WeightFormatter.oneRM(kilograms: p.predictedOneRM, in: weightUnit)) 狙い",
+                trend: sessionMaxEstimateSeries(
+                    sets: sets, forExerciseId: p.exerciseId, windowSize: windowSize)
+            )
+        }
+    }
+
+    /// `prPredictions` の検出コアを構造化データで返す。UI（重さ更新ボタンなど）から直接予測値を使うため。
+    ///
+    /// 検出条件・予測値計算は `prPredictions` と完全に同一。並びは `impact`（= 予測値 + 伸び幅）降順。
+    public static func prPredictionDetails(
+        sets: [SetRecord],
+        records: [PersonalRecord],
+        windowSize: Int = 10,
+        minSamples: Int = 5,
+        minR2: Double = 0.3
+    ) -> [PRPrediction] {
+        var predictions: [PRPrediction] = []
 
         for pr in records {
             guard let exercise = pr.exercise else { continue }
@@ -341,18 +369,19 @@ public enum Analytics {
 
             let margin = max(1, predictionMargin(points: points, fit: fit).rounded())
             let growth = predicted - seriesMax
-            advices.append(
-                CoachingAdvice(
-                    title: "PR 更新の可能性",
-                    message:
-                        "次回\(exercise.name)で推定 \(WeightFormatter.oneRM(kilograms: predicted, in: weightUnit))（±\(Int(margin))kg）の PR を狙えます（直近\(points.count)セッションの上昇トレンドより）。",
-                    severity: .info,
+            predictions.append(
+                PRPrediction(
+                    exerciseId: exercise.id,
+                    exerciseName: exercise.name,
+                    predictedOneRM: predicted,
+                    margin: margin,
+                    sessionCount: points.count,
                     impact: predicted + growth
                 )
             )
         }
 
-        return advices.sorted { $0.impact > $1.impact }
+        return predictions.sorted { $0.impact > $1.impact }
     }
 
     /// 停滞（プラトー）検出。種目別に最高推定 1RM 系列の傾きがほぼ 0 のとき助言する。
@@ -382,7 +411,10 @@ public enum Analytics {
                     message:
                         "\(exercise.name)はここ\(points.count)セッションほぼ横ばいです。レップ域・頻度・種目の変更を検討してください。",
                     severity: .info,
-                    impact: Double(points.count)
+                    impact: Double(points.count),
+                    subject: exercise.name,
+                    detail: "横ばい \(points.count) 回",
+                    trend: maxes
                 )
             )
         }
@@ -426,6 +458,20 @@ public enum Analytics {
         forExerciseId exerciseId: UUID,
         windowSize: Int
     ) -> [Double] {
+        estimatedOneRMSeries(sets: sets, forExerciseId: exerciseId, windowSize: windowSize)
+            .map(\.weight)
+    }
+
+    /// 指定種目の「セッション単位の最高推定 1RM（RIR 補正つき）」を日付つきの時系列で返す。古い順、直近 `windowSize` 件。
+    ///
+    /// `sessionMaxEstimateSeries` の日付つき版。ホームの自己ベストカードのスパークラインなど、
+    /// 日付軸が必要な箇所で使う。`weight` フィールドには推定 1RM(kg) が入る。
+    /// 保存済み `estimated1RM`（Epley 固定）ではなく `OneRepMax.estimate(weight:reps:rpe:)` で都度算出する。
+    public static func estimatedOneRMSeries(
+        sets: [SetRecord],
+        forExerciseId exerciseId: UUID,
+        windowSize: Int = 12
+    ) -> [DateWeightPoint] {
         // 他のワーキングセット集計と同様、ウォームアップと計画のみ(未完了)セットは除外する。
         let exerciseSets = sets.filter {
             !$0.isWarmup && $0.isCompleted && $0.exercise?.id == exerciseId
@@ -433,7 +479,7 @@ public enum Analytics {
         let bySession = Dictionary(grouping: exerciseSets) { $0.session?.id ?? UUID() }
         return
             bySession.values
-            .compactMap { setsInSession -> (date: Date, max: Double)? in
+            .compactMap { setsInSession -> DateWeightPoint? in
                 let estimates = setsInSession.compactMap { set -> Double? in
                     guard let w = set.weight, let r = set.reps, w > 0, r > 0 else { return nil }
                     return OneRepMax.estimate(weight: w, reps: r, rpe: set.rpe)
@@ -441,11 +487,11 @@ public enum Analytics {
                 guard let maxRM = estimates.max(),
                     let latest = setsInSession.map(\.completedAt).max()
                 else { return nil }
-                return (date: latest, max: maxRM)
+                return DateWeightPoint(date: latest, weight: maxRM)
             }
             .sorted { $0.date < $1.date }
             .suffix(windowSize)
-            .map(\.max)
+            .map { $0 }
     }
 
     /// 回帰の残差標準誤差を ± マージン（kg）として返す。点が 3 未満なら 0。
@@ -521,7 +567,9 @@ public enum Analytics {
                         title: "新しい部位",
                         message: "\(muscle.displayName)を今週から再開しました。",
                         severity: .info,
-                        impact: this
+                        impact: this,
+                        subject: muscle.displayName,
+                        detail: "今週から再開"
                     )
                 )
                 continue
@@ -538,7 +586,9 @@ public enum Analytics {
                         title: "オーバーワーク注意",
                         message: "今週の\(muscle.displayName)トレが先週比\(percent)%です。回復を意識しましょう。",
                         severity: .warning,
-                        impact: this - last
+                        impact: this - last,
+                        subject: muscle.displayName,
+                        detail: "先週比 \(percent)%"
                     )
                 )
             } else if ratio < 0.5 {
@@ -548,16 +598,21 @@ public enum Analytics {
                         title: "ボリューム不足",
                         message: "今週の\(muscle.displayName)トレは先週比\(percent)%です。追加できる余地があります。",
                         severity: .warning,
-                        impact: last - this
+                        impact: last - this,
+                        subject: muscle.displayName,
+                        detail: "先週比 \(percent)%"
                     )
                 )
             } else if (0.9...1.1).contains(ratio) {
+                let percent = Int((ratio * 100).rounded())
                 advices.append(
                     CoachingAdvice(
                         title: "安定したペース",
                         message: "今週の\(muscle.displayName)は先週とほぼ同じボリュームを維持できています。",
                         severity: .success,
-                        impact: this
+                        impact: this,
+                        subject: muscle.displayName,
+                        detail: "先週比 \(percent)%"
                     )
                 )
             }
@@ -615,7 +670,10 @@ public enum Analytics {
                         message:
                             "\(exercise.name)は直近2回とも高強度（RPE \(Int(highThreshold)) 以上）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。",
                         severity: .warning,
-                        impact: (lastWeight - suggested) + 50
+                        impact: (lastWeight - suggested) + 50,
+                        subject: exercise.name,
+                        detail:
+                            "\(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit))"
                     )
                 )
             } else if recent.allSatisfy({ $0.avgRPE <= lowThreshold }) {
@@ -627,7 +685,10 @@ public enum Analytics {
                         message:
                             "\(exercise.name)は直近2回とも余裕（RPE \(Int(lowThreshold)) 以下）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。",
                         severity: .info,
-                        impact: (suggested - lastWeight) + 50
+                        impact: (suggested - lastWeight) + 50,
+                        subject: exercise.name,
+                        detail:
+                            "\(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit))"
                     )
                 )
             }
@@ -683,6 +744,23 @@ public enum Analytics {
         }
         return Array(sorted.prefix(limit))
     }
+
+    /// 助言を `title` 単位でグループ化する（表示用）。
+    ///
+    /// グループの並びは入力の並び（severity → impact）に従い、各 title の初出順を保つ。
+    /// グループ内の items も入力順を保つため、最重要の対象が各グループの先頭に来る。
+    public static func groupedCoaching(_ advice: [CoachingAdvice]) -> [CoachingAdviceGroup] {
+        var order: [String] = []
+        var buckets: [String: [CoachingAdvice]] = [:]
+        for item in advice {
+            if buckets[item.title] == nil { order.append(item.title) }
+            buckets[item.title, default: []].append(item)
+        }
+        return order.map { title in
+            let items = buckets[title] ?? []
+            return CoachingAdviceGroup(title: title, severity: items.first?.severity ?? .info, items: items)
+        }
+    }
 }
 
 /// 1週間分の集計データポイント。
@@ -696,6 +774,35 @@ public struct WeeklyVolumePoint: Sendable, Identifiable, Hashable {
         self.weekStart = weekStart
         self.total = total
         self.byMuscleGroup = byMuscleGroup
+    }
+}
+
+/// PR 予測の構造化結果。`Analytics.prPredictionDetails` が返す。
+///
+/// `predictedOneRM` は次回セッションの推定 1RM(kg)。`impact` は並び替え用スコア（予測値 + 系列直近最高からの伸び幅）。
+public struct PRPrediction: Sendable, Identifiable, Hashable {
+    public var id: UUID { exerciseId }
+    public let exerciseId: UUID
+    public let exerciseName: String
+    public let predictedOneRM: Double
+    public let margin: Double
+    public let sessionCount: Int
+    public let impact: Double
+
+    public init(
+        exerciseId: UUID,
+        exerciseName: String,
+        predictedOneRM: Double,
+        margin: Double,
+        sessionCount: Int,
+        impact: Double
+    ) {
+        self.exerciseId = exerciseId
+        self.exerciseName = exerciseName
+        self.predictedOneRM = predictedOneRM
+        self.margin = margin
+        self.sessionCount = sessionCount
+        self.impact = impact
     }
 }
 
@@ -750,24 +857,56 @@ public struct CoachingAdvice: Sendable, Identifiable, Hashable {
     public let severity: Severity
     /// 並び替えに使う重要度。値が大きいほど上位表示
     public let impact: Double
+    /// グループ化表示用の対象名（部位 or 種目。例: "肩" "ベンチプレス"）。
+    /// nil の助言（休息・体組成フェーズなど対象を持たないもの）は `message` をそのまま表示する。
+    public let subject: String?
+    /// 対象に紐づく簡潔な指標（例: "先週比 38%" "85kg 狙い"）。一覧で `subject` の右に並べる。
+    public let detail: String?
+    /// 推定1RM(kg) の時系列（古い順）。PR予測・停滞など傾向を示せる助言にのみ付与し、
+    /// それ以外は nil。UI 側で表示単位へ変換してスパークライン表示する。2 点未満ならグラフ非表示。
+    public let trend: [Double]?
 
     public init(
         id: UUID = UUID(),
         title: String,
         message: String,
         severity: Severity,
-        impact: Double
+        impact: Double,
+        subject: String? = nil,
+        detail: String? = nil,
+        trend: [Double]? = nil
     ) {
         self.id = id
         self.title = title
         self.message = message
         self.severity = severity
         self.impact = impact
+        self.subject = subject
+        self.detail = detail
+        self.trend = trend
     }
 
     public enum Severity: String, Sendable {
         case info
         case warning
         case success
+    }
+}
+
+/// 同一カテゴリ（`title`）でまとめたコーチング助言グループ。表示用。
+///
+/// 「ボリューム不足」「PR 更新の可能性」のような同種の助言を 1 つの見出しの下にまとめ、
+/// 各対象（部位・種目）を簡潔な行で並べられるようにする。
+public struct CoachingAdviceGroup: Sendable, Identifiable, Hashable {
+    public var id: String { title }
+    public let title: String
+    /// グループ代表の severity（先頭＝最重要要素の severity）。見出しアイコン色に使う。
+    public let severity: CoachingAdvice.Severity
+    public let items: [CoachingAdvice]
+
+    public init(title: String, severity: CoachingAdvice.Severity, items: [CoachingAdvice]) {
+        self.title = title
+        self.severity = severity
+        self.items = items
     }
 }

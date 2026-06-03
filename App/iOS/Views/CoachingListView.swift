@@ -10,20 +10,18 @@ struct CoachingListView: View {
 
     let advice: [CoachingAdvice]
 
+    var weightUnit: WeightUnit = .kg
+
     var body: some View {
         ScrollView {
             if advice.isEmpty {
                 emptyState
             } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(advice.enumerated()), id: \.element.id) { index, item in
-                        CoachingAdviceRow(advice: item)
-                        if index < advice.count - 1 {
-                            Divider()
-                                .padding(.leading, OikomiSpacing.l + 22 + OikomiSpacing.m)
-                        }
-                    }
-                }
+                // ホームのコーチングカードと同じグループ化表示。一覧は全件・全対象を出す。
+                CoachingGroupedView(
+                    groups: Analytics.groupedCoaching(advice), weightUnit: weightUnit
+                )
+                .padding(OikomiSpacing.l)
                 .background(
                     OikomiColor.cardBackground,
                     in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
@@ -50,52 +48,6 @@ struct CoachingListView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, OikomiSpacing.xxl)
-    }
-}
-
-/// 1 件の助言をコンパクトな行で表す。左端に severity 色のアイコン、右に見出し + 本文。
-/// 行ごとの枠線は持たず、色は控えめなアクセント（先頭アイコン）としてのみ使う。
-private struct CoachingAdviceRow: View {
-
-    let advice: CoachingAdvice
-
-    var body: some View {
-        HStack(alignment: .top, spacing: OikomiSpacing.m) {
-            Image(systemName: iconName)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(severityColor)
-                .frame(width: 22, alignment: .center)
-                .padding(.top, 1)
-
-            VStack(alignment: .leading, spacing: OikomiSpacing.xs) {
-                Text(advice.title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                Text(advice.message)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, OikomiSpacing.l)
-        .padding(.vertical, OikomiSpacing.m)
-    }
-
-    private var iconName: String {
-        switch advice.severity {
-        case .warning: return "exclamationmark.triangle.fill"
-        case .success: return "checkmark.seal.fill"
-        case .info: return "info.circle.fill"
-        }
-    }
-
-    private var severityColor: Color {
-        switch advice.severity {
-        case .warning: return .orange
-        case .success: return .green
-        case .info: return .blue
-        }
     }
 }
 

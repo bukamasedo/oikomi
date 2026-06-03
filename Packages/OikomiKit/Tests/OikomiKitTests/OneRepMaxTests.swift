@@ -84,4 +84,32 @@ struct OneRepMaxTests {
             OneRepMax.estimate(weight: 100, reps: 5, rpe: -5)
                 == OneRepMax.estimate(weight: 100, reps: 5, rpe: 1))
     }
+
+    @Test("workingWeight: 単一レップは 1RM そのまま")
+    func workingWeightSingleRep() {
+        #expect(OneRepMax.workingWeight(forOneRM: 100, reps: 1) == 100)
+    }
+
+    @Test("workingWeight: 低レップ(≤5)は Epley の逆算で往復一致")
+    func workingWeightRoundTripEpley() {
+        // Epley(90, 3) を逆算 → 90 に戻る
+        let oneRM = OneRepMax.epley(weight: 90, reps: 3)
+        let back = OneRepMax.workingWeight(forOneRM: oneRM, reps: 3)
+        #expect(abs(back - 90) < 0.001)
+    }
+
+    @Test("workingWeight: 中レップ(≥6)は Brzycki の逆算で往復一致")
+    func workingWeightRoundTripBrzycki() {
+        // Brzycki(80, 8) を逆算 → 80 に戻る
+        let oneRM = OneRepMax.brzycki(weight: 80, reps: 8)
+        let back = OneRepMax.workingWeight(forOneRM: oneRM, reps: 8)
+        #expect(abs(back - 80) < 0.001)
+    }
+
+    @Test("workingWeight: 不正入力は 0")
+    func workingWeightInvalid() {
+        #expect(OneRepMax.workingWeight(forOneRM: 0, reps: 5) == 0)
+        #expect(OneRepMax.workingWeight(forOneRM: 100, reps: 0) == 0)
+        #expect(OneRepMax.workingWeight(forOneRM: 100, reps: 37) == 0)
+    }
 }

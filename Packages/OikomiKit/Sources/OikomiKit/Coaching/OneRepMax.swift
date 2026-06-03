@@ -36,6 +36,21 @@ public enum OneRepMax {
         return weight / estimated1RM
     }
 
+    /// 目標 1RM を指定レップ数で挙げるためのワーキング重量を逆算する。
+    ///
+    /// `epley` / `brzycki` の逆関数。式選択はレップ数のみで行う（RPE なし）:
+    /// reps ≤ 5 → Epley 逆算 `1RM / (1 + reps/30)`、6 以上 → Brzycki 逆算 `1RM × (37 - reps) / 36`。
+    /// レップ間でフィットさせた予測 1RM を「今回の予定レップ数」のワーキング重量へ戻す用途。
+    public static func workingWeight(forOneRM oneRM: Double, reps: Int) -> Double {
+        guard oneRM > 0, reps >= 1 else { return 0 }
+        if reps == 1 { return oneRM }
+        if reps <= 5 {
+            return oneRM / (1.0 + Double(reps) / 30.0)
+        }
+        guard reps < 37 else { return 0 }
+        return oneRM * (37.0 - Double(reps)) / 36.0
+    }
+
     /// レップ域に応じた式選択 + RIR 補正つきの 1RM 推定。
     ///
     /// - RIR 補正: 実効レップ = reps + (10 - rpe)。RPE8(RIR2) のセットは「あと2レップ可能」とみなす。

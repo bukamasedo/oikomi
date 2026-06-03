@@ -34,12 +34,10 @@ struct PeriodSegment: View {
 
 #Preview("Light") {
     StatefulPreviewWrapper(PeriodSegment.Period.week) { binding in
-        VStack {
-            PeriodSegment(selection: binding)
-                .padding()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(OikomiColor.appBackground)
+        PeriodSegment(selection: binding)
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(OikomiColor.appBackground)
     }
 }
 

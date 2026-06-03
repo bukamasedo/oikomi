@@ -6,6 +6,9 @@ struct HistoryCalendarView: View {
     let activeDates: Set<Date>
     @Binding var selectedDate: Date?
     @State private var displayedMonth: Date
+    @State private var isPickingMonth = false
+    @State private var pickerYear: Int = 0
+    @State private var pickerMonth: Int = 1
 
     private let calendar: Calendar = {
         var cal = Calendar(identifier: .gregorian)
@@ -48,6 +51,20 @@ struct HistoryCalendarView: View {
             weekdayHeader
             grid
         }
+        .sheet(isPresented: $isPickingMonth) {
+            MonthYearPickerSheet(
+                year: $pickerYear,
+                month: $pickerMonth,
+                yearRange: availableYearRange,
+                // 「今月へ」「完了」とも閉じる際の applyPickedMonth で一元的に反映する。
+                onJumpToCurrentMonth: {
+                    pickerYear = calendar.component(.year, from: Date())
+                    pickerMonth = calendar.component(.month, from: Date())
+                }
+            )
+            .presentationDetents([.height(320)])
+            .onDisappear { applyPickedMonth() }
+        }
     }
 
     @ViewBuilder
@@ -58,17 +75,38 @@ struct HistoryCalendarView: View {
             } label: {
                 Image(systemName: "chevron.left")
                     .padding(8)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+
             Spacer()
-            Text(monthLabel)
-                .font(.headline.monospacedDigit())
+
+            // 月ラベルタップで年月ピッカーを提示し、任意の過去月へ一気に移動できる。
+            Button {
+                presentMonthPicker()
+            } label: {
+                HStack(spacing: 4) {
+                    Text(monthLabel)
+                        .font(.headline.monospacedDigit())
+                    Image(systemName: "chevron.down")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
             Spacer()
+
             Button {
                 changeMonth(by: 1)
             } label: {
                 Image(systemName: "chevron.right")
                     .padding(8)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .disabled(isAtCurrentMonth)
         }
     }
 
@@ -147,7 +185,52 @@ struct HistoryCalendarView: View {
 
     private func changeMonth(by months: Int) {
         if let new = calendar.date(byAdding: .month, value: months, to: displayedMonth) {
-            displayedMonth = new
+            displayedMonth = clampToCurrentMonth(new)
         }
+    }
+
+    // MARK: - 年月ピッカー連携
+
+    /// 現在月の月初。これより未来へは表示を進めない。
+    private var currentMonthStart: Date {
+        let comp = calendar.dateComponents([.year, .month], from: Date())
+        return calendar.date(from: comp) ?? Date()
+    }
+
+    private var isAtCurrentMonth: Bool {
+        let displayedStart =
+            calendar.date(
+                from: calendar.dateComponents([.year, .month], from: displayedMonth)) ?? displayedMonth
+        return displayedStart >= currentMonthStart
+    }
+
+    /// 与えられた日付を月初へ丸めつつ、現在月を上限にクランプする。
+    private func clampToCurrentMonth(_ date: Date) -> Date {
+        let monthStart =
+            calendar.date(
+                from: calendar.dateComponents([.year, .month], from: date)) ?? date
+        return min(monthStart, currentMonthStart)
+    }
+
+    /// 活動日の最小年〜現在年。記録が無ければ現在年のみ。
+    private var availableYearRange: ClosedRange<Int> {
+        let currentYear = calendar.component(.year, from: Date())
+        let minYear = activeDates.map { calendar.component(.year, from: $0) }.min() ?? currentYear
+        return min(minYear, currentYear)...currentYear
+    }
+
+    private func presentMonthPicker() {
+        pickerYear = calendar.component(.year, from: displayedMonth)
+        pickerMonth = calendar.component(.month, from: displayedMonth)
+        isPickingMonth = true
+    }
+
+    /// ピッカーの選択値を月初へ組み立て、クランプして反映する。「完了」「今月へ」共通の適用経路。
+    private func applyPickedMonth() {
+        var comp = DateComponents()
+        comp.year = pickerYear
+        comp.month = pickerMonth
+        guard let picked = calendar.date(from: comp) else { return }
+        displayedMonth = clampToCurrentMonth(picked)
     }
 }

@@ -18,6 +18,14 @@ struct ExerciseInSessionCard: View {
     var onEditSet: (SetRecord) -> Void = { _ in }
     /// ヘッダのメニューから「種目を削除」がタップされたとき呼ばれる。readOnly 時はメニューごと非表示。
     var onDeleteExercise: () -> Void = {}
+    /// PR 更新の可能性がある種目に対する推奨ワーキング重量(kg)。非 nil のとき「重さを更新」ボタンを出す。
+    var weightUpdateSuggestionKg: Double? = nil
+    /// 「重さを更新」ボタンの重量表示に使う単位。
+    var weightUnit: WeightUnit = .kg
+    /// なぜ更新を勧めるのか（上昇トレンド・PR 更新の可能性など）をボタン下に表示する根拠文。
+    var weightUpdateReason: String? = nil
+    /// 「重さを更新」ボタンがタップされたとき呼ばれる。未完了セットの重量を推奨値へ更新する。
+    var onUpdateWeight: () -> Void = {}
 
     private var completedCount: Int { sets.count(where: \.isCompleted) }
 
@@ -81,6 +89,34 @@ struct ExerciseInSessionCard: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+
+                if let suggestionKg = weightUpdateSuggestionKg {
+                    Divider()
+                        .padding(.horizontal, OikomiSpacing.l)
+                    Button(action: onUpdateWeight) {
+                        HStack(alignment: .top, spacing: OikomiSpacing.xs) {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .foregroundStyle(OikomiColor.brandPrimary)
+                            // TODO: 将来ローカライズ（このカードは現状すべて直書き）
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("重さを更新 → \(WeightFormatter.string(kilograms: suggestionKg, in: weightUnit))")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(.primary)
+                                if let weightUpdateReason {
+                                    Text(weightUpdateReason)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, OikomiSpacing.l)
+                        .padding(.vertical, OikomiSpacing.m)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
         .background(
@@ -96,17 +132,31 @@ struct ExerciseInSessionCard: View {
                 .truncationMode(.tail)
             Spacer(minLength: OikomiSpacing.s)
             completionChip
-        }
-        .contentShape(Rectangle())
-        .contextMenu {
             if !readOnly {
-                Button(role: .destructive) {
-                    onDeleteExercise()
-                } label: {
-                    Label("種目を削除", systemImage: "trash")
-                }
+                menuButton
             }
         }
+    }
+
+    /// 種目への操作（現状は削除のみ）をまとめた「…」メニュー。
+    /// 以前は長押しの contextMenu だったが、発見しづらいため明示ボタン化した。
+    @ViewBuilder
+    private var menuButton: some View {
+        Menu {
+            Button(role: .destructive) {
+                onDeleteExercise()
+            } label: {
+                Label("種目を削除", systemImage: "trash")
+            }
+            .tint(.red)
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+                .contentShape(Circle())
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder

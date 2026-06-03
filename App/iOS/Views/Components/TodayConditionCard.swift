@@ -11,19 +11,19 @@ struct TodayConditionCard: View {
     /// 親（HomeView）が算出して渡すレディネス。nil なら総合スコア行は出さない。
     var readiness: ReadinessScore? = nil
 
-    @State private var hrv: Double?
-    @State private var rhr: Int?
-    @State private var sleepHours: Double?
-    @State private var lastFetchedAt: Date?
+    /// 今日の HealthKit 値。HomeView が一括取得して渡す（ウィジェット保存と fetch を一本化するため）。
+    var hrv: Double? = nil
+    var rhr: Int? = nil
+    var sleepHours: Double? = nil
 
     private var isPro: Bool { ProGate.canReadHealthData }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: OikomiSpacing.m) {
-            header
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
             if isPro {
                 proContent
             } else {
+                header
                 lockedContent
             }
         }
@@ -32,74 +32,86 @@ struct TodayConditionCard: View {
             RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
                 .fill(OikomiColor.cardBackground)
         )
-        .task(id: isPro) {
-            await refresh()
-        }
     }
 
     @ViewBuilder
     private var header: some View {
-        HStack {
-            Label("今日のコンディション", systemImage: "heart.text.square.fill")
-                .font(.subheadline.weight(.semibold))
-                .labelStyle(.titleAndIcon)
-                .foregroundStyle(.primary)
-            Spacer()
-            if isPro, let fetched = lastFetchedAt {
-                Text(fetched, style: .time)
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.tertiary)
-            }
-        }
+        Label("今日のコンディション", systemImage: "heart.text.square.fill")
+            .font(.subheadline.weight(.semibold))
+            .labelStyle(.titleAndIcon)
+            .foregroundStyle(.primary)
     }
 
     @ViewBuilder
     private var proContent: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.m) {
+            header
             if let readiness {
-                readinessRow(readiness)
+                readinessBar(readiness)
             }
-            HStack(alignment: .top, spacing: 0) {
-                metricCell(
-                    title: "HRV",
-                    value: hrv.map { "\(Int($0.rounded()))" } ?? "—",
-                    unit: "ms",
-                    systemImage: "waveform.path.ecg",
-                    tint: OikomiColor.statPink
-                )
-                divider
-                metricCell(
-                    title: "安静時心拍",
-                    value: rhr.map { "\($0)" } ?? "—",
-                    unit: "bpm",
-                    systemImage: "heart.fill",
-                    tint: OikomiColor.statRed
-                )
-                divider
-                metricCell(
-                    title: "睡眠",
-                    value: sleepHours.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
-                    unit: "h",
-                    systemImage: "moon.zzz.fill",
-                    tint: OikomiColor.statIndigo
-                )
-            }
+            metricsRow
         }
     }
 
     @ViewBuilder
-    private func readinessRow(_ readiness: ReadinessScore) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("コンディション")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-                Text("\(readiness.value)")
-                    .font(OikomiFont.statValueCompact)
-                    .foregroundStyle(readinessColor(readiness.band))
-                Text("/ 100")
-                    .font(OikomiFont.metricUnit)
-                    .foregroundStyle(.secondary)
+    private var metricsRow: some View {
+        HStack(alignment: .top, spacing: 0) {
+            metricCell(
+                title: "HRV",
+                value: hrv.map { "\(Int($0.rounded()))" } ?? "—",
+                unit: "ms",
+                systemImage: "waveform.path.ecg",
+                tint: OikomiColor.statPink
+            )
+            divider
+            metricCell(
+                title: "安静時心拍",
+                value: rhr.map { "\($0)" } ?? "—",
+                unit: "bpm",
+                systemImage: "heart.fill",
+                tint: OikomiColor.statRed
+            )
+            divider
+            metricCell(
+                title: "睡眠",
+                value: sleepHours.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
+                unit: "h",
+                systemImage: "moon.zzz.fill",
+                tint: OikomiColor.statIndigo
+            )
+        }
+    }
+
+    /// コンディションスコアを横長プログレスバーで視覚化する行。
+    /// 数値だけでは「良い／悪い」が直感的に伝わらないため、
+    /// バンド色のバーでひと目で状態が分かるようにする。
+    @ViewBuilder
+    private func readinessBar(_ readiness: ReadinessScore) -> some View {
+        let progress = min(1.0, max(0.0, Double(readiness.value) / 100.0))
+        let tint = bandTint(readiness.band)
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            HStack(spacing: OikomiSpacing.m) {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(tint.opacity(0.15))
+                        Capsule()
+                            .fill(tint)
+                            .frame(width: max(0, geo.size.width * progress))
+                            .animation(.easeInOut(duration: 0.5), value: progress)
+                    }
+                }
+                .frame(height: 10)
+
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("\(readiness.value)")
+                        .font(OikomiFont.statValue)
+                        .foregroundStyle(.primary)
+                    Text("/ 100")
+                        .font(OikomiFont.metricUnit)
+                        .foregroundStyle(.secondary)
+                }
+                .fixedSize()
             }
             if let note = readiness.sourceNote {
                 Text(note)
@@ -107,14 +119,24 @@ struct TodayConditionCard: View {
                     .foregroundStyle(.tertiary)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("コンディションスコア \(readiness.value) / 100、\(bandLabel(readiness.band))")
     }
 
-    private func readinessColor(_ band: ReadinessScore.Band) -> Color {
+    /// バーの色。低=赤・ふつう=ブランド・好調=緑の信号機マッピング。
+    private func bandTint(_ band: ReadinessScore.Band) -> Color {
         switch band {
         case .low: return OikomiColor.statRed
-        case .normal: return .primary
+        case .normal: return OikomiColor.brandSecondary
         case .high: return OikomiColor.statGreen
+        }
+    }
+
+    private func bandLabel(_ band: ReadinessScore.Band) -> String {
+        switch band {
+        case .low: return "低め"
+        case .normal: return "ふつう"
+        case .high: return "好調"
         }
     }
 
@@ -126,19 +148,21 @@ struct TodayConditionCard: View {
         systemImage: String,
         tint: Color
     ) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: systemImage)
-                .font(.title3)
-                .foregroundStyle(tint)
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(value)
-                    .font(OikomiFont.statValueCompact)
-                Text(unit)
-                    .font(OikomiFont.metricUnit)
-                    .foregroundStyle(.secondary)
+        VStack(spacing: 3) {
+            HStack(spacing: 4) {
+                Image(systemName: systemImage)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(tint)
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(value)
+                        .font(OikomiFont.statValueCompact)
+                    Text(unit)
+                        .font(OikomiFont.metricUnit)
+                        .foregroundStyle(.secondary)
+                }
             }
             Text(title)
-                .font(.caption.weight(.medium))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -167,24 +191,6 @@ struct TodayConditionCard: View {
                     .foregroundStyle(.secondary)
             }
         }
-    }
-
-    private func refresh() async {
-        guard isPro else {
-            hrv = nil
-            rhr = nil
-            sleepHours = nil
-            lastFetchedAt = nil
-            return
-        }
-        async let hrvTask = HealthStore.shared.todayValue(for: .hrv)
-        async let rhrTask = HealthStore.shared.todayValue(for: .restingHeartRate)
-        async let sleepTask = HealthStore.shared.todayValue(for: .sleepHours)
-        let (hrvValue, rhrValue, sleepValue) = await (hrvTask, rhrTask, sleepTask)
-        hrv = hrvValue
-        rhr = rhrValue.map { Int($0.rounded()) }
-        sleepHours = sleepValue
-        lastFetchedAt = Date()
     }
 }
 

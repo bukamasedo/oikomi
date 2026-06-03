@@ -615,6 +615,32 @@ struct AnalyticsTests {
         #expect(predictions.first?.message.contains("±") == true)
     }
 
+    @Test("prPredictionDetails: exerciseId と推定 1RM を構造化して返す")
+    func prPredictionDetailsReturnsStructuredData() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<5 {
+            let weight = Double(80 + offset)
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: weight, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let details = Analytics.prPredictionDetails(sets: allSets, records: records)
+
+        let first = try #require(details.first)
+        #expect(first.exerciseId == bench.id)
+        #expect(first.exerciseName == "ベンチプレス")
+        #expect(first.predictedOneRM > 0)
+        #expect(first.sessionCount == 5)
+    }
+
     @Test("linearRegression: 完全直線で R² == 1、slope と intercept が一致")
     func linearRegressionPerfectFit() {
         let points: [(x: Double, y: Double)] = (0..<5).map { (Double($0), Double($0) * 2 + 3) }
@@ -645,6 +671,58 @@ struct AnalyticsTests {
         let points: [(x: Double, y: Double)] = [(0, 1), (1, 3)]
         let fit = Analytics.linearRegression(points)!
         #expect(Analytics.predictionMargin(points: points, fit: fit) == 0)
+    }
+
+    @Test("prPredictions: 予測 advice に推定1RMトレンド系列が付与される")
+    func prPredictionCarriesTrend() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<5 {
+            let weight = Double(80 + offset)
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: weight, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let predictions = Analytics.prPredictions(sets: allSets, records: records)
+
+        let trend = try #require(predictions.first?.trend)
+        #expect(trend.count >= 2)
+        // 古い順（昇順トレンド）で末尾が最大付近
+        #expect(trend.last == trend.max())
+    }
+
+    @Test("plateauAdvice: 停滞 advice に推定1RMトレンド系列が付与される")
+    func plateauCarriesTrend() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+
+        // 横ばい 5 セッション → 停滞 advice 発火
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<5 {
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: 80, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.plateauAdvice(sets: allSets, records: records)
+
+        let trend = try #require(advices.first?.trend)
+        #expect(trend.count >= 2)
     }
 
     // MARK: - plateauAdvice
@@ -1017,5 +1095,137 @@ struct AnalyticsTests {
             limit: .max, bodyPhase: nil)
         #expect(withPhase.contains { $0.title == "減量期" })
         #expect(!withoutPhase.contains { $0.title == "減量期" })
+    }
+
+    // MARK: - groupedCoaching（同一カテゴリのグループ化）
+
+    @Test("groupedCoaching: 同じ title はまとめ、初出順とグループ内順を保つ")
+    func groupedCoachingMergesByTitle() {
+        let advice = [
+            CoachingAdvice(
+                title: "ボリューム不足", message: "肩", severity: .warning, impact: 30, subject: "肩", detail: "先週比 38%"),
+            CoachingAdvice(
+                title: "PR 更新の可能性", message: "ベンチ", severity: .info, impact: 20, subject: "ベンチプレス", detail: "85kg 狙い"),
+            CoachingAdvice(
+                title: "ボリューム不足", message: "腕", severity: .warning, impact: 10, subject: "上腕二頭筋", detail: "先週比 42%"),
+        ]
+        let groups = Analytics.groupedCoaching(advice)
+        #expect(groups.count == 2)
+        #expect(groups.map(\.title) == ["ボリューム不足", "PR 更新の可能性"])
+        // 1 つ目のグループは 2 件、入力順を保持
+        #expect(groups[0].items.map(\.subject) == ["肩", "上腕二頭筋"])
+        #expect(groups[0].severity == .warning)
+    }
+
+    @Test("groupedCoaching: 空入力は空配列")
+    func groupedCoachingEmpty() {
+        #expect(Analytics.groupedCoaching([]).isEmpty)
+    }
+
+    @Test("volumeAdvice: 不足/超過に subject と detail が入る")
+    func volumeAdviceHasStructuredFields() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        let weekStart = cal.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+        let lastWeek = cal.date(byAdding: .day, value: -3, to: weekStart)!
+        let session = try repo.startSession()
+        for _ in 0..<4 {
+            let s = try repo.addSet(to: session, exercise: bench, weight: 80, reps: 8)
+            s.completedAt = lastWeek
+        }
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let advices = Analytics.volumeAdvice(from: allSets, referenceDate: now, calendar: cal)
+        let undertraining = advices.first { $0.title.contains("不足") }
+        #expect(undertraining?.subject != nil)
+        #expect(undertraining?.detail?.contains("先週比") == true)
+    }
+
+    // MARK: - estimatedOneRMSeries（自己ベストカードのスパークライン）
+
+    /// 同一種目で重量を変えながら N セッション分作るヘルパー（古い順に weights を消費）。
+    private func makeWeightSessions(
+        context: ModelContext, exercise: Exercise, weights: [Double]
+    ) throws {
+        let repo = WorkoutSessionRepository(context: context)
+        let cal = Self.calendar
+        let now = Date()
+        let total = weights.count
+        for (offset, weight) in weights.enumerated() {
+            let date = cal.date(byAdding: .day, value: -(total - offset) * 2, to: now)!
+            let s = try repo.startSession(at: date)
+            try repo.addSet(to: s, exercise: exercise, weight: weight, reps: 8, completedAt: date)
+            s.endedAt = date
+        }
+    }
+
+    @Test("estimatedOneRMSeries: セッション毎に1点・古い順・重量増で 1RM も増える")
+    func estimatedOneRMSeriesAscending() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        try makeWeightSessions(context: context, exercise: bench, weights: [80, 90, 100])
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let series = Analytics.estimatedOneRMSeries(sets: allSets, forExerciseId: bench.id)
+
+        #expect(series.count == 3)
+        // 古い順に並んでいる
+        #expect(series[0].date < series[1].date)
+        #expect(series[1].date < series[2].date)
+        // 重量を上げたので推定 1RM も単調増加
+        #expect(series[0].weight < series[1].weight)
+        #expect(series[1].weight < series[2].weight)
+        // 値は OneRepMax.estimate と一致する
+        #expect(abs(series[2].weight - OneRepMax.estimate(weight: 100, reps: 8, rpe: nil)) < 0.001)
+    }
+
+    @Test("estimatedOneRMSeries: windowSize で直近 N セッションに絞る")
+    func estimatedOneRMSeriesWindow() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        try makeWeightSessions(context: context, exercise: bench, weights: [60, 70, 80, 90, 100])
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let series = Analytics.estimatedOneRMSeries(
+            sets: allSets, forExerciseId: bench.id, windowSize: 3)
+
+        // 直近 3 件（70 を含まず 80,90,100 由来）が古い順で残る
+        #expect(series.count == 3)
+        #expect(series.first!.weight < series.last!.weight)
+        #expect(series.last!.weight > OneRepMax.estimate(weight: 90, reps: 8, rpe: nil) - 0.001)
+    }
+
+    @Test("estimatedOneRMSeries: ウォームアップ・未完了・別種目は除外")
+    func estimatedOneRMSeriesExcludes() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let exercises = try context.fetch(FetchDescriptor<Exercise>())
+        let bench = exercises.first { $0.name == "ベンチプレス" }!
+        let squat = exercises.first { $0.name == "スクワット" }!
+        let repo = WorkoutSessionRepository(context: context)
+        let date = Self.calendar.date(byAdding: .day, value: -2, to: Date())!
+
+        let s = try repo.startSession(at: date)
+        // 本命のワーキングセット
+        try repo.addSet(to: s, exercise: bench, weight: 100, reps: 8, completedAt: date)
+        // 除外されるべきセット群
+        let warm = try repo.addSet(to: s, exercise: bench, weight: 40, reps: 8, completedAt: date)
+        warm.isWarmup = true
+        let planned = try repo.addSet(to: s, exercise: bench, weight: 200, reps: 1, completedAt: date)
+        planned.isCompleted = false
+        try repo.addSet(to: s, exercise: squat, weight: 150, reps: 8, completedAt: date)
+        s.endedAt = date
+
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+        let series = Analytics.estimatedOneRMSeries(sets: allSets, forExerciseId: bench.id)
+
+        #expect(series.count == 1)
+        // ベンチの本命セット(100kg)由来。ウォームアップ(40)や未完了(200)に引っ張られない。
+        #expect(abs(series[0].weight - OneRepMax.estimate(weight: 100, reps: 8, rpe: nil)) < 0.001)
     }
 }

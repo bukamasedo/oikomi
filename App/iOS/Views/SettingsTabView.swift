@@ -47,35 +47,24 @@ struct SettingsTabView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
+            ScrollView {
+                VStack(spacing: OikomiSpacing.l) {
                     proHeroRow
-                        .listRowInsets(
-                            EdgeInsets(
-                                top: OikomiSpacing.s, leading: OikomiSpacing.l,
-                                bottom: OikomiSpacing.s, trailing: OikomiSpacing.l)
-                        )
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
                     tipJarRow
-                        .listRowInsets(
-                            EdgeInsets(
-                                top: 0, leading: OikomiSpacing.l,
-                                bottom: OikomiSpacing.s, trailing: OikomiSpacing.l)
-                        )
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
+                    preferenceSection
+                    notificationsSection
+                    integrationsSection
+                    dataSection
+                    #if DEBUG
+                        developerSection
+                    #endif
+                    aboutSection
                 }
-                preferenceSection
-                notificationsSection
-                iCloudSection
-                healthKitSection
-                dataSection
-                #if DEBUG
-                    developerSection
-                #endif
-                aboutSection
+                .padding(.horizontal, OikomiSpacing.l)
+                .padding(.bottom, OikomiSpacing.xxl)
             }
+            .scrollContentBackground(.hidden)
+            .background(OikomiColor.appBackground)
             .navigationTitle("設定")
             .alert("エラー", isPresented: .constant(errorMessage != nil)) {
                 Button("OK") { errorMessage = nil }
@@ -121,6 +110,90 @@ struct SettingsTabView: View {
     }
 
     // MARK: - Sections
+
+    /// ホーム画面と同一のカード見た目（角丸 16・cardBackground・内側 16pt padding）の汎用コンテナ。
+    /// 純正 List の insetGrouped ではなく `HomeView` の自作カードに合わせる。
+    @ViewBuilder
+    private func settingsCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.s) {
+            content()
+        }
+        // 行ごとにアイコン幅が違ってもテキスト開始位置を揃えるため、
+        // カード内の Label はアイコン列を固定幅にする。
+        .labelStyle(SettingsRowLabelStyle())
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(OikomiSpacing.l)
+        .background(
+            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                .fill(OikomiColor.cardBackground)
+        )
+    }
+
+    /// カード内の先頭に置く見出し行。アイコンの大きさ・色はホーム / 分析画面の見出しと統一し、
+    /// 本文と同サイズ・`.primary` のモノクロにする。下に約 16pt の余白を取る。
+    @ViewBuilder
+    private func cardHeader(_ title: LocalizedStringKey, systemImage: String) -> some View {
+        Label(title, systemImage: systemImage)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.primary)
+            .padding(.bottom, OikomiSpacing.s)
+    }
+
+    /// カード内の 1 行（左ラベル + 右トレーリング）。最低タップ高を確保する。
+    @ViewBuilder
+    private func settingsRow<L: View, T: View>(
+        @ViewBuilder label: () -> L,
+        @ViewBuilder trailing: () -> T = { EmptyView() }
+    ) -> some View {
+        HStack(spacing: OikomiSpacing.m) {
+            label()
+            Spacer(minLength: OikomiSpacing.s)
+            trailing()
+        }
+        .frame(minHeight: 30)
+    }
+
+    /// 画面遷移行（右端に chevron）。NavigationLink の青 tint を避けて primary に統一。
+    @ViewBuilder
+    private func navRow<Destination: View>(
+        _ title: LocalizedStringKey, systemImage: String,
+        @ViewBuilder destination: () -> Destination
+    ) -> some View {
+        NavigationLink {
+            destination()
+        } label: {
+            settingsRow {
+                Label(title, systemImage: systemImage)
+            } trailing: {
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.primary)
+    }
+
+    /// メニュー Picker 行（左ラベル + 右に選択値）。List 行と同様の見た目にする。
+    @ViewBuilder
+    private func pickerRow<SelectionValue: Hashable, Options: View>(
+        _ title: LocalizedStringKey, systemImage: String,
+        selection: Binding<SelectionValue>,
+        @ViewBuilder options: () -> Options
+    ) -> some View {
+        settingsRow {
+            Label(title, systemImage: systemImage)
+        } trailing: {
+            Picker("", selection: selection) {
+                options()
+            }
+            .labelsHidden()
+            .tint(.secondary)
+            // メニュー Picker の選択値（例:「キログラム (kg)」）が幅不足で改行するのを防ぐ。
+            .fixedSize(horizontal: true, vertical: false)
+        }
+    }
 
     @ViewBuilder
     private var proHeroRow: some View {
@@ -207,20 +280,18 @@ struct SettingsTabView: View {
 
     @ViewBuilder
     private var preferenceSection: some View {
-        Section {
-            Picker(selection: $preferredLocationRaw) {
+        settingsCard {
+            cardHeader("環境", systemImage: "slider.horizontal.3")
+
+            pickerRow("トレーニング場所", systemImage: "location", selection: $preferredLocationRaw) {
                 Text("ジム").tag(Location.gym.rawValue)
                 Text("自宅").tag(Location.home.rawValue)
-            } label: {
-                Label("トレーニング場所", systemImage: "location")
             }
-
-            Picker(selection: $weightUnitRaw) {
+            Divider()
+            pickerRow("重量単位", systemImage: "scalemass", selection: $weightUnitRaw) {
                 ForEach(WeightUnit.allCases, id: \.rawValue) { unit in
                     Text("\(unit.localizedName) (\(unit.symbol))").tag(unit.rawValue)
                 }
-            } label: {
-                Label("重量単位", systemImage: "scalemass")
             }
             .onChange(of: weightUnitRaw) { _, newValue in
                 // App Group UserDefaults は iPhone↔Watch 間では共有されないため、
@@ -228,86 +299,79 @@ struct SettingsTabView: View {
                 guard let unit = WeightUnit(rawValue: newValue) else { return }
                 WCSyncBridge.shared.sendUnitPreferenceUpdate(unit)
             }
-
-            Picker(selection: $weeklyTargetDays) {
+            Divider()
+            pickerRow(
+                "週次トレーニング目標", systemImage: "calendar.badge.checkmark",
+                selection: $weeklyTargetDays
+            ) {
                 ForEach(WeeklyTrainingTarget.allowedRange, id: \.self) { days in
                     Text("週 \(days) 日").tag(days)
                 }
-            } label: {
-                Label("週次トレーニング目標", systemImage: "calendar.badge.checkmark")
             }
-
-            Picker(selection: $experienceLevelRaw) {
+            Divider()
+            pickerRow(
+                "経験レベル", systemImage: "figure.strengthtraining.traditional",
+                selection: $experienceLevelRaw
+            ) {
                 ForEach(ExperienceLevel.allCases, id: \.rawValue) { level in
                     Text(level.displayName).tag(level.rawValue)
                 }
-            } label: {
-                Label("経験レベル", systemImage: "figure.strengthtraining.traditional")
             }
-
-            Picker(selection: $trainingGoalRaw) {
+            Divider()
+            pickerRow("トレーニング目標", systemImage: "target", selection: $trainingGoalRaw) {
                 ForEach(TrainingGoal.allCases, id: \.rawValue) { goal in
                     Text(goal.displayName).tag(goal.rawValue)
                 }
-            } label: {
-                Label("トレーニング目標", systemImage: "target")
             }
-
-            NavigationLink {
+            Divider()
+            navRow("アプリアイコン", systemImage: "app.badge") {
                 AppIconPickerView()
-            } label: {
-                Label("アプリアイコン", systemImage: "app.badge")
-            }
-        } header: {
-            Text("環境")
-        }
-    }
-
-    @ViewBuilder
-    private var healthKitSection: some View {
-        Section("ヘルスケア") {
-            NavigationLink {
-                HealthKitDetailView()
-            } label: {
-                Label("HealthKit 連携", systemImage: "heart.text.square")
             }
         }
     }
 
     @ViewBuilder
     private var notificationsSection: some View {
-        Section {
+        settingsCard {
+            cardHeader("通知", systemImage: "bell.badge")
+
             Toggle(isOn: $notifRestEnabled) {
                 notificationRow(kind: .rest)
             }
+            Divider()
             Toggle(isOn: $notifWeeklyEnabled) {
                 notificationRow(kind: .weekly)
             }
+            Divider()
             Toggle(isOn: $notifPRPredictionEnabled) {
                 notificationRow(kind: .prPrediction)
             }
+            Divider()
             Toggle(isOn: $notifHRVDeloadEnabled) {
                 notificationRow(kind: .hrvDeload, proGated: !ProGate.canUseAICoaching)
             }
             .disabled(!ProGate.canUseAICoaching)
+            Divider()
             Toggle(isOn: $notifForgottenEnabled) {
                 notificationRow(kind: .forgottenSession)
             }
+            Divider()
             Toggle(isOn: $notifTrialEnabled) {
                 notificationRow(kind: .trial)
             }
-            Picker(selection: $notifTimePresetRaw) {
+            Divider()
+            pickerRow("通知時刻", systemImage: "clock", selection: $notifTimePresetRaw) {
                 ForEach(NotificationTimePreset.allCases, id: \.rawValue) { preset in
                     Text(preset.displayName).tag(preset.rawValue)
                 }
-            } label: {
-                Label("通知時刻", systemImage: "clock")
             }
-        } header: {
-            Text("通知")
-        } footer: {
+
             if !ProGate.canUseAICoaching {
+                Divider()
                 Text("HRV 連動ディロード推奨は Pro 限定です。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .onChange(of: notifRestEnabled) { _, _ in rescheduleNotifications() }
@@ -345,9 +409,17 @@ struct SettingsTabView: View {
         }
     }
 
+    /// HealthKit と iCloud という外部データ連携をひとまとめにしたカード。
+    /// 単独項目（旧「ヘルスケア」）が浮かないよう、似た性質の設定を 1 グループに集約する。
     @ViewBuilder
-    private var iCloudSection: some View {
-        Section {
+    private var integrationsSection: some View {
+        settingsCard {
+            cardHeader("連携・同期", systemImage: "link")
+
+            navRow("HealthKit 連携", systemImage: "heart.text.square") {
+                HealthKitDetailView()
+            }
+            Divider()
             Toggle(isOn: $cloudKitEnabled) {
                 Label("iCloud 同期", systemImage: "icloud")
             }
@@ -355,23 +427,26 @@ struct SettingsTabView: View {
             .onChange(of: cloudKitEnabled) { _, _ in
                 showCloudKitChangeAlert = true
             }
-
-            HStack {
+            Divider()
+            settingsRow {
                 Text("現在の状態")
-                Spacer()
+            } trailing: {
                 statusBadge
             }
 
             if !ProGate.canUseICloudSync {
+                Divider()
                 Button {
                     showProSheet = true
                 } label: {
-                    Label("Pro にアップグレード", systemImage: "star.fill")
-                        .foregroundStyle(.tint)
+                    settingsRow {
+                        Label("Pro にアップグレード", systemImage: "star.fill")
+                            .foregroundStyle(.tint)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
-        } header: {
-            Text("マルチデバイス同期")
         }
         .alert("再起動が必要です", isPresented: $showCloudKitChangeAlert) {
             Button("OK") {}
@@ -400,25 +475,37 @@ struct SettingsTabView: View {
 
     @ViewBuilder
     private var dataSection: some View {
-        Section("データ") {
+        settingsCard {
+            cardHeader("データ", systemImage: "tray.full")
+
             Button {
                 showOnboarding = true
             } label: {
-                Label {
-                    Text("オンボーディングを再表示")
-                } icon: {
-                    Image(systemName: "play.circle")
-                        .foregroundStyle(Color.accentColor)
+                settingsRow {
+                    Label {
+                        Text("オンボーディングを再表示")
+                    } icon: {
+                        Image(systemName: "play.circle")
+                            .foregroundStyle(Color.accentColor)
+                    }
                 }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .foregroundStyle(.primary)
+            Divider()
             exportButton
+            Divider()
             Button(role: .destructive) {
                 showResetConfirm = true
             } label: {
-                Label("すべてのデータを削除", systemImage: "trash")
-                    .foregroundStyle(.red)
+                settingsRow {
+                    Label("すべてのデータを削除", systemImage: "trash")
+                        .foregroundStyle(.red)
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
         }
     }
 
@@ -428,35 +515,37 @@ struct SettingsTabView: View {
             Button {
                 exportData()
             } label: {
-                HStack {
+                settingsRow {
                     Label {
                         Text("CSV としてエクスポート")
                     } icon: {
                         Image(systemName: "square.and.arrow.up")
                             .foregroundStyle(Color.accentColor)
                     }
+                } trailing: {
                     if let url = exportedURL {
-                        Spacer()
                         ShareLink(item: url) {
                             Image(systemName: "paperplane.fill")
                                 .foregroundStyle(.tint)
                         }
                     }
                 }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .foregroundStyle(.primary)
         } else {
             Button {
                 showProSheet = true
             } label: {
-                HStack {
+                settingsRow {
                     Label {
                         Text("CSV としてエクスポート")
                     } icon: {
                         Image(systemName: "square.and.arrow.up")
                             .foregroundStyle(Color.accentColor)
                     }
-                    Spacer()
+                } trailing: {
                     Text("Pro")
                         .font(.caption2.weight(.semibold))
                         .padding(.horizontal, 6)
@@ -466,7 +555,9 @@ struct SettingsTabView: View {
                                 .fill(Color.yellow.opacity(0.3))
                         )
                 }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .foregroundStyle(.primary)
         }
     }
@@ -482,17 +573,23 @@ struct SettingsTabView: View {
 
     @ViewBuilder
     private var aboutSection: some View {
-        Section("情報") {
-            NavigationLink {
+        settingsCard {
+            cardHeader("情報", systemImage: "info.circle")
+
+            navRow("用語解説", systemImage: "book.closed") {
                 GlossaryView()
-            } label: {
-                Label("用語解説", systemImage: "book.closed")
             }
-            LabeledContent("バージョン") {
+            Divider()
+            settingsRow {
+                Text("バージョン")
+            } trailing: {
                 Text(appVersionDisplay)
                     .foregroundStyle(.secondary)
             }
-            LabeledContent("OikomiKit") {
+            Divider()
+            settingsRow {
+                Text("OikomiKit")
+            } trailing: {
                 Text(OikomiKit.version)
                     .foregroundStyle(.secondary)
                     .font(.callout.monospaced())
@@ -503,21 +600,27 @@ struct SettingsTabView: View {
     #if DEBUG
         @ViewBuilder
         private var developerSection: some View {
-            Section {
+            settingsCard {
+                cardHeader("開発者ツール", systemImage: "hammer")
+
                 Button {
                     Task { await generateMockData() }
                 } label: {
-                    HStack {
+                    settingsRow {
                         Label("テストデータ (6週間) を生成", systemImage: "wand.and.stars")
-                        Spacer()
+                    } trailing: {
                         if mockIsRunning {
                             ProgressView()
                         }
                     }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .foregroundStyle(.primary)
                 .disabled(mockIsRunning)
 
                 if let summary = mockSummary {
+                    Divider()
                     VStack(alignment: .leading, spacing: 4) {
                         Text("生成完了")
                             .font(.caption.weight(.semibold))
@@ -536,22 +639,29 @@ struct SettingsTabView: View {
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
+                Divider()
                 Button(role: .destructive) {
                     showMockClearConfirm = true
                 } label: {
-                    Label("テストデータを削除", systemImage: "trash.slash")
-                        .foregroundStyle(.red)
+                    settingsRow {
+                        Label("テストデータを削除", systemImage: "trash.slash")
+                            .foregroundStyle(.red)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .disabled(mockIsRunning)
-            } header: {
-                Text("開発者ツール")
-            } footer: {
+
+                Divider()
                 Text(
                     "DEBUG ビルド限定。月・水・金 を Push / Pull / Legs にローテーションした 6 週間分のリアルな履歴を生成し、HealthKit にも HRV / 安静時心拍数 / 睡眠 / 体重 / HKWorkout を書き込みます（権限ダイアログが出ます）。"
                 )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
 
@@ -612,6 +722,22 @@ struct SettingsTabView: View {
             WCSyncBridge.shared.sendBulkDelete()
         } catch {
             errorMessage = "リセット失敗: \(error.localizedDescription)"
+        }
+    }
+}
+
+// MARK: - Row Label Style
+
+/// 設定カードの行ラベル用スタイル。アイコン列を固定幅にすることで、
+/// SF Symbol ごとに字幅が違ってもテキストの開始位置（左端）を揃える。
+private struct SettingsRowLabelStyle: LabelStyle {
+    var iconWidth: CGFloat = 26
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: OikomiSpacing.s) {
+            configuration.icon
+                .frame(width: iconWidth, alignment: .center)
+            configuration.title
         }
     }
 }

@@ -11,10 +11,8 @@ struct OnboardingView: View {
 
     enum Step: Int, CaseIterable {
         case welcome
-        case healthKit
-        case notifications
-        case routinePrompt
-        case weightUnit
+        case profile
+        case integrations
         case pro
     }
 
@@ -22,19 +20,16 @@ struct OnboardingView: View {
         VStack {
             switch step {
             case .welcome:
-                WelcomeStep(onContinue: { step = .healthKit })
-            case .healthKit:
-                HealthKitStep(
-                    isDone: healthAuthorizationDone,
-                    onRequest: requestHealth,
-                    onContinue: { step = .notifications }
+                WelcomeStep(onContinue: { step = .profile })
+            case .profile:
+                ProfileStep(onContinue: { step = .integrations })
+            case .integrations:
+                IntegrationsStep(
+                    healthDone: healthAuthorizationDone,
+                    onRequestHealth: requestHealth,
+                    onRequestNotifications: requestNotifications,
+                    onContinue: { step = .pro }
                 )
-            case .notifications:
-                NotificationsStep(onRequest: requestNotifications, onContinue: { step = .routinePrompt })
-            case .routinePrompt:
-                RoutinePromptStep(onContinue: { step = .weightUnit })
-            case .weightUnit:
-                WeightUnitStep(onContinue: { step = .pro })
             case .pro:
                 OnboardingProStep(onFinish: finish)
             }
@@ -138,20 +133,6 @@ private struct OnboardingPrimaryButton: View {
     }
 }
 
-private struct BulletPoint: View {
-    let text: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.subheadline)
-                .foregroundStyle(.green)
-            Text(text)
-                .font(.subheadline)
-        }
-    }
-}
-
 private struct ValueRow: View {
     let icon: String
     let title: String
@@ -238,128 +219,200 @@ private struct WelcomeStep: View {
     }
 }
 
-// MARK: - HealthKit
+// MARK: - Profile
 
-private struct HealthKitStep: View {
-    let isDone: Bool
-    let onRequest: () -> Void
+/// 経験・目標・週目標・場所・重量単位を 1 画面で設定する。
+/// すべてデフォルト選択済みで、こだわらないユーザーは無操作で「次へ」を押せる（短さ優先）。
+/// 保存先は設定タブの環境セクションと同一キーのため、双方向に一致する。
+private struct ProfileStep: View {
     let onContinue: () -> Void
+
+    // 経験 / 目標 / 週目標 / 場所 は SettingsTabView と同一の @AppStorage キーで即時保存する。
+    @AppStorage(TrainingProfilePreference.experienceKey) private var experienceRaw =
+        TrainingProfile.default.experience.rawValue
+    @AppStorage(TrainingProfilePreference.goalKey) private var goalRaw =
+        TrainingProfile.default.goal.rawValue
+    @AppStorage(WeeklyTrainingTarget.storageKey) private var weeklyTargetDays =
+        WeeklyTrainingTarget.defaultDays
+    @AppStorage("OikomiPreferredLocation") private var locationRaw = Location.gym.rawValue
+
+    // 重量単位だけは App Group suite 保存のため @AppStorage(.standard) を使えない。
+    // 「次へ」押下時に UnitPreference 経由で書き込み、Watch にも同期する。
+    @State private var unit: WeightUnit = UnitPreference.current()
 
     var body: some View {
         VStack(spacing: 0) {
             OnboardingStepIndicator(current: 1)
                 .padding(.top, OikomiSpacing.xl)
 
-            Spacer(minLength: OikomiSpacing.xxl)
-
-            OnboardingHeroIcon(
-                symbol: "heart.text.square.fill",
-                tint: .pink,
-                background: Color.pink.opacity(0.14)
-            )
-
-            VStack(spacing: OikomiSpacing.s) {
-                Text("ヘルスケア連携")
-                    .font(.title.weight(.bold))
-                Text("ワークアウトをヘルスケアに保存し、HRV や睡眠からトレーニング負荷を最適化します。")
-                    .font(.body)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, OikomiSpacing.xxl)
-            }
-            .padding(.top, OikomiSpacing.l)
-
-            VStack(alignment: .leading, spacing: OikomiSpacing.m) {
-                BulletPoint(text: "ワークアウトをヘルスケアに保存")
-                BulletPoint(text: "HRV・睡眠の活用は Pro で解放（権限はここで一括許可）")
-                BulletPoint(text: "すべての計算はオンデバイスで完結")
-            }
-            .padding(.horizontal, OikomiSpacing.xxxl)
-            .padding(.top, OikomiSpacing.xl)
-
-            Spacer()
-
-            VStack(spacing: OikomiSpacing.m) {
-                if isDone {
-                    OnboardingPrimaryButton(
-                        title: "次へ",
-                        systemImage: "checkmark.circle.fill",
-                        action: onContinue
+            ScrollView {
+                VStack(spacing: OikomiSpacing.xl) {
+                    OnboardingHeroIcon(
+                        symbol: "slider.horizontal.3",
+                        tint: OikomiColor.brandPrimary,
+                        background: OikomiColor.brandPrimary.opacity(0.14),
+                        size: 84
                     )
-                } else {
-                    OnboardingPrimaryButton(title: "次へ", action: onRequest)
+                    .padding(.top, OikomiSpacing.l)
+
+                    VStack(spacing: OikomiSpacing.xs) {
+                        Text("あなたについて")
+                            .font(.title.weight(.bold))
+                        Text("コーチングの精度を高めます。あとで設定でいつでも変更できます。")
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, OikomiSpacing.xl)
+                    }
+
+                    VStack(spacing: 0) {
+                        ProfileRow(label: "経験レベル") {
+                            Picker("経験レベル", selection: $experienceRaw) {
+                                ForEach(ExperienceLevel.allCases, id: \.rawValue) { level in
+                                    Text(level.displayName).tag(level.rawValue)
+                                }
+                            }
+                        }
+                        Divider()
+                        ProfileRow(label: "目標") {
+                            Picker("目標", selection: $goalRaw) {
+                                ForEach(TrainingGoal.allCases, id: \.rawValue) { goal in
+                                    Text(goal.displayName).tag(goal.rawValue)
+                                }
+                            }
+                        }
+                        Divider()
+                        ProfileRow(label: "週のトレーニング日数") {
+                            Picker("週のトレーニング日数", selection: $weeklyTargetDays) {
+                                ForEach(WeeklyTrainingTarget.allowedRange, id: \.self) { days in
+                                    Text("週 \(days) 日").tag(days)
+                                }
+                            }
+                        }
+                        Divider()
+                        ProfileRow(label: "場所") {
+                            Picker("場所", selection: $locationRaw) {
+                                Text("ジム").tag(Location.gym.rawValue)
+                                Text("自宅").tag(Location.home.rawValue)
+                            }
+                        }
+                        Divider()
+                        ProfileRow(label: "重量の単位") {
+                            Picker("重量の単位", selection: $unit) {
+                                ForEach(WeightUnit.allCases, id: \.rawValue) { unit in
+                                    Text("\(unit.localizedName) (\(unit.symbol))").tag(unit)
+                                }
+                            }
+                        }
+                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                            .fill(OikomiColor.cardBackground)
+                    )
+                    .padding(.horizontal, OikomiSpacing.xxl)
                 }
-                Text("「次へ」を選ぶと、ヘルスケアの権限を確認します。許可は後から「設定 → ヘルスケア連携」で変更できます")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .multilineTextAlignment(.center)
+                .padding(.bottom, OikomiSpacing.xl)
+            }
+
+            OnboardingPrimaryButton(title: "次へ") {
+                // 重量単位は App Group へ保存し、設定タブと同様に Watch へ同期する。
+                UnitPreference.set(unit)
+                WCSyncBridge.shared.sendUnitPreferenceUpdate(unit)
+                onContinue()
             }
             .padding(.horizontal, OikomiSpacing.xxl)
+            .padding(.top, OikomiSpacing.s)
             .padding(.bottom, OikomiSpacing.xxxl)
         }
         .background(OikomiColor.appBackground)
     }
 }
 
-// MARK: - Notifications
+/// ラベル左・セレクトボックス右のフォーム行。`content` はメニュー方式の `Picker` を想定。
+private struct ProfileRow<Content: View>: View {
+    let label: String
+    @ViewBuilder var content: Content
 
-private struct NotificationsStep: View {
-    let onRequest: () -> Void
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.body)
+                .foregroundStyle(.primary)
+            Spacer(minLength: OikomiSpacing.m)
+            content
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .tint(OikomiColor.brandPrimary)
+        }
+        .padding(.horizontal, OikomiSpacing.l)
+        .padding(.vertical, OikomiSpacing.s + 2)
+    }
+}
+
+// MARK: - Integrations (HealthKit + Notifications)
+
+/// HealthKit と通知の許可を 1 画面に統合。どちらも任意で、「次へ」で許可状況に関わらず進める。
+private struct IntegrationsStep: View {
+    let healthDone: Bool
+    let onRequestHealth: () -> Void
+    let onRequestNotifications: () -> Void
     let onContinue: () -> Void
 
-    @State private var requested = false
+    @State private var notifRequested = false
 
     var body: some View {
         VStack(spacing: 0) {
             OnboardingStepIndicator(current: 2)
                 .padding(.top, OikomiSpacing.xl)
 
-            Spacer(minLength: OikomiSpacing.xxl)
+            Spacer(minLength: OikomiSpacing.xl)
 
             OnboardingHeroIcon(
-                symbol: "bell.badge.fill",
+                symbol: "link",
                 tint: OikomiColor.brandPrimary,
                 background: OikomiColor.brandPrimary.opacity(0.14)
             )
 
             VStack(spacing: OikomiSpacing.s) {
-                Text("通知でサポート")
+                Text("連携")
                     .font(.title.weight(.bold))
-                Text("レスト終了や AI コーチング、トライアル残日数などをお知らせします。各通知は設定タブで個別に OFF にできます。")
-                    .font(.body)
+                Text("ヘルスケアと通知を有効にすると、記録の保存とトレーニングのサポートが受けられます。どちらも後から設定で変更できます。")
+                    .font(.subheadline)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, OikomiSpacing.xxl)
             }
             .padding(.top, OikomiSpacing.l)
 
-            VStack(alignment: .leading, spacing: OikomiSpacing.m) {
-                BulletPoint(text: "レスト終了を Apple Watch でお知らせ")
-                BulletPoint(text: "翌日 PR 圏内の種目があれば朝に通知")
-                BulletPoint(text: "ワークアウト終了し忘れをリマインド")
+            VStack(spacing: OikomiSpacing.m) {
+                PermissionRow(
+                    icon: "heart.text.square.fill",
+                    tint: .pink,
+                    title: "ヘルスケア連携",
+                    description: "ワークアウトを保存。HRV・睡眠の活用は Pro で解放（計算はオンデバイス完結）",
+                    isDone: healthDone,
+                    action: onRequestHealth
+                )
+                PermissionRow(
+                    icon: "bell.badge.fill",
+                    tint: OikomiColor.brandPrimary,
+                    title: "通知",
+                    description: "レスト終了・PR 予測・終了し忘れをお知らせ",
+                    isDone: notifRequested,
+                    action: {
+                        onRequestNotifications()
+                        notifRequested = true
+                    }
+                )
             }
-            .padding(.horizontal, OikomiSpacing.xxxl)
+            .padding(.horizontal, OikomiSpacing.xxl)
             .padding(.top, OikomiSpacing.xl)
 
             Spacer()
 
-            VStack(spacing: OikomiSpacing.m) {
-                if requested {
-                    OnboardingPrimaryButton(
-                        title: "次へ",
-                        systemImage: "checkmark.circle.fill",
-                        action: onContinue
-                    )
-                } else {
-                    OnboardingPrimaryButton(title: "通知を許可") {
-                        onRequest()
-                        requested = true
-                    }
-                    Button("後で設定", action: onContinue)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                Text("通知は後から「設定 → 通知」で個別に切り替えできます")
+            VStack(spacing: OikomiSpacing.s) {
+                OnboardingPrimaryButton(title: "次へ", action: onContinue)
+                Text("許可は後から「設定 → 連携・同期 / 通知」で変更できます")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
@@ -371,170 +424,51 @@ private struct NotificationsStep: View {
     }
 }
 
-// MARK: - Routine Prompt
-
-private struct RoutinePromptStep: View {
-    let onContinue: () -> Void
+private struct PermissionRow: View {
+    let icon: String
+    let tint: Color
+    let title: String
+    let description: String
+    let isDone: Bool
+    let action: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            OnboardingStepIndicator(current: 3)
-                .padding(.top, OikomiSpacing.xl)
+        HStack(alignment: .top, spacing: OikomiSpacing.m) {
+            ZStack {
+                RoundedRectangle(cornerRadius: OikomiRadius.tile, style: .continuous)
+                    .fill(tint.opacity(0.14))
+                Image(systemName: icon)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(tint)
+            }
+            .frame(width: 40, height: 40)
 
-            Spacer(minLength: OikomiSpacing.xxl)
-
-            OnboardingHeroIcon(
-                symbol: "list.bullet.clipboard.fill",
-                tint: OikomiColor.brandPrimary,
-                background: OikomiColor.brandPrimary.opacity(0.16)
-            )
-
-            VStack(spacing: OikomiSpacing.s) {
-                Text("ルーティンで素早く")
-                    .font(.title.weight(.bold))
-                Text("プッシュ・プル・レッグなど、毎回行うメニューをルーティンとして保存しておくと、1 タップでセッションを開始できます。")
-                    .font(.body)
-                    .multilineTextAlignment(.center)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                Text(description)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, OikomiSpacing.xxl)
             }
-            .padding(.top, OikomiSpacing.l)
 
-            VStack(alignment: .leading, spacing: OikomiSpacing.m) {
-                BulletPoint(text: "種目リストをワンタップで開始")
-                BulletPoint(text: "前回の重量・レップを自動表示")
-                BulletPoint(text: "ホームと進行中画面に進捗表示")
+            Spacer(minLength: OikomiSpacing.s)
+
+            if isDone {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.green)
+            } else {
+                Button("許可", action: action)
+                    .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.bordered)
+                    .tint(OikomiColor.brandPrimary)
             }
-            .padding(.horizontal, OikomiSpacing.xxxl)
-            .padding(.top, OikomiSpacing.xl)
-
-            Spacer()
-
-            VStack(spacing: OikomiSpacing.s) {
-                OnboardingPrimaryButton(title: "次へ", action: onContinue)
-                Text("ルーティンはトレーニングタブで後から作成できます（Free は 5 個まで）")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.horizontal, OikomiSpacing.xxl)
-            .padding(.bottom, OikomiSpacing.xxxl)
         }
-        .background(OikomiColor.appBackground)
-    }
-}
-
-// MARK: - Weight Unit
-
-private struct WeightUnitStep: View {
-    let onContinue: () -> Void
-
-    @State private var selected: WeightUnit = UnitPreference.current()
-
-    var body: some View {
-        VStack(spacing: 0) {
-            OnboardingStepIndicator(current: 4)
-                .padding(.top, OikomiSpacing.xl)
-
-            Spacer(minLength: OikomiSpacing.xxl)
-
-            OnboardingHeroIcon(
-                symbol: "scalemass.fill",
-                tint: .blue,
-                background: Color.blue.opacity(0.14)
-            )
-
-            VStack(spacing: OikomiSpacing.s) {
-                Text("重量の単位")
-                    .font(.title.weight(.bold))
-                Text("kg と lb のどちらで記録しますか？ あとから設定でいつでも変更できます。")
-                    .font(.body)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, OikomiSpacing.xxl)
-            }
-            .padding(.top, OikomiSpacing.l)
-
-            VStack(spacing: OikomiSpacing.m) {
-                ForEach(WeightUnit.allCases, id: \.rawValue) { unit in
-                    WeightUnitChoiceCard(
-                        unit: unit,
-                        isSelected: selected == unit,
-                        onTap: { selected = unit }
-                    )
-                }
-            }
-            .padding(.horizontal, OikomiSpacing.xxl)
-            .padding(.top, OikomiSpacing.xl)
-
-            Spacer()
-
-            OnboardingPrimaryButton(title: "次へ") {
-                UnitPreference.set(selected)
-                onContinue()
-            }
-            .padding(.horizontal, OikomiSpacing.xxl)
-            .padding(.bottom, OikomiSpacing.xxxl)
-        }
-        .background(OikomiColor.appBackground)
-    }
-}
-
-private struct WeightUnitChoiceCard: View {
-    let unit: WeightUnit
-    let isSelected: Bool
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: OikomiSpacing.m) {
-                ZStack {
-                    Circle()
-                        .fill(isSelected ? OikomiColor.brandPrimary.opacity(0.16) : OikomiColor.elevatedBackground)
-                    Text(unit.symbol)
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(isSelected ? OikomiColor.brandPrimary : .secondary)
-                }
-                .frame(width: 48, height: 48)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(unit.localizedName)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    Text(unitDescription)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(OikomiColor.brandPrimary)
-                }
-            }
-            .padding(OikomiSpacing.l)
-            .background(
-                RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
-                    .fill(OikomiColor.cardBackground)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
-                    .strokeBorder(
-                        isSelected ? OikomiColor.brandPrimary : Color.clear,
-                        lineWidth: 2
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var unitDescription: String {
-        switch unit {
-        case .kg: return "メートル法・日本国内の標準"
-        case .lb: return "ヤード・ポンド法・米国式器具に多い"
-        }
+        .padding(OikomiSpacing.l)
+        .background(
+            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                .fill(OikomiColor.cardBackground)
+        )
     }
 }
 
@@ -560,7 +494,7 @@ private struct OnboardingProStep: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            OnboardingStepIndicator(current: 5)
+            OnboardingStepIndicator(current: 3)
                 .padding(.top, OikomiSpacing.xl)
 
             Spacer(minLength: OikomiSpacing.xxl)

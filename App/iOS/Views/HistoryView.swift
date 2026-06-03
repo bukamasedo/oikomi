@@ -5,8 +5,6 @@ import SwiftUI
 /// 履歴タブ。Apple Fitness History + ヘルスケアの期間セグメントに着想を得た構成。
 struct HistoryView: View {
 
-    @Environment(\.modelContext) private var modelContext
-
     @Query(
         filter: #Predicate<WorkoutSession> { $0.endedAt != nil },
         sort: \WorkoutSession.startedAt,
@@ -14,9 +12,7 @@ struct HistoryView: View {
     )
     private var sessions: [WorkoutSession]
 
-    @State private var period: PeriodSegment.Period = .week
     @State private var selectedDate: Date?
-    @State private var sessionPendingDeletion: WorkoutSession?
     @State private var navigationTarget: WorkoutSession?
 
     @AppStorage(UnitPreference.storageKey, store: .sharedAppGroup)
@@ -39,20 +35,9 @@ struct HistoryView: View {
         return sessions.filter { interval.contains($0.startedAt) }
     }
 
+    // 集計は「今週」固定（直近基準）。日付を選べばその日に切り替わる。
     private var periodInterval: DateInterval? {
-        let now = Date()
-        switch period {
-        case .day:
-            return calendar.dateInterval(of: .day, for: now)
-        case .week:
-            return calendar.dateInterval(of: .weekOfYear, for: now)
-        case .month:
-            return calendar.dateInterval(of: .month, for: now)
-        case .year:
-            return calendar.dateInterval(of: .year, for: now)
-        case .all:
-            return nil
-        }
+        calendar.dateInterval(of: .weekOfYear, for: Date())
     }
 
     private var totalSets: Int {
@@ -69,20 +54,20 @@ struct HistoryView: View {
             }
     }
 
+    // 通算（全期間）。スコープ(週/月)に依存しないので sessions 全体から集計する。
+    private var allTimeVolume: Double {
+        sessions
+            .flatMap { $0.sets ?? [] }
+            .filter(\.isCompleted)
+            .reduce(0) { acc, s in
+                guard let w = s.weight, let r = s.reps else { return acc }
+                return acc + w * Double(r)
+            }
+    }
+
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    PeriodSegment(selection: $period)
-                }
-                .listRowBackground(Color.clear)
-                .listRowInsets(
-                    EdgeInsets(
-                        top: OikomiSpacing.l, leading: OikomiSpacing.l,
-                        bottom: 0, trailing: OikomiSpacing.l)
-                )
-                .listRowSeparator(.hidden)
-
                 Section {
                     summaryCard
                 }
@@ -113,7 +98,7 @@ struct HistoryView: View {
                     Section {
                         OikomiEmptyState(
                             title: "この期間の記録はありません",
-                            message: "期間を切り替えるか、カレンダーで別の日付を選んでください。",
+                            message: "カレンダーで別の日付を選んでください。",
                             systemImage: "calendar.badge.exclamationmark",
                             tint: OikomiColor.brandPrimary
                         )
@@ -128,100 +113,26 @@ struct HistoryView: View {
                     .listRowSeparator(.hidden)
                 } else {
                     Section {
-                        ForEach(periodSessions) { session in
-                            Button {
-                                navigationTarget = session
-                            } label: {
-                                WorkoutHistoryCard(session: session)
-                            }
-                            .buttonStyle(.plain)
-                            .listRowBackground(Color.clear)
-                            .listRowInsets(
-                                EdgeInsets(
-                                    top: 0, leading: OikomiSpacing.l,
-                                    bottom: OikomiSpacing.m, trailing: OikomiSpacing.l)
-                            )
-                            .listRowSeparator(.hidden)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    sessionPendingDeletion = session
-                                } label: {
-                                    Label("削除", systemImage: "trash")
-                                }
-                            }
-                            .contextMenu {
-                                Button(role: .destructive) {
-                                    sessionPendingDeletion = session
-                                } label: {
-                                    Label("セッションを削除", systemImage: "trash")
-                                }
-                            } preview: {
-                                WorkoutHistoryCard(session: session)
-                            }
-                        }
-                    } header: {
-                        SectionHeader(
-                            title: sessionsSectionTitle,
-                            trailing: {
-                                if selectedDate != nil {
-                                    Button("すべて") { selectedDate = nil }
-                                        .font(.subheadline.weight(.medium))
-                                }
-                            }
-                        )
-                        .listRowInsets(
-                            EdgeInsets(
-                                top: OikomiSpacing.l, leading: OikomiSpacing.l,
-                                bottom: OikomiSpacing.s, trailing: OikomiSpacing.l)
-                        )
-                        .textCase(nil)
-                    }
-
-                    Section {
-                        Color.clear.frame(height: OikomiSpacing.xxl)
+                        sessionsCard
                     }
                     .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
+                    .listRowInsets(
+                        EdgeInsets(
+                            top: OikomiSpacing.l, leading: OikomiSpacing.l,
+                            bottom: OikomiSpacing.xxl, trailing: OikomiSpacing.l)
+                    )
                     .listRowSeparator(.hidden)
                 }
             }
             .listStyle(.plain)
+            // List 既定のセクション余白を消し、カード間・先頭余白を listRowInsets だけで
+            // 制御する(ホーム/トレーニングの ScrollView と同じ 16pt スケールに揃えるため)。
+            .listSectionSpacing(0)
             .scrollContentBackground(.hidden)
             .background(OikomiColor.appBackground)
             .navigationTitle("履歴")
             .navigationDestination(item: $navigationTarget) { session in
                 SessionDetailView(session: session)
-            }
-            // ブランド tint(オレンジ)がキャンセルボタンに流れ込むのを避けるため、
-            // アラートだけ neutral tint の不可視ホストに載せる(destructive は赤のまま)。
-            .background {
-                Color.clear
-                    .tint(.primary)
-                    .alert(
-                        "このセッションを削除しますか？",
-                        isPresented: Binding(
-                            get: { sessionPendingDeletion != nil },
-                            set: { if !$0 { sessionPendingDeletion = nil } }
-                        ),
-                        presenting: sessionPendingDeletion
-                    ) { session in
-                        Button("削除", role: .destructive) { deleteSession(session) }
-                        Button("キャンセル", role: .cancel) { sessionPendingDeletion = nil }
-                    } message: { _ in
-                        Text("セット記録もすべて削除されます。この操作は取り消せません。")
-                    }
-            }
-        }
-    }
-
-    private func deleteSession(_ session: WorkoutSession) {
-        let repo = WorkoutSessionRepository(context: modelContext)
-        sessionPendingDeletion = nil
-        Task { @MainActor in
-            do {
-                try await repo.deleteSession(session)
-            } catch {
-                print("[HistoryView] failed to delete session: \(error)")
             }
         }
     }
@@ -230,42 +141,93 @@ struct HistoryView: View {
         if let selectedDate {
             return selectedDate.formatted(.dateTime.year().month(.abbreviated).day()) + " のセッション"
         }
-        switch period {
-        case .day: return "今日のセッション"
-        case .week: return "今週のセッション (\(periodSessions.count))"
-        case .month: return "今月のセッション (\(periodSessions.count))"
-        case .year: return "今年のセッション (\(periodSessions.count))"
-        case .all: return "全セッション (\(periodSessions.count))"
+        return "今週のセッション (\(periodSessions.count))"
+    }
+
+    // 見出しはカード外ではなくカード内に置き、全セッションを 1 枚のカードにまとめる
+    //（ホームの「直近の自己ベスト」カードと同じ構成）。
+    @ViewBuilder
+    private var sessionsCard: some View {
+        VStack(alignment: .leading, spacing: OikomiSpacing.m) {
+            HStack(alignment: .firstTextBaseline) {
+                Label(sessionsSectionTitle, systemImage: "figure.strengthtraining.traditional")
+                    .font(.subheadline.weight(.semibold))
+                    .labelStyle(.titleAndIcon)
+                    .foregroundStyle(.primary)
+                Spacer(minLength: OikomiSpacing.s)
+                if selectedDate != nil {
+                    Button("すべて") { selectedDate = nil }
+                        .font(.subheadline.weight(.medium))
+                }
+            }
+
+            ForEach(Array(periodSessions.enumerated()), id: \.element.id) { index, session in
+                if index > 0 {
+                    Divider()
+                }
+                Button {
+                    navigationTarget = session
+                } label: {
+                    WorkoutHistoryRow(session: session)
+                }
+                .buttonStyle(.plain)
+            }
         }
+        .padding(OikomiSpacing.l)
+        .background(
+            RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous)
+                .fill(OikomiColor.cardBackground)
+        )
     }
 
     @ViewBuilder
     private var summaryCard: some View {
-        HStack(spacing: OikomiSpacing.m) {
-            summaryTile(
-                title: "セッション",
-                value: "\(periodSessions.count)",
-                unit: "回",
-                systemImage: "figure.strengthtraining.traditional",
-                tint: OikomiColor.brandPrimary
-            )
-            divider
-            summaryTile(
-                title: "セット",
-                value: "\(totalSets)",
-                unit: "",
-                systemImage: "list.bullet",
-                tint: OikomiColor.statBlue
-            )
-            divider
-            summaryTile(
-                title: "ボリューム",
-                value: WeightFormatter.numberOnly(
-                    kilograms: totalVolume, in: weightUnit, fractionDigits: 0...0),
-                unit: weightUnit.symbol,
-                systemImage: "scalemass.fill",
-                tint: OikomiColor.statIndigo
-            )
+        VStack(spacing: OikomiSpacing.m) {
+            HStack(spacing: OikomiSpacing.m) {
+                summaryTile(
+                    title: "セッション",
+                    value: "\(periodSessions.count)",
+                    unit: "回",
+                    systemImage: "figure.strengthtraining.traditional",
+                    tint: OikomiColor.brandPrimary
+                )
+                divider
+                summaryTile(
+                    title: "セット",
+                    value: "\(totalSets)",
+                    unit: "",
+                    systemImage: "list.bullet",
+                    tint: OikomiColor.statBlue
+                )
+                divider
+                summaryTile(
+                    title: "ボリューム",
+                    value: WeightFormatter.numberOnly(
+                        kilograms: totalVolume, in: weightUnit, fractionDigits: 0...0),
+                    unit: weightUnit.symbol,
+                    systemImage: "scalemass.fill",
+                    tint: OikomiColor.statIndigo
+                )
+            }
+
+            Divider()
+                .overlay(OikomiColor.separator)
+
+            // 通算（全期間）。週/月トグルに依存しない不変の積み上げを 1 行で示す。
+            HStack(spacing: OikomiSpacing.xs) {
+                Image(systemName: "infinity")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(
+                    "通算 \(sessions.count)回・"
+                        + WeightFormatter.numberOnly(
+                            kilograms: allTimeVolume, in: weightUnit, fractionDigits: 0...0)
+                        + weightUnit.symbol
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+            }
         }
         .padding(OikomiSpacing.l)
         .background(

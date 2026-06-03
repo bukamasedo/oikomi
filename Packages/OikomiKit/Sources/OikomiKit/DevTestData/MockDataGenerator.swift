@@ -7,18 +7,17 @@ import SwiftData
 
 /// 開発・QA 用の現実的なテストデータ生成器。
 ///
-/// `WorkoutSession.notes` / `Routine.name` のプレフィックス、HK サンプルの metadata に
-/// マーカーを埋め、後で `clearMockData` でモック分だけを除去できる設計。
+/// 実利用と同じ見た目にするため、ルーティン名や notes に "Mock" 等の可視マーカーは入れない。
+/// 識別は UI 非表示の `WorkoutSession.notes` マーカーと HK サンプルの metadata だけで行い、
+/// ルーティンは「マーカー付きセッションから参照され、かつ実セッションを持たないもの」を
+/// 基準に `clearMockData` で削除する（実データのルーティンは保護される）。
 ///
 /// 本番ユーザー向けの UI からは呼ばない（DEBUG ビルドの設定画面からのみ叩く想定）。
 @MainActor
 public enum MockDataGenerator {
 
-    /// `WorkoutSession.notes` に入れるマーカー。
+    /// `WorkoutSession.notes` に入れるマーカー（UI には表示されない内部識別子）。
     public static let sessionNoteMarker = "oikomi.mock"
-
-    /// モックルーティン名のプレフィックス。
-    public static let routineNamePrefix = "[Mock] "
 
     /// HKObject の metadata に入れるキー。
     public static let healthKitMetadataKey = "oikomi.mock"
@@ -69,7 +68,7 @@ public enum MockDataGenerator {
         var routines: [(Routine, RoutinePlan)] = []
         for plan in plans {
             let routine = try makeOrFetchRoutine(
-                named: routineNamePrefix + plan.displayName, plan: plan, context: context)
+                named: plan.displayName, plan: plan, context: context)
             routines.append((routine, plan))
         }
 
@@ -248,7 +247,6 @@ public enum MockDataGenerator {
         removeFromHealthKit: Bool = true
     ) async throws {
         let marker = sessionNoteMarker
-        let prefix = routineNamePrefix
 
         // 1) モックセッション（sets / snapshot は cascade）
         let mockSessions = try context.fetch(
@@ -256,18 +254,20 @@ public enum MockDataGenerator {
                 predicate: #Predicate<WorkoutSession> { $0.notes == marker }
             )
         )
+        // 削除前に参照ルーティンを控える（後で「実セッションを持たない」ものだけ消すため）。
+        var referencedRoutines: [UUID: Routine] = [:]
+        for s in mockSessions {
+            if let r = s.routine { referencedRoutines[r.id] = r }
+        }
         for s in mockSessions {
             context.delete(s)
         }
+        try context.save()
 
-        // 2) モックルーティン
-        let mockRoutines = try context.fetch(
-            FetchDescriptor<Routine>(
-                predicate: #Predicate<Routine> { $0.name.starts(with: prefix) }
-            )
-        )
-        for r in mockRoutines {
-            context.delete(r)
+        // 2) モックルーティン: モックセッション削除後に残セッションが無い
+        //    （= 純粋なモック生成物）ものだけ削除。実利用のルーティンは保持する。
+        for routine in referencedRoutines.values where (routine.sessions ?? []).isEmpty {
+            context.delete(routine)
         }
 
         // 3) PR を全消し → 残った非モックセットから再構築
@@ -309,9 +309,11 @@ public enum MockDataGenerator {
         if let existing = try context.fetch(
             FetchDescriptor<Routine>(predicate: #Predicate<Routine> { $0.name == name })
         ).first {
+            existing.scheduledWeekdays = plan.scheduledWeekdays
             return existing
         }
-        let routine = Routine(name: name, createdAt: Date())
+        let routine = Routine(
+            name: name, createdAt: Date(), scheduledWeekdays: plan.scheduledWeekdays)
         context.insert(routine)
         for (idx, item) in plan.items.enumerated() {
             guard let exercise = resolveExercise(nameEn: item.nameEn, context: context) else { continue }
@@ -536,10 +538,14 @@ public enum MockDataGenerator {
 /// ルーティンと進行プランを表現する宣言的データ。
 public struct RoutinePlan: Sendable {
     public let displayName: String
+    /// このルーティンを予定する曜日（Calendar weekday: 日=1 … 土=7）。生成スケジュール
+    /// （月=プッシュ / 水=プル / 金=レッグ）と一致させ、ホームの「今日のルーティン」に出るようにする。
+    public let scheduledWeekdays: [Int]
     public let items: [RoutineItem]
 
     public static let push = RoutinePlan(
         displayName: "プッシュ",
+        scheduledWeekdays: [2],
         items: [
             RoutineItem(
                 nameEn: "Barbell Bench Press - Medium Grip",
@@ -576,6 +582,7 @@ public struct RoutinePlan: Sendable {
 
     public static let pull = RoutinePlan(
         displayName: "プル",
+        scheduledWeekdays: [4],
         items: [
             RoutineItem(
                 nameEn: "Barbell Deadlift",
@@ -612,6 +619,7 @@ public struct RoutinePlan: Sendable {
 
     public static let legs = RoutinePlan(
         displayName: "レッグ",
+        scheduledWeekdays: [6],
         items: [
             RoutineItem(
                 nameEn: "Barbell Squat",

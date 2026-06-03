@@ -84,18 +84,6 @@ struct AnalysisTabView: View {
             }
             .background(OikomiColor.appBackground)
             .navigationTitle("分析")
-            .toolbar {
-                if ProGate.canUseAICoaching {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink {
-                            MonthlySummaryHistoryView()
-                        } label: {
-                            Image(systemName: "sparkles.rectangle.stack")
-                        }
-                        .accessibilityLabel("振り返り履歴")
-                    }
-                }
-            }
             .sheet(isPresented: $showingExercisePicker) {
                 ExercisePickerSheet { picked in
                     selectedExercise = picked
@@ -321,9 +309,11 @@ struct AnalysisTabView: View {
                         OikomiColor.cardBackground,
                         in: RoundedRectangle(cornerRadius: OikomiRadius.card, style: .continuous))
             } else {
+                // 全完了セットは 1 回だけ平坦化し、各行のスパークライン算出に使い回す。
+                let sets = allSets
                 VStack(spacing: 0) {
                     ForEach(Array(personalRecords.enumerated()), id: \.element.id) { idx, pr in
-                        prRow(pr)
+                        prRow(pr, allSets: sets)
                         if idx < personalRecords.count - 1 {
                             Divider().padding(.leading, OikomiSpacing.l)
                         }
@@ -337,32 +327,11 @@ struct AnalysisTabView: View {
     }
 
     @ViewBuilder
-    private func prRow(_ pr: PersonalRecord) -> some View {
-        let content = HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(pr.exercise?.name ?? "（種目不明）")
-                    .font(.body)
-                Text(pr.achievedAt, style: .date)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(WeightFormatter.string(kilograms: pr.weight, in: weightUnit)) × \(pr.reps)")
-                    .font(.body.monospacedDigit())
-                Text("推定1RM \(WeightFormatter.oneRM(kilograms: pr.estimated1RM, in: weightUnit))")
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.tertiary)
-            }
-            if pr.exercise != nil {
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(.horizontal, OikomiSpacing.l)
-        .padding(.vertical, OikomiSpacing.m)
-        .contentShape(Rectangle())
+    private func prRow(_ pr: PersonalRecord, allSets: [SetRecord]) -> some View {
+        let content = prRowContent(pr, allSets: allSets)
+            .padding(.horizontal, OikomiSpacing.l)
+            .padding(.vertical, OikomiSpacing.m)
+            .contentShape(Rectangle())
 
         if let exercise = pr.exercise {
             NavigationLink(value: exercise) { content }
@@ -370,6 +339,23 @@ struct AnalysisTabView: View {
         } else {
             content
         }
+    }
+
+    private func prRowContent(_ pr: PersonalRecord, allSets: [SetRecord]) -> some View {
+        // 推定 1RM 推移（表示単位に変換）。種目不明や記録 1 件なら空配列でグラフ非表示。
+        let series: [Double] = {
+            guard let id = pr.exercise?.id else { return [] }
+            return Analytics.estimatedOneRMSeries(sets: allSets, forExerciseId: id)
+                .map { weightUnit.fromKilograms($0.weight) }
+        }()
+        return PRHighlightRow(
+            title: pr.exercise?.name ?? "（種目不明）",
+            subtitle:
+                "推定1RM \(WeightFormatter.oneRM(kilograms: pr.estimated1RM, in: weightUnit))・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))",
+            weightText: WeightFormatter.string(kilograms: pr.weight, in: weightUnit),
+            repsText: "× \(pr.reps)",
+            series: series
+        )
     }
 }
 
@@ -379,7 +365,6 @@ struct AnalysisTabView: View {
             for: [
                 WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
                 RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
-                MonthlySummary.self,
             ], inMemory: true)
 }
 
@@ -389,7 +374,6 @@ struct AnalysisTabView: View {
             for: [
                 WorkoutSession.self, SetRecord.self, Exercise.self, Routine.self,
                 RoutineExercise.self, PersonalRecord.self, HealthSnapshot.self,
-                MonthlySummary.self,
             ], inMemory: true
         )
         .preferredColorScheme(.dark)

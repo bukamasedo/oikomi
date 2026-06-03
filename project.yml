@@ -47,6 +47,10 @@ targets:
         NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。読み取ったデータはオンデバイスで処理され、iCloud 同期を有効にした場合のみご自身のプライベート iCloud に保存されます。第三者への送信は行いません。"
         NSHealthUpdateUsageDescription: "完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。"
         NSSupportsLiveActivities: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.shuhirouchi.oikomi
+            CFBundleURLSchemes:
+              - oikomi
         UIBackgroundModes:
           - fetch
         BGTaskSchedulerPermittedIdentifiers:

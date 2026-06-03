@@ -17,6 +17,5 @@ public enum OikomiKit {
         RoutineExercise.self,
         HealthSnapshot.self,
         PersonalRecord.self,
-        MonthlySummary.self,
     ]
 }
