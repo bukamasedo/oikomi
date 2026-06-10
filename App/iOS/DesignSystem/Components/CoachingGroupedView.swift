@@ -76,7 +76,7 @@ struct CoachingGroupedView: View {
             }
 
             if hidden > 0 {
-                Text("ほか \(hidden) 件")
+                Text(String(localized: "ほか \(hidden) 件"))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }

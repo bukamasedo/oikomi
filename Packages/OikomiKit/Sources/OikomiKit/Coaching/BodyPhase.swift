@@ -8,9 +8,9 @@ public enum BodyPhase: String, Sendable, CaseIterable {
 
     public var displayName: String {
         switch self {
-        case .bulk: return "増量期"
-        case .cut: return "減量期"
-        case .maintenance: return "維持期"
+        case .bulk: return loc("増量期")
+        case .cut: return loc("減量期")
+        case .maintenance: return loc("維持期")
         }
     }
 
@@ -51,8 +51,8 @@ public enum BodyPhase: String, Sendable, CaseIterable {
         case .bulk:
             return [
                 CoachingAdvice(
-                    title: "増量期",
-                    message: "体重が +\(formatted) kg/月 で増加中。PR を伸ばしやすい時期です。",
+                    title: loc("増量期"),
+                    message: loc("体重が +\(formatted) kg/月 で増加中。PR を伸ばしやすい時期です。"),
                     severity: .info,
                     impact: 110
                 )
@@ -60,8 +60,8 @@ public enum BodyPhase: String, Sendable, CaseIterable {
         case .cut:
             return [
                 CoachingAdvice(
-                    title: "減量期",
-                    message: "体重が -\(formatted) kg/月 で減少中。筋力を維持できていれば成功です。",
+                    title: loc("減量期"),
+                    message: loc("体重が -\(formatted) kg/月 で減少中。筋力を維持できていれば成功です。"),
                     severity: .info,
                     impact: 110
                 )

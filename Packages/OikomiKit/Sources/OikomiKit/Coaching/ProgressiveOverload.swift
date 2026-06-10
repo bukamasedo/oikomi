@@ -41,9 +41,9 @@ public enum ProgressiveOverload {
             advices.append(
                 CoachingAdvice(
                     // volumeAdvice の前週比「ボリューム不足」と区別するため、絶対 MEV 基準は「MEV未達」とする。
-                    title: "MEV未達",
+                    title: loc("MEV未達"),
                     message:
-                        "\(names(ordered.map(\.muscle))) が今週 MEV 未満です。来週は各 +1〜2 セット増やしましょう。",
+                        loc("\(names(ordered.map(\.muscle))) が今週 MEV 未満です。来週は各 +1〜2 セット増やしましょう。"),
                     severity: .warning,
                     impact: 1000 + Double(insufficient.count) * 100
                 )
@@ -56,9 +56,9 @@ public enum ProgressiveOverload {
             }
             advices.append(
                 CoachingAdvice(
-                    title: "漸進的に増やす",
+                    title: loc("漸進的に増やす"),
                     message:
-                        "\(names(ordered.map(\.muscle))) は来週 +1〜2 セットで MAV に向けて漸進できます。",
+                        loc("\(names(ordered.map(\.muscle))) は来週 +1〜2 セットで MAV に向けて漸進できます。"),
                     severity: .info,
                     impact: 120 + Double(progressable.count) * 10
                 )
@@ -70,8 +70,8 @@ public enum ProgressiveOverload {
 
     /// 最大 `maxListed` 部位を「・」連結。超過分は「など」。
     private static func names(_ muscles: [MuscleGroup]) -> String {
-        var s = muscles.prefix(maxListed).map(\.displayName).joined(separator: "・")
-        if muscles.count > maxListed { s += " など" }
+        var s = muscles.prefix(maxListed).map(\.displayName).joined(separator: loc("・"))
+        if muscles.count > maxListed { s += loc(" など") }
         return s
     }
 }

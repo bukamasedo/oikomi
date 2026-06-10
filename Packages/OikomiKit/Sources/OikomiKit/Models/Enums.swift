@@ -20,19 +20,19 @@ public enum MuscleGroup: String, Codable, CaseIterable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .chest: return "胸"
-        case .back: return "背中"
-        case .shoulders: return "肩"
-        case .biceps: return "上腕二頭筋"
-        case .triceps: return "上腕三頭筋"
-        case .forearms: return "前腕"
-        case .abs: return "腹"
-        case .obliques: return "腹斜筋"
-        case .quads: return "大腿四頭筋"
-        case .hamstrings: return "ハムストリング"
-        case .glutes: return "臀部"
-        case .calves: return "ふくらはぎ"
-        case .fullBody: return "全身"
+        case .chest: return loc("胸")
+        case .back: return loc("背中")
+        case .shoulders: return loc("肩")
+        case .biceps: return loc("上腕二頭筋")
+        case .triceps: return loc("上腕三頭筋")
+        case .forearms: return loc("前腕")
+        case .abs: return loc("腹")
+        case .obliques: return loc("腹斜筋")
+        case .quads: return loc("大腿四頭筋")
+        case .hamstrings: return loc("ハムストリング")
+        case .glutes: return loc("臀部")
+        case .calves: return loc("ふくらはぎ")
+        case .fullBody: return loc("全身")
         }
     }
 }
@@ -74,9 +74,9 @@ public enum ExperienceLevel: String, Codable, CaseIterable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .beginner: return "初心者"
-        case .intermediate: return "中級者"
-        case .advanced: return "上級者"
+        case .beginner: return loc("初心者")
+        case .intermediate: return loc("中級者")
+        case .advanced: return loc("上級者")
         }
     }
 }
@@ -88,9 +88,9 @@ public enum TrainingGoal: String, Codable, CaseIterable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .hypertrophy: return "筋肥大"
-        case .strength: return "筋力"
-        case .maintenance: return "維持"
+        case .hypertrophy: return loc("筋肥大")
+        case .strength: return loc("筋力")
+        case .maintenance: return loc("維持")
         }
     }
 }

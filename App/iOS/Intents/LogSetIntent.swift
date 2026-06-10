@@ -41,9 +41,9 @@ struct LogSetIntent: AppIntent {
 
         let confirmation: LocalizedStringResource
         if useBodyweight {
-            confirmation = "\(exercise.name) \(reps) レップを記録しました"
+            confirmation = "\(exercise.localizedName) \(reps) レップを記録しました"
         } else {
-            confirmation = "\(exercise.name) \(weight, format: .number) kg × \(reps) レップを記録しました"
+            confirmation = "\(exercise.localizedName) \(weight, format: .number) kg × \(reps) レップを記録しました"
         }
         return .result(dialog: IntentDialog(confirmation))
     }

@@ -43,7 +43,13 @@ struct HistoryCalendarView: View {
         return cells
     }
 
-    private let weekdayLabels = ["月", "火", "水", "木", "金", "土", "日"]
+    // 月曜始まりの短縮曜日名。ロケール対応（英語=Mon/Tue/…、日本語=月/火/…）。
+    // 単独「月」「日」は Localizable 上で期間（Month/Day）と衝突するため、
+    // 曜日はカタログを介さず Calendar から取る。shortWeekdaySymbols は index 0=日曜。
+    private let weekdayLabels: [String] = {
+        let s = Calendar.current.shortWeekdaySymbols
+        return [s[1], s[2], s[3], s[4], s[5], s[6], s[0]]  // 月→日
+    }()
 
     var body: some View {
         VStack(spacing: 12) {

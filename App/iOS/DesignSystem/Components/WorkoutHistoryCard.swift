@@ -23,12 +23,12 @@ struct WorkoutHistoryRow: View {
         let m = s / 60
         let h = m / 60
         if h > 0 { return "\(h)h \(m % 60)m" }
-        return "\(m) 分"
+        return String(localized: "\(m) 分")
     }
 
     private var primaryExerciseNames: String {
         let names = (session.sets ?? [])
-            .compactMap { $0.exercise?.name }
+            .compactMap { $0.exercise?.localizedName }
         var seen = Set<String>()
         var ordered: [String] = []
         for n in names where seen.insert(n).inserted {
@@ -41,7 +41,7 @@ struct WorkoutHistoryRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: OikomiSpacing.m) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.routine?.name ?? "ルーティンなし")
+                Text(session.routine?.name ?? String(localized: "ルーティンなし"))
                     .font(.headline)
                     .lineLimit(1)
 
@@ -57,7 +57,7 @@ struct WorkoutHistoryRow: View {
                 }
 
                 HStack(spacing: OikomiSpacing.m) {
-                    Label("\(session.sets?.count ?? 0) セット", systemImage: "list.bullet")
+                    Label(String(localized: "\(session.sets?.count ?? 0) セット"), systemImage: "list.bullet")
                     Label(durationText, systemImage: "clock")
                 }
                 .font(.caption.monospacedDigit())

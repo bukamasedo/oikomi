@@ -70,21 +70,21 @@ public enum ProGateError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .routineLimitReached(_, let limit):
-            return "Free プランで作成できるルーティンは \(limit) 個までです。Pro にアップグレードすると無制限になります。"
+            return loc("Free プランで作成できるルーティンは \(limit) 個までです。Pro にアップグレードすると無制限になります。")
         case .customExerciseLimitReached(_, let limit):
-            return "Free プランで作成できるカスタム種目は \(limit) 個までです。Pro にアップグレードすると無制限になります。"
+            return loc("Free プランで作成できるカスタム種目は \(limit) 個までです。Pro にアップグレードすると無制限になります。")
         case .healthDataReadRequiresPro:
-            return "HRV・睡眠データの読み取りは Pro 限定機能です。"
+            return loc("HRV・睡眠データの読み取りは Pro 限定機能です。")
         case .aiCoachingRequiresPro:
-            return "AI コーチングは Pro 限定機能です。"
+            return loc("AI コーチングは Pro 限定機能です。")
         case .liveActivityRequiresPro:
-            return "Live Activity は Pro 限定機能です。"
+            return loc("Live Activity は Pro 限定機能です。")
         case .iCloudSyncRequiresPro:
-            return "iCloud 同期は Pro 限定機能です。"
+            return loc("iCloud 同期は Pro 限定機能です。")
         case .advancedAnalyticsRequiresPro:
-            return "高度な分析は Pro 限定機能です。"
+            return loc("高度な分析は Pro 限定機能です。")
         case .dataExportRequiresPro:
-            return "データエクスポートは Pro 限定機能です。"
+            return loc("データエクスポートは Pro 限定機能です。")
         }
     }
 }

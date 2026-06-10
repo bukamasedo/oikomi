@@ -97,8 +97,8 @@ struct HistoryView: View {
                 if periodSessions.isEmpty {
                     Section {
                         OikomiEmptyState(
-                            title: "この期間の記録はありません",
-                            message: "カレンダーで別の日付を選んでください。",
+                            title: String(localized: "この期間の記録はありません"),
+                            message: String(localized: "カレンダーで別の日付を選んでください。"),
                             systemImage: "calendar.badge.exclamationmark",
                             tint: OikomiColor.brandPrimary
                         )
@@ -139,9 +139,10 @@ struct HistoryView: View {
 
     private var sessionsSectionTitle: String {
         if let selectedDate {
-            return selectedDate.formatted(.dateTime.year().month(.abbreviated).day()) + " のセッション"
+            return selectedDate.formatted(.dateTime.year().month(.abbreviated).day())
+                + String(localized: " のセッション")
         }
-        return "今週のセッション (\(periodSessions.count))"
+        return String(localized: "今週のセッション (\(periodSessions.count))")
     }
 
     // 見出しはカード外ではなくカード内に置き、全セッションを 1 枚のカードにまとめる
@@ -185,15 +186,15 @@ struct HistoryView: View {
         VStack(spacing: OikomiSpacing.m) {
             HStack(spacing: OikomiSpacing.m) {
                 summaryTile(
-                    title: "セッション",
+                    title: String(localized: "セッション"),
                     value: "\(periodSessions.count)",
-                    unit: "回",
+                    unit: String(localized: "回"),
                     systemImage: "figure.strengthtraining.traditional",
                     tint: OikomiColor.brandPrimary
                 )
                 divider
                 summaryTile(
-                    title: "セット",
+                    title: String(localized: "セット"),
                     value: "\(totalSets)",
                     unit: "",
                     systemImage: "list.bullet",
@@ -201,7 +202,7 @@ struct HistoryView: View {
                 )
                 divider
                 summaryTile(
-                    title: "ボリューム",
+                    title: String(localized: "ボリューム"),
                     value: WeightFormatter.numberOnly(
                         kilograms: totalVolume, in: weightUnit, fractionDigits: 0...0),
                     unit: weightUnit.symbol,
@@ -219,7 +220,7 @@ struct HistoryView: View {
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Text(
-                    "通算 \(sessions.count)回・"
+                    String(localized: "通算 \(sessions.count)回・")
                         + WeightFormatter.numberOnly(
                             kilograms: allTimeVolume, in: weightUnit, fractionDigits: 0...0)
                         + weightUnit.symbol

@@ -175,7 +175,7 @@ struct StatsProvider: TimelineProvider {
                 consecutiveWeeks: consecutiveWeeks,
                 weekSessionCount: thisWeekSessions,
                 weekVolume: weekVolume,
-                latestPRExerciseName: latestPR?.exercise?.name,
+                latestPRExerciseName: latestPR?.exercise?.localizedName,
                 latestPRWeight: latestPR?.weight,
                 isProActive: isProActive,
                 weightUnit: UnitPreference.current(),

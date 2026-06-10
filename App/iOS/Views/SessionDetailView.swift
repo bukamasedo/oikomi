@@ -91,7 +91,7 @@ struct SessionDetailView: View {
                     Button("コピーして開始") { copySession() }
                     Button("キャンセル", role: .cancel) {}
                 } message: {
-                    Text("\(session.sets?.count ?? 0) セットを複製して新しいワークアウトを開始します。")
+                    Text(String(localized: "\(session.sets?.count ?? 0) セットを複製して新しいワークアウトを開始します。"))
                 }
                 .alert(
                     "このセッションを削除しますか？",
@@ -142,14 +142,14 @@ struct SessionDetailView: View {
 
             HStack(spacing: OikomiSpacing.l) {
                 heroMetric(
-                    title: "所要時間",
+                    title: String(localized: "所要時間"),
                     value: session.durationSeconds.map(formatDuration) ?? "—"
                 )
                 divider
-                heroMetric(title: "総セット", value: "\(setCount)")
+                heroMetric(title: String(localized: "総セット"), value: "\(setCount)")
                 divider
                 heroMetric(
-                    title: "ボリューム",
+                    title: String(localized: "ボリューム"),
                     value: WeightFormatter.numberOnly(
                         kilograms: totalVolume, in: weightUnit, fractionDigits: 0...0)
                         + " \(weightUnit.symbol)"
@@ -202,7 +202,7 @@ struct SessionDetailView: View {
         do {
             try repo.startSessionByCopying(session)
         } catch {
-            errorMessage = "コピーに失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "コピーに失敗: \(error.localizedDescription)")
         }
     }
 
@@ -224,10 +224,10 @@ struct SessionDetailView: View {
     private func formatDuration(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds) / 60
         if minutes < 60 {
-            return "\(minutes) 分"
+            return String(localized: "\(minutes) 分")
         }
         let hours = minutes / 60
         let remaining = minutes % 60
-        return "\(hours)時間\(remaining)分"
+        return String(localized: "\(hours)時間\(remaining)分")
     }
 }

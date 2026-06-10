@@ -1,0 +1,52 @@
+{
+  "sourceLanguage" : "ja",
+  "strings" : {
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "OikomiWatch"
+          }
+        }
+      }
+    },
+    "NSHealthShareUsageDescription" : {
+      "comment" : "Privacy - Health Share Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reads your HRV, resting heart rate, sleep, body weight, body fat, and lean body mass to visualize your training load and condition. The data is processed on device and stored only in your private iCloud when iCloud sync is enabled. It is never sent to third parties."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。読み取ったデータはオンデバイスで処理され、iCloud 同期を有効にした場合のみご自身のプライベート iCloud に保存されます。第三者への送信は行いません。"
+          }
+        }
+      }
+    },
+    "NSHealthUpdateUsageDescription" : {
+      "comment" : "Privacy - Health Update Usage Description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves completed workouts to Health and reflects them in your Apple Watch activity rings."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

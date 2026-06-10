@@ -59,9 +59,9 @@ struct CoachingChip: View {
 
     private var severityLabel: String {
         switch advice.severity {
-        case .warning: return "注意"
-        case .success: return "好調"
-        case .info: return "情報"
+        case .warning: return String(localized: "注意")
+        case .success: return String(localized: "好調")
+        case .info: return String(localized: "情報")
         }
     }
 }

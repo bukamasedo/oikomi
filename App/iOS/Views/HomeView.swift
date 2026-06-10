@@ -14,6 +14,7 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.requestReview) private var requestReview
 
     @Query(filter: #Predicate<WorkoutSession> { $0.endedAt == nil })
     private var activeSessions: [WorkoutSession]
@@ -141,9 +142,23 @@ struct HomeView: View {
             .task(id: scenePhase) {
                 if scenePhase == .active {
                     await refreshHealthSignals()
+                    maybeRequestReview()
                 }
             }
         }
+    }
+
+    /// 完了セッション数が節目に達した「ポジティブな瞬間」に、控えめに App Store レビュー依頼を出す。
+    ///
+    /// 出すか／節目はすべて `ReviewRequestGate`（OikomiKit・テスト済み）が判定し、最終的な表示可否は
+    /// OS（年3回まで）に委ねる。Watch で完了したワークアウトも同期済みデータから数えられる。
+    @MainActor
+    private func maybeRequestReview() {
+        let repo = WorkoutSessionRepository(context: modelContext)
+        guard let count = try? repo.completedSessionCount() else { return }
+        guard let milestone = ReviewRequestGate.milestoneDue(completedSessionCount: count) else { return }
+        requestReview()
+        ReviewRequestGate.markRequested(milestone: milestone)
     }
 
     /// HealthStore から今日のレディネスを取り直す。Pro/権限がなければ nil。
@@ -211,7 +226,7 @@ struct HomeView: View {
                     Text("進行中のワークアウト")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
-                    Text(session.routine?.name ?? "ルーティンなし")
+                    Text(session.routine?.name ?? String(localized: "ルーティンなし"))
                         .font(.headline)
                         .foregroundStyle(.primary)
                     HStack(spacing: OikomiSpacing.s) {
@@ -313,7 +328,7 @@ struct HomeView: View {
                     .background(OikomiColor.brandPrimary, in: Capsule())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("\(routine.name) を開始")
+            .accessibilityLabel(String(localized: "\(routine.name) を開始"))
         }
     }
 
@@ -321,7 +336,7 @@ struct HomeView: View {
     private func routineSummary(_ routine: Routine) -> String {
         let exercises = routine.orderedExercises
         let sets = exercises.reduce(0) { $0 + $1.plannedSets }
-        return "\(exercises.count) 種目 · \(sets) セット"
+        return String(localized: "\(exercises.count) 種目 · \(sets) セット")
     }
 
     /// 今日のスケジュールが無い日は、トレーニングタブでルーティンを選ぶ導線を出す。
@@ -453,9 +468,11 @@ struct HomeView: View {
                 .map { weightUnit.fromKilograms($0.weight) }
         }()
         return PRHighlightRow(
-            title: pr.exercise?.name ?? "（種目不明）",
-            subtitle:
-                "推定1RM \(WeightFormatter.oneRM(kilograms: pr.estimated1RM, in: weightUnit))・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))",
+            title: pr.exercise?.localizedName ?? String(localized: "（種目不明）"),
+            subtitle: String(
+                localized:
+                    "推定1RM \(WeightFormatter.oneRM(kilograms: pr.estimated1RM, in: weightUnit))・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))"
+            ),
             weightText: WeightFormatter.string(kilograms: pr.weight, in: weightUnit),
             repsText: "× \(pr.reps)",
             series: series

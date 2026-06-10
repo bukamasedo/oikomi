@@ -100,7 +100,7 @@ struct WatchRestTimerView: View {
                 }
             }
 
-            Text(timerInterval: Date()...endAt, countsDown: true)
+                Text(timerInterval: Date()...endAt, countsDown: true)
                 .font(.system(size: 28, weight: .bold, design: .rounded).monospacedDigit())
                 .foregroundStyle(isLuminanceReduced ? .secondary : .primary)
                 .lineLimit(1)

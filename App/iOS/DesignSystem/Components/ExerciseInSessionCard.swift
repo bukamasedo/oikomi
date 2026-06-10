@@ -97,11 +97,15 @@ struct ExerciseInSessionCard: View {
                         HStack(alignment: .top, spacing: OikomiSpacing.xs) {
                             Image(systemName: "arrow.up.circle.fill")
                                 .foregroundStyle(OikomiColor.brandPrimary)
-                            // TODO: 将来ローカライズ（このカードは現状すべて直書き）
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("重さを更新 → \(WeightFormatter.string(kilograms: suggestionKg, in: weightUnit))")
-                                    .font(.subheadline.weight(.medium))
-                                    .foregroundStyle(.primary)
+                                Text(
+                                    String(
+                                        localized:
+                                            "重さを更新 → \(WeightFormatter.string(kilograms: suggestionKg, in: weightUnit))"
+                                    )
+                                )
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
                                 if let weightUpdateReason {
                                     Text(weightUpdateReason)
                                         .font(.caption)
@@ -126,7 +130,7 @@ struct ExerciseInSessionCard: View {
     @ViewBuilder
     private var header: some View {
         HStack(alignment: .center, spacing: OikomiSpacing.s) {
-            Text(exercise.name)
+            Text(exercise.localizedName)
                 .font(.headline)
                 .lineLimit(1)
                 .truncationMode(.tail)

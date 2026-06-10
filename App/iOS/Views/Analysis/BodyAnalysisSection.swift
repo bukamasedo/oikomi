@@ -33,8 +33,8 @@ struct BodyAnalysisSection: View {
             RelativeStrength.report(records: records, bodyweightKg: bodyweightKg ?? 0).prefix(5))
         VStack(spacing: OikomiSpacing.l) {
             metricCard(
-                title: "体重",
-                subtitle: "直近 90 日",
+                title: String(localized: "体重"),
+                subtitle: String(localized: "直近 90 日"),
                 unit: weightUnit.symbol,
                 series: convertedWeight,
                 tint: OikomiColor.textSecondary,
@@ -43,16 +43,16 @@ struct BodyAnalysisSection: View {
             )
             relativeStrengthCard(rows: relativeRows)
             metricCard(
-                title: "体脂肪率",
-                subtitle: "直近 90 日",
+                title: String(localized: "体脂肪率"),
+                subtitle: String(localized: "直近 90 日"),
                 unit: "%",
                 series: fatSeries.map { HealthTrendPoint(date: $0.date, value: $0.value * 100) },
                 tint: OikomiColor.statOrange,
                 systemImage: "percent"
             )
             metricCard(
-                title: "除脂肪体重 (LBM)",
-                subtitle: "直近 90 日",
+                title: String(localized: "除脂肪体重 (LBM)"),
+                subtitle: String(localized: "直近 90 日"),
                 unit: weightUnit.symbol,
                 series: convertedLBM,
                 tint: OikomiColor.statGreen,

@@ -126,7 +126,7 @@ struct NumericStepperField: View {
         let text = sign + formatter(d)
         HStack(spacing: 2) {
             Image(systemName: d > 0 ? "arrow.up" : (d < 0 ? "arrow.down" : "equal"))
-            Text("前回 " + text)
+            Text(String(localized: "前回 ") + text)
         }
         .font(OikomiFont.metaEmphasized)
         .foregroundStyle(color)

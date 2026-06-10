@@ -31,7 +31,7 @@ struct WeeklyTargetRing: View {
                 Label("\(consecutiveWeeks) 週連続", systemImage: "flame.fill")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(OikomiColor.brandPrimary)
-                    .accessibilityLabel("\(consecutiveWeeks) 週連続トレーニング")
+                    .accessibilityLabel(String(localized: "\(consecutiveWeeks) 週連続トレーニング"))
             }
         }
     }
@@ -73,7 +73,7 @@ struct WeeklyTargetRing: View {
         }
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("今週のトレーニング日数 \(daysThisWeek) / 目標 \(target) 日")
+        .accessibilityLabel(String(localized: "今週のトレーニング日数 \(daysThisWeek) / 目標 \(target) 日"))
     }
 }
 

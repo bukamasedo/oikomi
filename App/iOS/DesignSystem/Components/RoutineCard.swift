@@ -10,7 +10,7 @@ struct RoutineCard: View {
     private var exerciseCount: Int { routine.orderedExercises.count }
 
     private var lastUsedText: String {
-        guard let lastUsed = routine.lastUsedAt else { return "未実施" }
+        guard let lastUsed = routine.lastUsedAt else { return String(localized: "未実施") }
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = Locale(identifier: "ja_JP")
         formatter.unitsStyle = .short
@@ -37,7 +37,7 @@ struct RoutineCard: View {
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text("\(exerciseCount) 種目")
+                Text(String(localized: "\(exerciseCount) 種目"))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 

@@ -146,13 +146,13 @@ public enum MuscleRecovery {
         guard !ready.isEmpty else { return [] }
 
         let shown = ready.prefix(4)
-        var names = shown.map(\.muscle.displayName).joined(separator: "・")
-        if ready.count > 4 { names += " など" }
+        var names = shown.map(\.muscle.displayName).joined(separator: loc("・"))
+        if ready.count > 4 { names += loc(" など") }
 
         return [
             CoachingAdvice(
-                title: "回復済みの部位",
-                message: "\(names) が回復済みです。次のトレーニング候補です。",
+                title: loc("回復済みの部位"),
+                message: loc("\(names) が回復済みです。次のトレーニング候補です。"),
                 severity: .info,
                 impact: 100 + Double(ready.count) * 10
             )

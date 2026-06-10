@@ -91,7 +91,7 @@ struct ExerciseDetailView: View {
             .padding(.bottom, OikomiSpacing.xxl)
         }
         .background(OikomiColor.appBackground)
-        .navigationTitle(exercise.name)
+        .navigationTitle(exercise.localizedName)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $editingRest, onDismiss: saveRest) {
             RestSecondsPickerSheet(
@@ -100,7 +100,7 @@ struct ExerciseDetailView: View {
                     set: { pendingRestSeconds = $0 }
                 ),
                 allowsDefault: false,
-                title: "デフォルトレスト"
+                title: String(localized: "デフォルトレスト")
             )
             .presentationDetents([.height(360)])
             .presentationDragIndicator(.visible)
@@ -158,7 +158,7 @@ struct ExerciseDetailView: View {
         do {
             try repo.updateDefaultRestSeconds(exercise, to: newValue)
         } catch {
-            restErrorMessage = "保存に失敗: \(error.localizedDescription)"
+            restErrorMessage = String(localized: "保存に失敗: \(error.localizedDescription)")
         }
     }
 
@@ -228,17 +228,17 @@ struct ExerciseDetailView: View {
     @ViewBuilder
     private var statsTiles: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-            SectionHeader(title: "累計")
+            SectionHeader(title: String(localized: "累計"))
             HStack(spacing: OikomiSpacing.m) {
                 StatTile(
-                    title: "セッション",
+                    title: String(localized: "セッション"),
                     value: "\(totalSessions)",
-                    unit: "回",
+                    unit: String(localized: "回"),
                     systemImage: "figure.strengthtraining.traditional",
                     tint: OikomiColor.brandPrimary
                 )
                 StatTile(
-                    title: "ワーキングセット",
+                    title: String(localized: "ワーキングセット"),
                     value: "\(workingSets.count)",
                     unit: "",
                     systemImage: "list.bullet",
@@ -246,7 +246,7 @@ struct ExerciseDetailView: View {
                 )
             }
             StatTile(
-                title: "総ボリューム",
+                title: String(localized: "総ボリューム"),
                 value: WeightFormatter.numberOnly(
                     kilograms: totalVolume, in: weightUnit, fractionDigits: 0...0),
                 unit: weightUnit.symbol,
@@ -261,7 +261,9 @@ struct ExerciseDetailView: View {
     @ViewBuilder
     private var trendCard: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-            SectionHeader(title: "最大重量の推移", subtitle: weightTrend.isEmpty ? nil : "ワーキングセットの最大値")
+            SectionHeader(
+                title: String(localized: "最大重量の推移"),
+                subtitle: weightTrend.isEmpty ? nil : String(localized: "ワーキングセットの最大値"))
 
             if weightTrend.count < 2 {
                 Text("推移を表示するには 2 回以上の記録が必要です")
@@ -301,7 +303,7 @@ struct ExerciseDetailView: View {
     @ViewBuilder
     private var recentSetsCard: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-            SectionHeader(title: "直近の記録")
+            SectionHeader(title: String(localized: "直近の記録"))
 
             if recentSets.isEmpty {
                 Text("まだ記録がありません")
@@ -347,7 +349,7 @@ struct ExerciseDetailView: View {
                 Text("\(WeightFormatter.string(kilograms: weight, in: weightUnit)) × \(reps)")
                     .font(.body.monospacedDigit())
             } else if let reps = set.reps {
-                Text("\(reps) レップ")
+                Text(String(localized: "\(reps) レップ"))
                     .font(.body.monospacedDigit())
             }
         }

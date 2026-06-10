@@ -82,6 +82,17 @@ extension Exercise {
         set { measurementTypeRawValue = newValue.rawValue }
     }
 
+    /// 表示用の種目名。端末の言語が英語で `nameEn` を持つ種目は英名を返す。
+    ///
+    /// 種目名は SwiftData に保存される「データ」であり、`Localizable.xcstrings` の
+    /// 対象外。シード 873 種は `nameEn` を備えるためそれを使い、英名を持たない
+    /// カスタム種目（`nameEn` 空）は日本語 `name` にフォールバックする。
+    /// 検索・ソートは `name` を使い続け、表示のみここで切り替える。
+    public var localizedName: String {
+        let isEnglish = Locale.current.language.languageCode?.identifier == "en"
+        return isEnglish && !nameEn.isEmpty ? nameEn : name
+    }
+
     /// 重量入力・記録が必要な種目か。
     /// 自重 (equipment == .bodyweight) や時間 / 距離計測は外部重量を持たない。
     /// 旧フォームで equipment と measurementType が不整合に作成された

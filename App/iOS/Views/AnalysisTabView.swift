@@ -35,10 +35,10 @@ struct AnalysisTabView: View {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .trend: return "推移"
-            case .condition: return "コンディション"
-            case .body: return "ボディ"
-            case .muscle: return "部位別"
+            case .trend: return String(localized: "推移")
+            case .condition: return String(localized: "コンディション")
+            case .body: return String(localized: "ボディ")
+            case .muscle: return String(localized: "部位別")
             }
         }
     }
@@ -111,8 +111,8 @@ struct AnalysisTabView: View {
     private var trendContent: some View {
         if !hasAnyData {
             OikomiEmptyState(
-                title: "分析データがありません",
-                message: "ワークアウトを完了すると、ここに推移が表示されます。",
+                title: String(localized: "分析データがありません"),
+                message: String(localized: "ワークアウトを完了すると、ここに推移が表示されます。"),
                 systemImage: "chart.bar.xaxis",
                 tint: OikomiColor.brandPrimary
             )
@@ -123,8 +123,8 @@ struct AnalysisTabView: View {
                 exerciseTrendCard
             } else {
                 ProLockTile(
-                    title: "詳細な推移グラフ",
-                    message: "週次総ボリュームと種目別の最大重量推移は Pro プランで閲覧できます。"
+                    title: String(localized: "詳細な推移グラフ"),
+                    message: String(localized: "週次総ボリュームと種目別の最大重量推移は Pro プランで閲覧できます。")
                 )
             }
             prsCard
@@ -139,8 +139,8 @@ struct AnalysisTabView: View {
             ConditionAnalysisSection()
         } else {
             ProLockTile(
-                title: "コンディション分析",
-                message: "HRV・安静時心拍・睡眠時間の推移は Pro プランで閲覧できます。",
+                title: String(localized: "コンディション分析"),
+                message: String(localized: "HRV・安静時心拍・睡眠時間の推移は Pro プランで閲覧できます。"),
                 systemImage: "heart.text.square.fill"
             )
         }
@@ -154,8 +154,8 @@ struct AnalysisTabView: View {
             BodyAnalysisSection(records: personalRecords)
         } else {
             ProLockTile(
-                title: "ボディ分析",
-                message: "体重・体脂肪率・除脂肪体重の推移は Pro プランで閲覧できます。",
+                title: String(localized: "ボディ分析"),
+                message: String(localized: "体重・体脂肪率・除脂肪体重の推移は Pro プランで閲覧できます。"),
                 systemImage: "scalemass.fill"
             )
         }
@@ -169,8 +169,8 @@ struct AnalysisTabView: View {
             MuscleGroupAnalysisSection(sets: allSets)
         } else {
             ProLockTile(
-                title: "部位別分析",
-                message: "週セット数と週ボリューム \(weightUnit.symbol) を部位別に可視化します。",
+                title: String(localized: "部位別分析"),
+                message: String(localized: "週セット数と週ボリューム \(weightUnit.symbol) を部位別に可視化します。"),
                 systemImage: "rectangle.split.3x1.fill"
             )
         }
@@ -244,7 +244,7 @@ struct AnalysisTabView: View {
                 showingExercisePicker = true
             } label: {
                 HStack {
-                    Text(selectedExercise?.name ?? "種目を選択")
+                    Text(selectedExercise?.localizedName ?? String(localized: "種目を選択"))
                         .foregroundStyle(selectedExercise == nil ? .secondary : .primary)
                     Spacer()
                     Image(systemName: "chevron.right")
@@ -298,7 +298,7 @@ struct AnalysisTabView: View {
     @ViewBuilder
     private var prsCard: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-            SectionHeader(title: "自己ベスト一覧")
+            SectionHeader(title: String(localized: "自己ベスト一覧"))
             if personalRecords.isEmpty {
                 Text("まだ PR がありません")
                     .font(.callout)
@@ -349,9 +349,12 @@ struct AnalysisTabView: View {
                 .map { weightUnit.fromKilograms($0.weight) }
         }()
         return PRHighlightRow(
-            title: pr.exercise?.name ?? "（種目不明）",
+            title: pr.exercise?.localizedName ?? String(localized: "（種目不明）"),
             subtitle:
-                "推定1RM \(WeightFormatter.oneRM(kilograms: pr.estimated1RM, in: weightUnit))・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))",
+                String(
+                    localized:
+                        "推定1RM \(WeightFormatter.oneRM(kilograms: pr.estimated1RM, in: weightUnit))・\(pr.achievedAt.formatted(.dateTime.month(.abbreviated).day()))"
+                ),
             weightText: WeightFormatter.string(kilograms: pr.weight, in: weightUnit),
             repsText: "× \(pr.reps)",
             series: series

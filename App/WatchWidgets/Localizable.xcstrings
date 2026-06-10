@@ -1,0 +1,142 @@
+{
+  "sourceLanguage": "ja",
+  "strings": {
+    "%lld セッション・%@ %@": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld セッション・%2$@ %3$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sessions · %@ %@"
+          }
+        }
+      }
+    },
+    "%lld 週連続・%lld セッション": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld 週連続・%2$lld セッション"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld-week streak · %lld sessions"
+          }
+        }
+      }
+    },
+    "%lld/%lld": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld/%2$lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld"
+          }
+        }
+      }
+    },
+    "Oikomi 統計": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oikomi Stats"
+          }
+        }
+      }
+    },
+    "PR: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PR: %@"
+          }
+        }
+      }
+    },
+    "今週": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week"
+          }
+        }
+      }
+    },
+    "今週 %lld / %lld 日": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "今週 %1$lld / %2$lld 日"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld days this week"
+          }
+        }
+      }
+    },
+    "今週 %lld/%lld 日 · %lld セッション": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "今週 %1$lld/%2$lld 日 · %3$lld セッション"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld days · %lld sessions this week"
+          }
+        }
+      }
+    },
+    "今週 %lld/%lld 日 · %lld 週連続": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "今週 %1$lld/%2$lld 日 · %3$lld 週連続"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld days · %lld-week streak this week"
+          }
+        }
+      }
+    },
+    "今週の達成日数とトレーニング状況を表示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show days completed and training status this week"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

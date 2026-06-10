@@ -192,18 +192,18 @@ private struct WelcomeStep: View {
             VStack(alignment: .leading, spacing: OikomiSpacing.xl) {
                 ValueRow(
                     icon: "applewatch",
-                    title: "手首だけで完結",
-                    description: "Apple Watch スタンドアロン。Digital Crown で 1〜3 タップで記録"
+                    title: String(localized: "手首だけで完結"),
+                    description: String(localized: "Apple Watch スタンドアロン。Digital Crown で 1〜3 タップで記録")
                 )
                 ValueRow(
                     icon: "chart.line.uptrend.xyaxis",
-                    title: "数値で見える進捗",
-                    description: "ボリューム推移と PR を可視化。HRV 連動の自動アドバイスは Pro で解放"
+                    title: String(localized: "数値で見える進捗"),
+                    description: String(localized: "ボリューム推移と PR を可視化。HRV 連動の自動アドバイスは Pro で解放")
                 )
                 ValueRow(
                     icon: "character.bubble",
-                    title: "日本語ネイティブ",
-                    description: "UI・種目名・コーチング文言すべて自然な日本語"
+                    title: String(localized: "日本語ネイティブ"),
+                    description: String(localized: "UI・種目名・コーチング文言すべて自然な日本語")
                 )
             }
             .padding(.horizontal, OikomiSpacing.xxl)
@@ -211,7 +211,7 @@ private struct WelcomeStep: View {
 
             Spacer()
 
-            OnboardingPrimaryButton(title: "はじめる", action: onContinue)
+            OnboardingPrimaryButton(title: String(localized: "はじめる"), action: onContinue)
                 .padding(.horizontal, OikomiSpacing.xxl)
                 .padding(.bottom, OikomiSpacing.xxxl)
         }
@@ -266,7 +266,7 @@ private struct ProfileStep: View {
                     }
 
                     VStack(spacing: 0) {
-                        ProfileRow(label: "経験レベル") {
+                        ProfileRow(label: String(localized: "経験レベル")) {
                             Picker("経験レベル", selection: $experienceRaw) {
                                 ForEach(ExperienceLevel.allCases, id: \.rawValue) { level in
                                     Text(level.displayName).tag(level.rawValue)
@@ -274,7 +274,7 @@ private struct ProfileStep: View {
                             }
                         }
                         Divider()
-                        ProfileRow(label: "目標") {
+                        ProfileRow(label: String(localized: "目標")) {
                             Picker("目標", selection: $goalRaw) {
                                 ForEach(TrainingGoal.allCases, id: \.rawValue) { goal in
                                     Text(goal.displayName).tag(goal.rawValue)
@@ -282,7 +282,7 @@ private struct ProfileStep: View {
                             }
                         }
                         Divider()
-                        ProfileRow(label: "週のトレーニング日数") {
+                        ProfileRow(label: String(localized: "週のトレーニング日数")) {
                             Picker("週のトレーニング日数", selection: $weeklyTargetDays) {
                                 ForEach(WeeklyTrainingTarget.allowedRange, id: \.self) { days in
                                     Text("週 \(days) 日").tag(days)
@@ -290,14 +290,14 @@ private struct ProfileStep: View {
                             }
                         }
                         Divider()
-                        ProfileRow(label: "場所") {
+                        ProfileRow(label: String(localized: "場所")) {
                             Picker("場所", selection: $locationRaw) {
                                 Text("ジム").tag(Location.gym.rawValue)
                                 Text("自宅").tag(Location.home.rawValue)
                             }
                         }
                         Divider()
-                        ProfileRow(label: "重量の単位") {
+                        ProfileRow(label: String(localized: "重量の単位")) {
                             Picker("重量の単位", selection: $unit) {
                                 ForEach(WeightUnit.allCases, id: \.rawValue) { unit in
                                     Text("\(unit.localizedName) (\(unit.symbol))").tag(unit)
@@ -314,7 +314,7 @@ private struct ProfileStep: View {
                 .padding(.bottom, OikomiSpacing.xl)
             }
 
-            OnboardingPrimaryButton(title: "次へ") {
+            OnboardingPrimaryButton(title: String(localized: "次へ")) {
                 // 重量単位は App Group へ保存し、設定タブと同様に Watch へ同期する。
                 UnitPreference.set(unit)
                 WCSyncBridge.shared.sendUnitPreferenceUpdate(unit)
@@ -388,16 +388,16 @@ private struct IntegrationsStep: View {
                 PermissionRow(
                     icon: "heart.text.square.fill",
                     tint: .pink,
-                    title: "ヘルスケア連携",
-                    description: "ワークアウトを保存。HRV・睡眠の活用は Pro で解放（計算はオンデバイス完結）",
+                    title: String(localized: "ヘルスケア連携"),
+                    description: String(localized: "ワークアウトを保存。HRV・睡眠の活用は Pro で解放（計算はオンデバイス完結）"),
                     isDone: healthDone,
                     action: onRequestHealth
                 )
                 PermissionRow(
                     icon: "bell.badge.fill",
                     tint: OikomiColor.brandPrimary,
-                    title: "通知",
-                    description: "レスト終了・PR 予測・終了し忘れをお知らせ",
+                    title: String(localized: "通知"),
+                    description: String(localized: "レスト終了・PR 予測・終了し忘れをお知らせ"),
                     isDone: notifRequested,
                     action: {
                         onRequestNotifications()
@@ -411,7 +411,7 @@ private struct IntegrationsStep: View {
             Spacer()
 
             VStack(spacing: OikomiSpacing.s) {
-                OnboardingPrimaryButton(title: "次へ", action: onContinue)
+                OnboardingPrimaryButton(title: String(localized: "次へ"), action: onContinue)
                 Text("許可は後から「設定 → 連携・同期 / 通知」で変更できます")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
@@ -485,7 +485,8 @@ private struct OnboardingProStep: View {
     }
 
     private var ctaLabel: String {
-        manager.isEligibleForIntroOffer ? "14 日間無料で試す" : "Pro を購入する"
+        manager.isEligibleForIntroOffer
+            ? String(localized: "14 日間無料で試す") : String(localized: "Pro を購入する")
     }
 
     private var isPurchaseAvailable: Bool {
@@ -625,8 +626,8 @@ private struct OnboardingProStep: View {
 
     /// 自動更新サブスクリプションの定型開示文（年額トライアル前提）。
     static let autoRenewDisclosure =
-        "サブスクリプションは期間終了の 24 時間前までに解約しない限り自動更新され、Apple ID に課金されます。"
-        + "無料トライアル中に解約した場合は課金されません。購入後は App Store の「サブスクリプション」からいつでも管理・解約できます。"
+        String(localized: "サブスクリプションは期間終了の 24 時間前までに解約しない限り自動更新され、Apple ID に課金されます。")
+        + String(localized: "無料トライアル中に解約した場合は課金されません。購入後は App Store の「サブスクリプション」からいつでも管理・解約できます。")
 }
 
 private struct OnboardingProPricingStatus: View {
@@ -647,7 +648,7 @@ private struct OnboardingProPricingStatus: View {
             }
         case .failed(let message):
             LoadFailureView(
-                title: "価格情報を取得できませんでした",
+                title: String(localized: "価格情報を取得できませんでした"),
                 message: message,
                 onRetry: onRetry
             )
@@ -664,8 +665,8 @@ private struct OnboardingProPricingStatus: View {
                 .multilineTextAlignment(.center)
             } else {
                 LoadFailureView(
-                    title: "価格情報が見つかりませんでした",
-                    message: "もう一度お試しください。",
+                    title: String(localized: "価格情報が見つかりませんでした"),
+                    message: String(localized: "もう一度お試しください。"),
                     onRetry: onRetry
                 )
             }

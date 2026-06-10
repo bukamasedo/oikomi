@@ -65,7 +65,7 @@ struct TodayConditionCard: View {
             )
             divider
             metricCell(
-                title: "安静時心拍",
+                title: String(localized: "安静時心拍"),
                 value: rhr.map { "\($0)" } ?? "—",
                 unit: "bpm",
                 systemImage: "heart.fill",
@@ -73,7 +73,7 @@ struct TodayConditionCard: View {
             )
             divider
             metricCell(
-                title: "睡眠",
+                title: String(localized: "睡眠"),
                 value: sleepHours.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
                 unit: "h",
                 systemImage: "moon.zzz.fill",
@@ -120,7 +120,8 @@ struct TodayConditionCard: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("コンディションスコア \(readiness.value) / 100、\(bandLabel(readiness.band))")
+        .accessibilityLabel(
+            String(localized: "コンディションスコア \(readiness.value) / 100、\(bandLabel(readiness.band))"))
     }
 
     /// バーの色。低=赤・ふつう=ブランド・好調=緑の信号機マッピング。
@@ -134,9 +135,9 @@ struct TodayConditionCard: View {
 
     private func bandLabel(_ band: ReadinessScore.Band) -> String {
         switch band {
-        case .low: return "低め"
-        case .normal: return "ふつう"
-        case .high: return "好調"
+        case .low: return String(localized: "低め")
+        case .normal: return String(localized: "ふつう")
+        case .high: return String(localized: "好調")
         }
     }
 

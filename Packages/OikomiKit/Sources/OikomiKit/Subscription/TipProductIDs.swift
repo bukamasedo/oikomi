@@ -32,10 +32,10 @@ public enum TipProductKind: String, CaseIterable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .pocari: "スポーツドリンク 1 本"
-        case .protein: "プロテイン 1 杯"
-        case .chicken: "鶏胸肉 200g"
-        case .cheatday: "焼肉チートデイ"
+        case .pocari: loc("スポーツドリンク 1 本")
+        case .protein: loc("プロテイン 1 杯")
+        case .chicken: loc("鶏胸肉 200g")
+        case .cheatday: loc("焼肉チートデイ")
         }
     }
 

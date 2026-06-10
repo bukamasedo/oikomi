@@ -60,7 +60,7 @@ struct WatchActiveSessionView: View {
             }
         }
         .listSectionSpacing(.compact)
-        .navigationTitle(session.routine?.name ?? "進行中")
+        .navigationTitle(session.routine?.name ?? String(localized: "進行中"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -168,7 +168,7 @@ struct WatchActiveSessionView: View {
             }
         } header: {
             HStack(spacing: WatchSpacing.s) {
-                Text(exercise.name)
+                Text(exercise.localizedName)
                     .font(.caption.weight(.semibold))
                     .textCase(nil)
                     .lineLimit(1)

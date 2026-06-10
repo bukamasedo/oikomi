@@ -226,8 +226,8 @@ public enum Analytics {
         if consecutive >= 5 {
             advices.append(
                 CoachingAdvice(
-                    title: "休息日を入れましょう",
-                    message: "\(consecutive) 日連続でトレーニングしています。回復のために 1 日空けることも検討してください。",
+                    title: loc("休息日を入れましょう"),
+                    message: loc("\(consecutive) 日連続でトレーニングしています。回復のために 1 日空けることも検討してください。"),
                     severity: .warning,
                     impact: Double(consecutive) * 1000
                 )
@@ -255,8 +255,8 @@ public enum Analytics {
                 let percent = Int((thisVolume / priorAvg * 100).rounded())
                 advices.append(
                     CoachingAdvice(
-                        title: "ディロード推奨",
-                        message: "今週の総ボリュームが過去3週平均の \(percent)% です。来週は強度を 80% 程度に落とすことを検討してください。",
+                        title: loc("ディロード推奨"),
+                        message: loc("今週の総ボリュームが過去3週平均の \(percent)% です。来週は強度を 80% 程度に落とすことを検討してください。"),
                         severity: .warning,
                         impact: thisVolume - priorAvg
                     )
@@ -280,16 +280,16 @@ public enum Analytics {
         switch readiness.band {
         case .low:
             return CoachingAdvice(
-                title: "今日は回復優先",
+                title: loc("今日は回復優先"),
                 message:
-                    "コンディションスコアが \(readiness.value) と低めです。前回比 80% 程度の重量で軽めに組むことを検討してください。",
+                    loc("コンディションスコアが \(readiness.value) と低めです。前回比 80% 程度の重量で軽めに組むことを検討してください。"),
                 severity: .warning,
                 impact: Double(100 - readiness.value) * 100
             )
         case .high:
             return CoachingAdvice(
-                title: "コンディション良好",
-                message: "コンディションスコアが \(readiness.value) と好調です。PR を狙える日です。",
+                title: loc("コンディション良好"),
+                message: loc("コンディションスコアが \(readiness.value) と好調です。PR を狙える日です。"),
                 severity: .success,
                 // .low と同スケールに揃える（×100）。そうしないと好調メッセージが他シグナルに埋もれて表示されない。
                 impact: Double(readiness.value) * 100
@@ -324,13 +324,15 @@ public enum Analytics {
             windowSize: windowSize, minSamples: minSamples, minR2: minR2)
         return predictions.map { p in
             CoachingAdvice(
-                title: "PR 更新の可能性",
+                title: loc("PR 更新の可能性"),
                 message:
-                    "次回\(p.exerciseName)で推定 \(WeightFormatter.oneRM(kilograms: p.predictedOneRM, in: weightUnit))（±\(Int(p.margin))kg）の PR を狙えます（直近\(p.sessionCount)セッションの上昇トレンドより）。",
+                    loc(
+                        "次回\(p.exerciseName)で推定 \(WeightFormatter.oneRM(kilograms: p.predictedOneRM, in: weightUnit))（±\(Int(p.margin))kg）の PR を狙えます（直近\(p.sessionCount)セッションの上昇トレンドより）。"
+                    ),
                 severity: .info,
                 impact: p.impact,
                 subject: p.exerciseName,
-                detail: "\(WeightFormatter.oneRM(kilograms: p.predictedOneRM, in: weightUnit)) 狙い",
+                detail: loc("\(WeightFormatter.oneRM(kilograms: p.predictedOneRM, in: weightUnit)) 狙い"),
                 trend: sessionMaxEstimateSeries(
                     sets: sets, forExerciseId: p.exerciseId, windowSize: windowSize)
             )
@@ -407,13 +409,13 @@ public enum Analytics {
             guard abs(fit.slope) < slopeEpsilon else { continue }
             advices.append(
                 CoachingAdvice(
-                    title: "停滞ぎみ",
+                    title: loc("停滞ぎみ"),
                     message:
-                        "\(exercise.name)はここ\(points.count)セッションほぼ横ばいです。レップ域・頻度・種目の変更を検討してください。",
+                        loc("\(exercise.name)はここ\(points.count)セッションほぼ横ばいです。レップ域・頻度・種目の変更を検討してください。"),
                     severity: .info,
                     impact: Double(points.count),
                     subject: exercise.name,
-                    detail: "横ばい \(points.count) 回",
+                    detail: loc("横ばい \(points.count) 回"),
                     trend: maxes
                 )
             )
@@ -564,12 +566,12 @@ public enum Analytics {
             if last == 0 && this > 0 {
                 advices.append(
                     CoachingAdvice(
-                        title: "新しい部位",
-                        message: "\(muscle.displayName)を今週から再開しました。",
+                        title: loc("新しい部位"),
+                        message: loc("\(muscle.displayName)を今週から再開しました。"),
                         severity: .info,
                         impact: this,
                         subject: muscle.displayName,
-                        detail: "今週から再開"
+                        detail: loc("今週から再開")
                     )
                 )
                 continue
@@ -583,36 +585,36 @@ public enum Analytics {
                 let percent = Int((ratio * 100).rounded())
                 advices.append(
                     CoachingAdvice(
-                        title: "オーバーワーク注意",
-                        message: "今週の\(muscle.displayName)トレが先週比\(percent)%です。回復を意識しましょう。",
+                        title: loc("オーバーワーク注意"),
+                        message: loc("今週の\(muscle.displayName)トレが先週比\(percent)%です。回復を意識しましょう。"),
                         severity: .warning,
                         impact: this - last,
                         subject: muscle.displayName,
-                        detail: "先週比 \(percent)%"
+                        detail: loc("先週比 \(percent)%")
                     )
                 )
             } else if ratio < 0.5 {
                 let percent = Int((ratio * 100).rounded())
                 advices.append(
                     CoachingAdvice(
-                        title: "ボリューム不足",
-                        message: "今週の\(muscle.displayName)トレは先週比\(percent)%です。追加できる余地があります。",
+                        title: loc("ボリューム不足"),
+                        message: loc("今週の\(muscle.displayName)トレは先週比\(percent)%です。追加できる余地があります。"),
                         severity: .warning,
                         impact: last - this,
                         subject: muscle.displayName,
-                        detail: "先週比 \(percent)%"
+                        detail: loc("先週比 \(percent)%")
                     )
                 )
             } else if (0.9...1.1).contains(ratio) {
                 let percent = Int((ratio * 100).rounded())
                 advices.append(
                     CoachingAdvice(
-                        title: "安定したペース",
-                        message: "今週の\(muscle.displayName)は先週とほぼ同じボリュームを維持できています。",
+                        title: loc("安定したペース"),
+                        message: loc("今週の\(muscle.displayName)は先週とほぼ同じボリュームを維持できています。"),
                         severity: .success,
                         impact: this,
                         subject: muscle.displayName,
-                        detail: "先週比 \(percent)%"
+                        detail: loc("先週比 \(percent)%")
                     )
                 )
             }
@@ -666,9 +668,11 @@ public enum Analytics {
                 guard suggested < lastWeight else { continue }
                 advices.append(
                     CoachingAdvice(
-                        title: "重量を少し下げましょう",
+                        title: loc("重量を少し下げましょう"),
                         message:
-                            "\(exercise.name)は直近2回とも高強度（RPE \(Int(highThreshold)) 以上）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。",
+                            loc(
+                                "\(exercise.name)は直近2回とも高強度（RPE \(Int(highThreshold)) 以上）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。"
+                            ),
                         severity: .warning,
                         impact: (lastWeight - suggested) + 50,
                         subject: exercise.name,
@@ -681,9 +685,11 @@ public enum Analytics {
                 guard suggested > lastWeight else { continue }
                 advices.append(
                     CoachingAdvice(
-                        title: "重量を上げてみましょう",
+                        title: loc("重量を上げてみましょう"),
                         message:
-                            "\(exercise.name)は直近2回とも余裕（RPE \(Int(lowThreshold)) 以下）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。",
+                            loc(
+                                "\(exercise.name)は直近2回とも余裕（RPE \(Int(lowThreshold)) 以下）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。"
+                            ),
                         severity: .info,
                         impact: (suggested - lastWeight) + 50,
                         subject: exercise.name,

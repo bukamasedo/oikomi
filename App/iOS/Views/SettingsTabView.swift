@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsTabView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openURL) private var openURL
 
     @AppStorage("OikomiPreferredLocation") private var preferredLocationRaw: String = Location.gym.rawValue
     @AppStorage(WeeklyTrainingTarget.storageKey) private var weeklyTargetDays: Int =
@@ -211,10 +212,10 @@ struct SettingsTabView: View {
                 .frame(width: 48, height: 48)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(isPro ? "Oikomi Pro" : "Pro にアップグレード")
+                    Text(isPro ? "Oikomi Pro" : String(localized: "Pro にアップグレード"))
                         .font(.headline)
                         .foregroundStyle(.white)
-                    Text(isPro ? "全機能を利用できます" : ProFeatureCatalog.heroSummary)
+                    Text(isPro ? String(localized: "全機能を利用できます") : ProFeatureCatalog.heroSummary)
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.9))
                 }
@@ -275,7 +276,7 @@ struct SettingsTabView: View {
     }
 
     private var tipJarSubtitle: String {
-        "気が向いたらお気持ちで応援を"
+        String(localized: "気が向いたらお気持ちで応援を")
     }
 
     @ViewBuilder
@@ -567,7 +568,7 @@ struct SettingsTabView: View {
             let url = try DataExporter.writeCSVToTemp(context: modelContext)
             exportedURL = url
         } catch {
-            errorMessage = "エクスポートに失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "エクスポートに失敗: \(error.localizedDescription)")
         }
     }
 
@@ -576,6 +577,28 @@ struct SettingsTabView: View {
         settingsCard {
             cardHeader("情報", systemImage: "info.circle")
 
+            // 言語切替は iOS 標準の「設定 App → Oikomi → 言語」に委ねる（HIG 準拠）。
+            // ここはその画面への導線。アプリは ja/en の 2 ローカライズを同梱しているため
+            // OS が自動で言語ピッカーを提供する。
+            Button {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    openURL(url)
+                }
+            } label: {
+                settingsRow {
+                    Label("言語", systemImage: "globe")
+                } trailing: {
+                    Text(verbatim: currentLanguageDisplay)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "arrow.up.forward")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.primary)
+            Divider()
             navRow("用語解説", systemImage: "book.closed") {
                 GlossaryView()
             }
@@ -677,7 +700,7 @@ struct SettingsTabView: View {
                 )
                 mockSummary = summary
             } catch {
-                errorMessage = "テストデータ生成失敗: \(error.localizedDescription)"
+                errorMessage = String(localized: "テストデータ生成失敗: \(error.localizedDescription)")
             }
         }
 
@@ -691,7 +714,7 @@ struct SettingsTabView: View {
                 )
                 mockSummary = nil
             } catch {
-                errorMessage = "テストデータ削除失敗: \(error.localizedDescription)"
+                errorMessage = String(localized: "テストデータ削除失敗: \(error.localizedDescription)")
             }
         }
     #endif
@@ -701,6 +724,13 @@ struct SettingsTabView: View {
         let short = info?["CFBundleShortVersionString"] as? String ?? "-"
         let build = info?["CFBundleVersion"] as? String ?? "-"
         return "\(short) (\(build))"
+    }
+
+    /// 現在アプリが解決している言語を、その言語自身の名前（endonym）で表示する。
+    /// `Bundle.main.preferredLocalizations` は端末言語＋アプリ別言語設定を反映した実効値。
+    private var currentLanguageDisplay: String {
+        let code = Bundle.main.preferredLocalizations.first ?? "ja"
+        return code.hasPrefix("en") ? "English" : "日本語"
     }
 
     // MARK: - Actions
@@ -721,7 +751,7 @@ struct SettingsTabView: View {
             // Apple Watch のローカルデータも削除する
             WCSyncBridge.shared.sendBulkDelete()
         } catch {
-            errorMessage = "リセット失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "リセット失敗: \(error.localizedDescription)")
         }
     }
 }
@@ -808,8 +838,8 @@ private struct ProUpgradeSheet: View {
     /// 価格は StoreKit の `displayPrice` から取得し、ストアフロント／通貨に追従させる。
     private var trialTermsText: String? {
         guard subscriptionManager.isEligibleForIntroOffer, let product = selectedProduct else { return nil }
-        let unit = product.id == ProductIDs.proYearly ? "年" : "月"
-        return "14日間無料、その後 \(product.displayPrice)/\(unit)"
+        let unit = product.id == ProductIDs.proYearly ? String(localized: "年") : String(localized: "月")
+        return String(localized: "14日間無料、その後 \(product.displayPrice)/\(unit)")
     }
 
     var body: some View {
@@ -834,8 +864,8 @@ private struct ProUpgradeSheet: View {
             } message: {
                 Text(
                     subscriptionManager.isProActive
-                        ? "Pro が有効になりました。"
-                        : "復元可能な購入が見つかりませんでした。")
+                        ? String(localized: "Pro が有効になりました。")
+                        : String(localized: "復元可能な購入が見つかりませんでした。"))
             }
             .alert("エラー", isPresented: $showError) {
                 Button("OK") { subscriptionManager.clearLastError() }
@@ -900,7 +930,7 @@ private struct ProUpgradeSheet: View {
                     .padding(.vertical, 24)
             case .failed(let message):
                 LoadFailureView(
-                    title: "価格情報を取得できませんでした",
+                    title: String(localized: "価格情報を取得できませんでした"),
                     message: message,
                     onRetry: { Task { await subscriptionManager.loadProducts() } }
                 )
@@ -909,14 +939,14 @@ private struct ProUpgradeSheet: View {
                 if let yearly = yearlyProduct {
                     priceRow(
                         product: yearly,
-                        label: "年額プラン",
+                        label: String(localized: "年額プラン"),
                         note: yearlyNote(yearly: yearly, monthly: monthlyProduct)
                     )
                 }
                 if let monthly = monthlyProduct {
                     priceRow(
                         product: monthly,
-                        label: "月額プラン",
+                        label: String(localized: "月額プラン"),
                         note: nil
                     )
                 }
@@ -961,9 +991,9 @@ private struct ProUpgradeSheet: View {
 
     private var ctaLabel: String {
         if subscriptionManager.isEligibleForIntroOffer {
-            return "14日間無料で始める"
+            return String(localized: "14日間無料で始める")
         }
-        return "購入する"
+        return String(localized: "購入する")
     }
 
     @ViewBuilder
@@ -996,20 +1026,20 @@ private struct ProUpgradeSheet: View {
 
     /// 自動更新サブスクリプションの定型開示文。月額/年額のどちらも対象。
     static let autoRenewDisclosure =
-        "サブスクリプションは期間終了の 24 時間前までに解約しない限り自動更新され、Apple ID に課金されます。"
-        + "無料トライアル中に解約した場合は課金されません。購入後は App Store の「サブスクリプション」からいつでも管理・解約できます。"
+        String(localized: "サブスクリプションは期間終了の 24 時間前までに解約しない限り自動更新され、Apple ID に課金されます。")
+        + String(localized: "無料トライアル中に解約した場合は課金されません。購入後は App Store の「サブスクリプション」からいつでも管理・解約できます。")
 
     /// 年額プランの「実質月額」と月額比割引率を StoreKit の価格から算出する。
     /// ハードコードを避け、ストアフロント／通貨に追従させる（表記の正確性）。
     private func yearlyNote(yearly: Product, monthly: Product?) -> String {
         let perMonth = (yearly.price / 12).formatted(yearly.priceFormatStyle)
         guard let monthly, monthly.price > 0 else {
-            return "実質 \(perMonth)/月"
+            return String(localized: "実質 \(perMonth)/月")
         }
         let discountPercent = (1 - yearly.price / (monthly.price * 12)) * 100
         let pct = NSDecimalNumber(decimal: discountPercent).intValue
-        guard pct > 0 else { return "実質 \(perMonth)/月" }
-        return "実質 \(perMonth)/月（月額比 \(pct)% オフ）"
+        guard pct > 0 else { return String(localized: "実質 \(perMonth)/月") }
+        return String(localized: "実質 \(perMonth)/月（月額比 \(pct)% オフ）")
     }
 
     @ViewBuilder

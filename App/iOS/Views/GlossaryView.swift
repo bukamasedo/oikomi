@@ -170,79 +170,84 @@ extension GlossarySection {
     // MARK: トレーニング基礎
 
     fileprivate static let trainingBasics = GlossarySection(
-        title: "トレーニング基礎",
-        footer: "Oikomi の「記録」「ホーム」「履歴」画面はすべてこの語彙で構成されています。",
+        title: String(localized: "トレーニング基礎"),
+        footer: String(localized: "Oikomi の「記録」「ホーム」「履歴」画面はすべてこの語彙で構成されています。"),
         entries: [
             GlossaryEntry(
-                term: "セット",
-                alias: "Set",
+                term: String(localized: "セット"),
+                alias: String(localized: "Set"),
                 systemImage: "rectangle.stack.fill",
                 tint: OikomiColor.brandPrimary,
-                description: "連続して行う一連のレップのまとまり。例: ベンチプレス 80kg × 8 レップ を 1 セットとして記録します。"
+                description: String(localized: "連続して行う一連のレップのまとまり。例: ベンチプレス 80kg × 8 レップ を 1 セットとして記録します。")
             ),
             GlossaryEntry(
-                term: "レップ",
-                alias: "Rep / Repetition",
+                term: String(localized: "レップ"),
+                alias: String(localized: "Rep / Repetition"),
                 systemImage: "repeat",
                 tint: OikomiColor.brandSecondary,
-                description: "1 回の挙上動作のこと。8 レップとは同じ重量で 8 回連続して挙げ切ったことを意味します。"
+                description: String(localized: "1 回の挙上動作のこと。8 レップとは同じ重量で 8 回連続して挙げ切ったことを意味します。")
             ),
             GlossaryEntry(
-                term: "重量",
-                alias: "Weight (kg)",
+                term: String(localized: "重量"),
+                alias: String(localized: "Weight (kg)"),
                 systemImage: "scalemass",
                 tint: OikomiColor.statBlue,
-                description: "1 セットで扱う負荷。バーベル種目ではシャフトと付属プレートを合算した総重量を入力します。"
+                description: String(localized: "1 セットで扱う負荷。バーベル種目ではシャフトと付属プレートを合算した総重量を入力します。")
             ),
             GlossaryEntry(
-                term: "ワーキングセット",
-                alias: "Working Set",
+                term: String(localized: "ワーキングセット"),
+                alias: String(localized: "Working Set"),
                 systemImage: "flame.fill",
                 tint: OikomiColor.statOrange,
-                description: "ウォームアップを除いた本番セット。週次ボリュームや MEV / MAV の集計対象になります。"
+                description: String(localized: "ウォームアップを除いた本番セット。週次ボリュームや MEV / MAV の集計対象になります。")
             ),
             GlossaryEntry(
-                term: "ウォームアップ",
-                alias: "Warm-up",
+                term: String(localized: "ウォームアップ"),
+                alias: String(localized: "Warm-up"),
                 systemImage: "thermometer.sun.fill",
                 tint: OikomiColor.statYellow,
-                description: "本番セットの前段で関節・神経系を準備する軽いセット。記録時に「ウォームアップ」フラグを立てると、ボリューム集計と PR 判定から除外されます。"
+                description: String(
+                    localized: "本番セットの前段で関節・神経系を準備する軽いセット。記録時に「ウォームアップ」フラグを立てると、ボリューム集計と PR 判定から除外されます。")
             ),
             GlossaryEntry(
-                term: "インターバル",
-                alias: "Rest Interval",
+                term: String(localized: "インターバル"),
+                alias: String(localized: "Rest Interval"),
                 systemImage: "timer",
                 tint: OikomiColor.statIndigo,
-                description: "セット間の休息時間。種目ごとの推奨秒数 (例: スクワット 180 秒、二頭筋カール 60 秒) があらかじめ設定されており、レストタイマーが自動起動します。"
+                description: String(
+                    localized: "セット間の休息時間。種目ごとの推奨秒数 (例: スクワット 180 秒、二頭筋カール 60 秒) があらかじめ設定されており、レストタイマーが自動起動します。")
             ),
             GlossaryEntry(
-                term: "種目",
-                alias: "Exercise",
+                term: String(localized: "種目"),
+                alias: String(localized: "Exercise"),
                 systemImage: "dumbbell.fill",
                 tint: OikomiColor.brandPrimary,
-                description: "個別の運動 (ベンチプレス、スクワット 等)。Oikomi にはバーベル・ダンベル・マシン・自重などを含む約 100 種を初期搭載しています。"
+                description: String(
+                    localized: "個別の運動 (ベンチプレス、スクワット 等)。Oikomi にはバーベル・ダンベル・マシン・自重などを含む約 100 種を初期搭載しています。")
             ),
             GlossaryEntry(
-                term: "カスタム種目",
-                alias: "Custom Exercise",
+                term: String(localized: "カスタム種目"),
+                alias: String(localized: "Custom Exercise"),
                 systemImage: "square.and.pencil",
                 tint: OikomiColor.statPurple,
-                description: "ユーザーが自作した種目。Free プランは 5 件まで、Pro プランは無制限に作成できます。"
+                description: String(localized: "ユーザーが自作した種目。Free プランは 5 件まで、Pro プランは無制限に作成できます。")
             ),
             GlossaryEntry(
-                term: "ルーティン",
-                alias: "Routine",
+                term: String(localized: "ルーティン"),
+                alias: String(localized: "Routine"),
                 systemImage: "list.bullet.rectangle.portrait",
                 tint: OikomiColor.brandSecondary,
-                description: "「胸+三頭筋」「PPL: Push 日」など、複数種目をまとめたテンプレート。ホームから 1 タップで開始でき、種目順や前回重量がプリフィルされます。",
-                note: "Free プランは 3 件まで、Pro プランは無制限。"
+                description: String(
+                    localized: "「胸+三頭筋」「PPL: Push 日」など、複数種目をまとめたテンプレート。ホームから 1 タップで開始でき、種目順や前回重量がプリフィルされます。"),
+                note: String(localized: "Free プランは 3 件まで、Pro プランは無制限。")
             ),
             GlossaryEntry(
-                term: "セッション",
-                alias: "Workout Session",
+                term: String(localized: "セッション"),
+                alias: String(localized: "Workout Session"),
                 systemImage: "figure.strengthtraining.traditional",
                 tint: OikomiColor.statRed,
-                description: "1 回のトレーニング全体を表す単位。開始時刻・終了時刻・含まれる全セットを保持し、終了時に HealthKit へ HKWorkout として書き込まれます。"
+                description: String(
+                    localized: "1 回のトレーニング全体を表す単位。開始時刻・終了時刻・含まれる全セットを保持し、終了時に HealthKit へ HKWorkout として書き込まれます。")
             ),
         ]
     )
@@ -250,110 +255,112 @@ extension GlossarySection {
     // MARK: コーチング・分析
 
     fileprivate static let analytics = GlossarySection(
-        title: "コーチング・分析",
-        footer: "「分析」タブと AI コーチングカードで使われる指標です。コーチング判定はオンデバイスで計算され、外部に送信されません。",
+        title: String(localized: "コーチング・分析"),
+        footer: String(localized: "「分析」タブと AI コーチングカードで使われる指標です。コーチング判定はオンデバイスで計算され、外部に送信されません。"),
         entries: [
             GlossaryEntry(
-                term: "1RM",
-                alias: "One Repetition Maximum",
+                term: String(localized: "1RM"),
+                alias: String(localized: "One Repetition Maximum"),
                 systemImage: "star.circle.fill",
                 tint: OikomiColor.proAccent,
-                description: "「1 回だけ挙げ切れる最大重量」のこと。直接測定は怪我のリスクが高いため、Oikomi は実際のセットから推定 1RM を計算します。"
+                description: String(localized: "「1 回だけ挙げ切れる最大重量」のこと。直接測定は怪我のリスクが高いため、Oikomi は実際のセットから推定 1RM を計算します。")
             ),
             GlossaryEntry(
-                term: "推定 1RM",
-                alias: "Estimated 1RM",
+                term: String(localized: "推定 1RM"),
+                alias: String(localized: "Estimated 1RM"),
                 systemImage: "function",
                 tint: OikomiColor.brandPrimary,
-                description: "実セットの重量とレップ数から計算式で予測した 1RM。種目ごとに最大値が PR として保存され、強度設定や PR 予測の基準になります。"
+                description: String(localized: "実セットの重量とレップ数から計算式で予測した 1RM。種目ごとに最大値が PR として保存され、強度設定や PR 予測の基準になります。")
             ),
             GlossaryEntry(
-                term: "Epley 式",
+                term: String(localized: "Epley 式"),
                 systemImage: "x.squareroot",
                 tint: OikomiColor.statBlue,
-                description: "1〜10 レップ程度の中レップで精度が高い 1RM 推定式。業界で広く使われる標準式です。",
-                formula: "1RM = weight × (1 + reps / 30)"
+                description: String(localized: "1〜10 レップ程度の中レップで精度が高い 1RM 推定式。業界で広く使われる標準式です。"),
+                formula: String(localized: "1RM = weight × (1 + reps / 30)")
             ),
             GlossaryEntry(
-                term: "Brzycki 式",
+                term: String(localized: "Brzycki 式"),
                 systemImage: "x.squareroot",
                 tint: OikomiColor.statIndigo,
-                description: "低〜中レップで Epley と並んで使われる 1RM 推定式。10 レップを超えると精度が下がります。",
-                formula: "1RM = weight × 36 / (37 - reps)"
+                description: String(localized: "低〜中レップで Epley と並んで使われる 1RM 推定式。10 レップを超えると精度が下がります。"),
+                formula: String(localized: "1RM = weight × 36 / (37 - reps)")
             ),
             GlossaryEntry(
-                term: "相対強度",
-                alias: "%1RM",
+                term: String(localized: "相対強度"),
+                alias: String(localized: "%1RM"),
                 systemImage: "percent",
                 tint: OikomiColor.statOrange,
-                description: "扱っている重量が推定 1RM の何 % にあたるかを示す値。筋力 ≥ 85%、筋肥大 65–85%、筋持久 < 65% がおおまかな目安です。",
-                formula: "%1RM = weight / estimated1RM × 100"
+                description: String(
+                    localized: "扱っている重量が推定 1RM の何 % にあたるかを示す値。筋力 ≥ 85%、筋肥大 65–85%、筋持久 < 65% がおおまかな目安です。"),
+                formula: String(localized: "%1RM = weight / estimated1RM × 100")
             ),
             GlossaryEntry(
-                term: "PR",
-                alias: "Personal Record (自己ベスト)",
+                term: String(localized: "PR"),
+                alias: String(localized: "Personal Record (自己ベスト)"),
                 systemImage: "trophy.fill",
                 tint: OikomiColor.proAccent,
-                description: "種目ごとの自己ベスト記録。重量 × レップと、その時点の推定 1RM が保存されます。「分析」タブの自己ベスト一覧で確認できます。"
+                description: String(localized: "種目ごとの自己ベスト記録。重量 × レップと、その時点の推定 1RM が保存されます。「分析」タブの自己ベスト一覧で確認できます。")
             ),
             GlossaryEntry(
-                term: "ボリューム",
-                alias: "Volume",
+                term: String(localized: "ボリューム"),
+                alias: String(localized: "Volume"),
                 systemImage: "chart.bar.fill",
                 tint: OikomiColor.brandPrimary,
-                description: "トレーニング総量を示す指標で、Oikomi では 重量 × レップ の合算で算出します。週次・部位別に集計し、過不足の判断材料にします。",
-                formula: "volume = Σ(weight × reps)"
+                description: String(localized: "トレーニング総量を示す指標で、Oikomi では 重量 × レップ の合算で算出します。週次・部位別に集計し、過不足の判断材料にします。"),
+                formula: String(localized: "volume = Σ(weight × reps)")
             ),
             GlossaryEntry(
-                term: "週次総ボリューム",
-                alias: "Weekly Volume",
+                term: String(localized: "週次総ボリューム"),
+                alias: String(localized: "Weekly Volume"),
                 systemImage: "calendar",
                 tint: OikomiColor.statBlue,
-                description: "直近 8 週ぶんの週合計ボリュームを棒グラフで表示。長期トレンドの確認とディロード判定の入力になります。"
+                description: String(localized: "直近 8 週ぶんの週合計ボリュームを棒グラフで表示。長期トレンドの確認とディロード判定の入力になります。")
             ),
             GlossaryEntry(
-                term: "部位別セット数",
-                alias: "Sets per Muscle / week",
+                term: String(localized: "部位別セット数"),
+                alias: String(localized: "Sets per Muscle / week"),
                 systemImage: "rectangle.split.3x1.fill",
                 tint: OikomiColor.statPurple,
-                description: "主働筋ごとの週次ワーキングセット数。1 セットが複数の主働筋を持つ場合はそれぞれにフルカウントで加算されます。"
+                description: String(localized: "主働筋ごとの週次ワーキングセット数。1 セットが複数の主働筋を持つ場合はそれぞれにフルカウントで加算されます。")
             ),
             GlossaryEntry(
-                term: "MEV",
-                alias: "Minimum Effective Volume",
+                term: String(localized: "MEV"),
+                alias: String(localized: "Minimum Effective Volume"),
                 systemImage: "arrow.down.to.line",
                 tint: OikomiColor.statGreen,
-                description: "「最低限有効ボリューム」。これを下回ると筋量維持が難しくなる目安の週セット数で、部位別に設定されています。",
-                note: "Schoenfeld らの 2017 メタアナリシスを下敷きにした中央値ベースの初期値。個人差は大きく、v1.1 以降でユーザーカスタマイズを予定。"
+                description: String(localized: "「最低限有効ボリューム」。これを下回ると筋量維持が難しくなる目安の週セット数で、部位別に設定されています。"),
+                note: String(localized: "Schoenfeld らの 2017 メタアナリシスを下敷きにした中央値ベースの初期値。個人差は大きく、v1.1 以降でユーザーカスタマイズを予定。")
             ),
             GlossaryEntry(
-                term: "MAV",
-                alias: "Maximum Adaptive Volume",
+                term: String(localized: "MAV"),
+                alias: String(localized: "Maximum Adaptive Volume"),
                 systemImage: "arrow.up.to.line",
                 tint: OikomiColor.statRed,
-                description: "「最大適応ボリューム」。これを超えると回復が追いつかず適応がむしろ減ってしまう目安の上限値です。"
+                description: String(localized: "「最大適応ボリューム」。これを超えると回復が追いつかず適応がむしろ減ってしまう目安の上限値です。")
             ),
             GlossaryEntry(
-                term: "ディロード",
-                alias: "Deload",
+                term: String(localized: "ディロード"),
+                alias: String(localized: "Deload"),
                 systemImage: "leaf.fill",
                 tint: OikomiColor.statGreen,
-                description: "1 週間ほど強度を 80% 程度に意図的に落とす計画的な回復期間。連続トレーニング日数の長期化、または週ボリュームの急増を検知した時にコーチングカードで提案します。",
-                note: "Pro 機能。v0.1 は連続日数 + ボリューム比の簡易判定。v1.1 で HRV ベースの判定を追加予定です。"
+                description: String(
+                    localized: "1 週間ほど強度を 80% 程度に意図的に落とす計画的な回復期間。連続トレーニング日数の長期化、または週ボリュームの急増を検知した時にコーチングカードで提案します。"),
+                note: String(localized: "Pro 機能。v0.1 は連続日数 + ボリューム比の簡易判定。v1.1 で HRV ベースの判定を追加予定です。")
             ),
             GlossaryEntry(
-                term: "ボリューム警告",
-                alias: "Volume Alert",
+                term: String(localized: "ボリューム警告"),
+                alias: String(localized: "Volume Alert"),
                 systemImage: "exclamationmark.triangle.fill",
                 tint: OikomiColor.statOrange,
-                description: "先週比でボリュームが大幅に変動した時の注意喚起。+50% 超で「過負荷の可能性」、−50% 未満で「不足」を通知します。"
+                description: String(localized: "先週比でボリュームが大幅に変動した時の注意喚起。+50% 超で「過負荷の可能性」、−50% 未満で「不足」を通知します。")
             ),
             GlossaryEntry(
-                term: "PR 予測",
-                alias: "PR Prediction",
+                term: String(localized: "PR 予測"),
+                alias: String(localized: "PR Prediction"),
                 systemImage: "chart.line.uptrend.xyaxis",
                 tint: OikomiColor.proAccent,
-                description: "直近セッションの最高 1RM が現 PR の 95% 以上に達した時、次回更新の可能性と狙うべき重量を提示します。"
+                description: String(localized: "直近セッションの最高 1RM が現 PR の 95% 以上に達した時、次回更新の可能性と狙うべき重量を提示します。")
             ),
         ]
     )
@@ -361,39 +368,39 @@ extension GlossarySection {
     // MARK: コンディション
 
     fileprivate static let condition = GlossarySection(
-        title: "コンディション (HealthKit)",
-        footer: "HealthKit 読み取りは Pro 機能です。Oikomi はオンデバイスで参照し、外部送信は行いません。",
+        title: String(localized: "コンディション (HealthKit)"),
+        footer: String(localized: "HealthKit 読み取りは Pro 機能です。Oikomi はオンデバイスで参照し、外部送信は行いません。"),
         entries: [
             GlossaryEntry(
-                term: "HRV",
-                alias: "Heart Rate Variability (心拍変動)",
+                term: String(localized: "HRV"),
+                alias: String(localized: "Heart Rate Variability (心拍変動)"),
                 systemImage: "waveform.path.ecg",
                 tint: OikomiColor.statPink,
-                description: "心拍の拍動間隔のばらつき。副交感神経の活性度合いを反映し、自分の平常値より低下していると疲労蓄積のサインとされます。",
-                note: "単位: ミリ秒 (ms)。Apple Watch では夜間の SDNN として測定されます。"
+                description: String(localized: "心拍の拍動間隔のばらつき。副交感神経の活性度合いを反映し、自分の平常値より低下していると疲労蓄積のサインとされます。"),
+                note: String(localized: "単位: ミリ秒 (ms)。Apple Watch では夜間の SDNN として測定されます。")
             ),
             GlossaryEntry(
-                term: "安静時心拍数",
-                alias: "Resting Heart Rate / RHR",
+                term: String(localized: "安静時心拍数"),
+                alias: String(localized: "Resting Heart Rate / RHR"),
                 systemImage: "heart.fill",
                 tint: OikomiColor.statRed,
-                description: "起床直後など安静時の心拍数。トレーニング適応で長期的に漸減することが多く、急上昇は体調不良やオーバートレーニングの目安になります。",
-                note: "単位: bpm (拍/分)。"
+                description: String(localized: "起床直後など安静時の心拍数。トレーニング適応で長期的に漸減することが多く、急上昇は体調不良やオーバートレーニングの目安になります。"),
+                note: String(localized: "単位: bpm (拍/分)。")
             ),
             GlossaryEntry(
-                term: "睡眠時間",
-                alias: "Sleep Hours",
+                term: String(localized: "睡眠時間"),
+                alias: String(localized: "Sleep Hours"),
                 systemImage: "moon.zzz.fill",
                 tint: OikomiColor.statIndigo,
-                description: "前夜の総睡眠時間。筋トレからの回復・タンパク合成・神経系リフレッシュに直結する最大の入力です。"
+                description: String(localized: "前夜の総睡眠時間。筋トレからの回復・タンパク合成・神経系リフレッシュに直結する最大の入力です。")
             ),
             GlossaryEntry(
-                term: "体組成",
-                alias: "Body Composition",
+                term: String(localized: "体組成"),
+                alias: String(localized: "Body Composition"),
                 systemImage: "figure",
                 tint: OikomiColor.statBlue,
-                description: "体重・体脂肪率・除脂肪体重 (LBM) などの総称。「分析 → ボディ」で長期推移を確認できます。",
-                note: "除脂肪体重 = 体重 × (1 − 体脂肪率)。筋量変化の近似指標として使えます。"
+                description: String(localized: "体重・体脂肪率・除脂肪体重 (LBM) などの総称。「分析 → ボディ」で長期推移を確認できます。"),
+                note: String(localized: "除脂肪体重 = 体重 × (1 − 体脂肪率)。筋量変化の近似指標として使えます。")
             ),
         ]
     )
@@ -401,99 +408,99 @@ extension GlossarySection {
     // MARK: 部位
 
     fileprivate static let body = GlossarySection(
-        title: "部位",
-        footer: "1 種目に主働筋を 1 つ以上設定し、ボリューム集計時にはそれぞれフルカウントで加算します。",
+        title: String(localized: "部位"),
+        footer: String(localized: "1 種目に主働筋を 1 つ以上設定し、ボリューム集計時にはそれぞれフルカウントで加算します。"),
         entries: [
             GlossaryEntry(
-                term: "胸",
-                alias: "Chest",
+                term: String(localized: "胸"),
+                alias: String(localized: "Chest"),
                 systemImage: "figure.arms.open",
                 tint: OikomiColor.statRed,
-                description: "大胸筋。ベンチプレス・ダンベルフライ・腕立て伏せなどが代表的種目です。"
+                description: String(localized: "大胸筋。ベンチプレス・ダンベルフライ・腕立て伏せなどが代表的種目です。")
             ),
             GlossaryEntry(
-                term: "背中",
-                alias: "Back",
+                term: String(localized: "背中"),
+                alias: String(localized: "Back"),
                 systemImage: "figure.walk",
                 tint: OikomiColor.statBlue,
-                description: "広背筋・僧帽筋中下部・脊柱起立筋を含む広い領域。デッドリフト・懸垂・ロウ系が中心です。"
+                description: String(localized: "広背筋・僧帽筋中下部・脊柱起立筋を含む広い領域。デッドリフト・懸垂・ロウ系が中心です。")
             ),
             GlossaryEntry(
-                term: "肩",
-                alias: "Shoulders",
+                term: String(localized: "肩"),
+                alias: String(localized: "Shoulders"),
                 systemImage: "figure.cooldown",
                 tint: OikomiColor.statYellow,
-                description: "三角筋 (前部・中部・後部)。ショルダープレス・サイドレイズなどで個別に刺激します。"
+                description: String(localized: "三角筋 (前部・中部・後部)。ショルダープレス・サイドレイズなどで個別に刺激します。")
             ),
             GlossaryEntry(
-                term: "上腕二頭筋",
-                alias: "Biceps",
+                term: String(localized: "上腕二頭筋"),
+                alias: String(localized: "Biceps"),
                 systemImage: "figure.boxing",
                 tint: OikomiColor.statOrange,
-                description: "腕の前面、肘屈曲の主働筋。バーベル/ダンベルカール、ハンマーカールなど。"
+                description: String(localized: "腕の前面、肘屈曲の主働筋。バーベル/ダンベルカール、ハンマーカールなど。")
             ),
             GlossaryEntry(
-                term: "上腕三頭筋",
-                alias: "Triceps",
+                term: String(localized: "上腕三頭筋"),
+                alias: String(localized: "Triceps"),
                 systemImage: "figure.boxing",
                 tint: OikomiColor.statOrange,
-                description: "腕の後面、肘伸展の主働筋。トライセプスエクステンション、ディップス、ナローベンチプレスなど。"
+                description: String(localized: "腕の後面、肘伸展の主働筋。トライセプスエクステンション、ディップス、ナローベンチプレスなど。")
             ),
             GlossaryEntry(
-                term: "前腕",
-                alias: "Forearms",
+                term: String(localized: "前腕"),
+                alias: String(localized: "Forearms"),
                 systemImage: "hand.raised.fill",
                 tint: OikomiColor.statOrange,
-                description: "握力と手首屈伸を司る筋群。リストカール・ファーマーズキャリーで補強します。"
+                description: String(localized: "握力と手首屈伸を司る筋群。リストカール・ファーマーズキャリーで補強します。")
             ),
             GlossaryEntry(
-                term: "腹",
-                alias: "Abs",
+                term: String(localized: "腹"),
+                alias: String(localized: "Abs"),
                 systemImage: "figure.core.training",
                 tint: OikomiColor.statGreen,
-                description: "腹直筋。クランチ・レッグレイズ・プランクなどの体幹種目で刺激します。"
+                description: String(localized: "腹直筋。クランチ・レッグレイズ・プランクなどの体幹種目で刺激します。")
             ),
             GlossaryEntry(
-                term: "腹斜筋",
-                alias: "Obliques",
+                term: String(localized: "腹斜筋"),
+                alias: String(localized: "Obliques"),
                 systemImage: "figure.core.training",
                 tint: OikomiColor.statGreen,
-                description: "体側を覆う回旋・側屈の主働筋。サイドベンド、ロシアンツイストなど。"
+                description: String(localized: "体側を覆う回旋・側屈の主働筋。サイドベンド、ロシアンツイストなど。")
             ),
             GlossaryEntry(
-                term: "大腿四頭筋",
-                alias: "Quads",
+                term: String(localized: "大腿四頭筋"),
+                alias: String(localized: "Quads"),
                 systemImage: "figure.strengthtraining.functional",
                 tint: OikomiColor.statPurple,
-                description: "太もも前面。スクワット・レッグプレス・レッグエクステンションが代表種目です。"
+                description: String(localized: "太もも前面。スクワット・レッグプレス・レッグエクステンションが代表種目です。")
             ),
             GlossaryEntry(
-                term: "ハムストリング",
-                alias: "Hamstrings",
+                term: String(localized: "ハムストリング"),
+                alias: String(localized: "Hamstrings"),
                 systemImage: "figure.strengthtraining.functional",
                 tint: OikomiColor.statPurple,
-                description: "太もも後面。ルーマニアンデッドリフト・レッグカール・グッドモーニングなど。"
+                description: String(localized: "太もも後面。ルーマニアンデッドリフト・レッグカール・グッドモーニングなど。")
             ),
             GlossaryEntry(
-                term: "臀部",
-                alias: "Glutes",
+                term: String(localized: "臀部"),
+                alias: String(localized: "Glutes"),
                 systemImage: "figure.strengthtraining.functional",
                 tint: OikomiColor.statPink,
-                description: "大殿筋・中殿筋。ヒップスラスト・ブルガリアンスクワット・スモウデッドリフトなど。"
+                description: String(localized: "大殿筋・中殿筋。ヒップスラスト・ブルガリアンスクワット・スモウデッドリフトなど。")
             ),
             GlossaryEntry(
-                term: "ふくらはぎ",
-                alias: "Calves",
+                term: String(localized: "ふくらはぎ"),
+                alias: String(localized: "Calves"),
                 systemImage: "figure.run",
                 tint: OikomiColor.statIndigo,
-                description: "下腿三頭筋 (腓腹筋・ヒラメ筋)。スタンディング/シーテッドカーフレイズで刺激します。"
+                description: String(localized: "下腿三頭筋 (腓腹筋・ヒラメ筋)。スタンディング/シーテッドカーフレイズで刺激します。")
             ),
             GlossaryEntry(
-                term: "全身",
-                alias: "Full Body",
+                term: String(localized: "全身"),
+                alias: String(localized: "Full Body"),
                 systemImage: "figure",
                 tint: OikomiColor.brandPrimary,
-                description: "クリーン、スナッチ、バーピーなど複数部位を横断的に動員する種目。部位別集計の対象外として扱います。"
+                description: String(localized: "クリーン、スナッチ、バーピーなど複数部位を横断的に動員する種目。部位別集計の対象外として扱います。")
             ),
         ]
     )
@@ -501,60 +508,74 @@ extension GlossarySection {
     // MARK: プラットフォーム / Pro
 
     fileprivate static let platform = GlossarySection(
-        title: "プラットフォーム・Pro",
-        footer: "Pro プランの詳細は「設定 → Pro にアップグレード」から確認できます。",
+        title: String(localized: "プラットフォーム・Pro"),
+        footer: String(localized: "Pro プランの詳細は「設定 → Pro にアップグレード」から確認できます。"),
         entries: [
             GlossaryEntry(
-                term: "Oikomi Pro",
+                term: String(localized: "Oikomi Pro"),
                 systemImage: "star.fill",
                 tint: OikomiColor.proAccent,
                 description:
-                    "月額 ¥780 / 年額 ¥5,800 のサブスクリプション。HRV 連動 AI コーチング・HealthKit 読み取り・iCloud 同期・無制限ルーティン/カスタム種目・CSV エクスポートが解放されます。",
-                note: "初回 14 日間は無料トライアル。App Store の購入履歴から自動更新を停止できます。"
+                    String(
+                        localized:
+                            "月額 ¥780 / 年額 ¥5,800 のサブスクリプション。HRV 連動 AI コーチング・HealthKit 読み取り・iCloud 同期・無制限ルーティン/カスタム種目・CSV エクスポートが解放されます。"
+                    ),
+                note: String(localized: "初回 14 日間は無料トライアル。App Store の購入履歴から自動更新を停止できます。")
             ),
             GlossaryEntry(
-                term: "Live Activity",
-                alias: "Dynamic Island",
+                term: String(localized: "Live Activity"),
+                alias: String(localized: "Dynamic Island"),
                 systemImage: "rectangle.dashed",
                 tint: OikomiColor.brandPrimary,
-                description: "iOS のロック画面とアイランドにワークアウト進行状況 (経過時間・現在の種目・次インターバル) を常時表示する機能。Free / Pro 共通。"
+                description: String(
+                    localized: "iOS のロック画面とアイランドにワークアウト進行状況 (経過時間・現在の種目・次インターバル) を常時表示する機能。Free / Pro 共通。")
             ),
             GlossaryEntry(
-                term: "iCloud 同期",
-                alias: "CloudKit",
+                term: String(localized: "iCloud 同期"),
+                alias: String(localized: "CloudKit"),
                 systemImage: "icloud.fill",
                 tint: OikomiColor.statBlue,
                 description:
-                    "iPhone・Apple Watch・iPad・Mac 間で記録を自動同期。データは Apple の iCloud プライベートデータベースに格納され、Oikomi 開発者からも参照できません。",
-                note: "Pro 限定。設定変更後はアプリの再起動が必要です。"
+                    String(
+                        localized:
+                            "iPhone・Apple Watch・iPad・Mac 間で記録を自動同期。データは Apple の iCloud プライベートデータベースに格納され、Oikomi 開発者からも参照できません。"
+                    ),
+                note: String(localized: "Pro 限定。設定変更後はアプリの再起動が必要です。")
             ),
             GlossaryEntry(
-                term: "HealthKit",
+                term: String(localized: "HealthKit"),
                 systemImage: "heart.text.square.fill",
                 tint: OikomiColor.statRed,
                 description:
-                    "Apple のヘルスケアフレームワーク。Oikomi はワークアウト完了時に HKWorkout を書き込み (Free)、HRV / 安静時心拍 / 睡眠 / 体組成を読み取り (Pro) します。"
+                    String(
+                        localized:
+                            "Apple のヘルスケアフレームワーク。Oikomi はワークアウト完了時に HKWorkout を書き込み (Free)、HRV / 安静時心拍 / 睡眠 / 体組成を読み取り (Pro) します。"
+                    )
             ),
             GlossaryEntry(
-                term: "Workout Buddy",
-                alias: "Apple Watch ワークアウトアプリ連携",
+                term: String(localized: "Workout Buddy"),
+                alias: String(localized: "Apple Watch ワークアウトアプリ連携"),
                 systemImage: "applewatch",
                 tint: OikomiColor.statGreen,
                 description:
-                    "Apple Watch 標準ワークアウトと同じセッション (HKWorkoutSession) を共有します。Oikomi で記録を開始すると、Buddy 側にも自動でワークアウト中表示が出ます。"
+                    String(
+                        localized:
+                            "Apple Watch 標準ワークアウトと同じセッション (HKWorkoutSession) を共有します。Oikomi で記録を開始すると、Buddy 側にも自動でワークアウト中表示が出ます。"
+                    )
             ),
             GlossaryEntry(
-                term: "App Intents",
-                alias: "Siri ショートカット",
+                term: String(localized: "App Intents"),
+                alias: String(localized: "Siri ショートカット"),
                 systemImage: "mic.fill",
                 tint: OikomiColor.statPurple,
-                description: "「Hey Siri、ベンチプレスを記録」のように音声・ショートカット・スマートスタックから入力できる仕組みです。"
+                description: String(localized: "「Hey Siri、ベンチプレスを記録」のように音声・ショートカット・スマートスタックから入力できる仕組みです。")
             ),
             GlossaryEntry(
-                term: "Free プラン",
+                term: String(localized: "Free プラン"),
                 systemImage: "person.fill",
                 tint: OikomiColor.textSecondary,
-                description: "無料プラン。基本記録・履歴無制限・Watch スタンドアロン記録・HealthKit 書き込みが利用可能。ルーティン 3 件 / カスタム種目 5 件まで。"
+                description: String(
+                    localized: "無料プラン。基本記録・履歴無制限・Watch スタンドアロン記録・HealthKit 書き込みが利用可能。ルーティン 3 件 / カスタム種目 5 件まで。")
             ),
         ]
     )

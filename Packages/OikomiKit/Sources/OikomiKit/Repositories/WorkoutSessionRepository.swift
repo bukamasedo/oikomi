@@ -513,6 +513,17 @@ public final class WorkoutSessionRepository {
         return try context.fetch(descriptor).first
     }
 
+    /// 完了済み（`endedAt != nil`）セッションの件数。
+    ///
+    /// レビュー依頼ゲート（`ReviewRequestGate`）の「ある程度使った」判定に使う。
+    /// 件数だけを数えるため `fetchCount` を使い、全件ロードしない。
+    public func completedSessionCount() throws -> Int {
+        let descriptor = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate<WorkoutSession> { $0.endedAt != nil }
+        )
+        return try context.fetchCount(descriptor)
+    }
+
     /// `olderThan` 秒以上前に開始されたまま終了していないセッションを自動終了する。
     ///
     /// 開発中のクラッシュ/再インストールで「endedAt が nil のまま残った」

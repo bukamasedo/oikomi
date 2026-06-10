@@ -176,10 +176,10 @@ struct TipJarSheet: View {
 
     private func tipRowSubtitle(for kind: TipProductKind) -> String {
         switch kind {
-        case .pocari: "ライトな応援"
-        case .protein: "ちょっと多めの応援"
-        case .chicken: "ガッツリ応援"
-        case .cheatday: "最大級の応援"
+        case .pocari: String(localized: "ライトな応援")
+        case .protein: String(localized: "ちょっと多めの応援")
+        case .chicken: String(localized: "ガッツリ応援")
+        case .cheatday: String(localized: "最大級の応援")
         }
     }
 

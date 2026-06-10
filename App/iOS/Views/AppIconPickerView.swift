@@ -14,20 +14,20 @@ struct AppIconOption: Identifiable, Equatable {
     static let all: [AppIconOption] = [
         .init(
             alternateName: nil,
-            title: "ダンベル",
-            subtitle: "デフォルト・万人向け筋トレ",
+            title: String(localized: "ダンベル"),
+            subtitle: String(localized: "デフォルト・万人向け筋トレ"),
             previewAssetName: "AppIconPreviewDumbbell"
         ),
         .init(
             alternateName: "AppIconBarbell",
-            title: "バーベル",
-            subtitle: "本格派・追い込み感",
+            title: String(localized: "バーベル"),
+            subtitle: String(localized: "本格派・追い込み感"),
             previewAssetName: "AppIconPreviewBarbell"
         ),
         .init(
             alternateName: "AppIconProtein",
-            title: "プロテイン",
-            subtitle: "栄養・回復寄り",
+            title: String(localized: "プロテイン"),
+            subtitle: String(localized: "栄養・回復寄り"),
             previewAssetName: "AppIconPreviewProtein"
         ),
     ]
@@ -153,8 +153,10 @@ struct AppIconPickerView: View {
     private func friendlyErrorMessage(for error: NSError) -> String {
         #if targetEnvironment(simulator)
             if error.domain == NSPOSIXErrorDomain {
-                return
-                    "iOS シミュレータの不具合により、シミュレータではアイコン切替が動作しません。実機ではご利用いただけます。\n(OS error: \(error.localizedDescription))"
+                return String(
+                    localized:
+                        "iOS シミュレータの不具合により、シミュレータではアイコン切替が動作しません。実機ではご利用いただけます。\n(OS error: \(error.localizedDescription))"
+                )
             }
         #endif
         return "\(error.localizedDescription)\n(domain: \(error.domain), code: \(error.code))"

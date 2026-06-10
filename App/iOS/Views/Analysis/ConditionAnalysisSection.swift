@@ -15,24 +15,24 @@ struct ConditionAnalysisSection: View {
     var body: some View {
         VStack(spacing: OikomiSpacing.l) {
             chartCard(
-                title: "HRV（心拍変動）",
-                subtitle: "直近 30 日",
+                title: String(localized: "HRV（心拍変動）"),
+                subtitle: String(localized: "直近 30 日"),
                 unit: "ms",
                 series: hrvSeries,
                 tint: OikomiColor.statPink,
                 systemImage: "waveform.path.ecg"
             )
             chartCard(
-                title: "安静時心拍",
-                subtitle: "直近 30 日",
+                title: String(localized: "安静時心拍"),
+                subtitle: String(localized: "直近 30 日"),
                 unit: "bpm",
                 series: rhrSeries,
                 tint: OikomiColor.statRed,
                 systemImage: "heart.fill"
             )
             chartCard(
-                title: "睡眠時間",
-                subtitle: "直近 14 日",
+                title: String(localized: "睡眠時間"),
+                subtitle: String(localized: "直近 14 日"),
                 unit: "h",
                 series: sleepSeries,
                 tint: OikomiColor.statIndigo,

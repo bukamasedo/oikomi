@@ -25,7 +25,7 @@ struct RestSecondsPickerSheet: View {
         seconds: Binding<Int?>,
         allowsDefault: Bool,
         defaultValueForDisplay: Int = 90,
-        title: String = "レスト時間"
+        title: String = String(localized: "レスト時間")
     ) {
         self._seconds = seconds
         self.allowsDefault = allowsDefault
@@ -73,7 +73,7 @@ struct RestSecondsPickerSheet: View {
     }
 
     static func formatLabel(_ s: Int) -> String {
-        if s == 0 { return "なし" }
-        return "\(s) 秒"
+        if s == 0 { return String(localized: "なし") }
+        return String(localized: "\(s) 秒")
     }
 }

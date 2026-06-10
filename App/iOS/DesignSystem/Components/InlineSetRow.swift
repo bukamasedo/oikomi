@@ -55,7 +55,7 @@ struct InlineSetRow: View {
             }
             .buttonStyle(.plain)
             .disabled(onToggleComplete == nil)
-            .accessibilityLabel("セット \(indexInGroup)。タップで完了切り替え")
+            .accessibilityLabel(String(localized: "セット \(indexInGroup)。タップで完了切り替え"))
         }
         .padding(.vertical, OikomiSpacing.s)
     }
@@ -73,7 +73,7 @@ struct InlineSetRow: View {
             if rest > 0 {
                 HStack(spacing: 2) {
                     Image(systemName: "timer")
-                    Text("\(rest)秒")
+                    Text(String(localized: "\(rest)秒"))
                         .monospacedDigit()
                 }
                 .font(.caption2)
@@ -88,7 +88,7 @@ struct InlineSetRow: View {
             Text("\(WeightFormatter.string(kilograms: weight, in: weightUnit)) × \(reps)")
                 .font(OikomiFont.setValue)
         } else if let reps = set.reps {
-            Text("\(reps) レップ（自重）")
+            Text(String(localized: "\(reps) レップ（自重）"))
                 .font(OikomiFont.setValue)
         } else {
             Text("—")

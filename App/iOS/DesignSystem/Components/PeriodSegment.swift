@@ -10,11 +10,11 @@ struct PeriodSegment: View {
 
         var label: String {
             switch self {
-            case .day: return "日"
-            case .week: return "週"
-            case .month: return "月"
-            case .year: return "年"
-            case .all: return "全て"
+            case .day: return String(localized: "日")
+            case .week: return String(localized: "週")
+            case .month: return String(localized: "月")
+            case .year: return String(localized: "年")
+            case .all: return String(localized: "全て")
             }
         }
     }

@@ -55,7 +55,7 @@ struct WorkoutTabView: View {
                 }
             }
             .background(OikomiColor.appBackground)
-            .navigationTitle(activeSession?.routine?.name ?? "トレーニング")
+            .navigationTitle(activeSession?.routine?.name ?? String(localized: "トレーニング"))
             .alert("エラー", isPresented: .constant(errorMessage != nil)) {
                 Button("OK") { errorMessage = nil }
             } message: {
@@ -80,8 +80,8 @@ struct WorkoutTabView: View {
 
                 if routines.isEmpty {
                     OikomiEmptyState(
-                        title: "ルーティンがありません",
-                        message: "よく使うトレーニングをルーティンとして保存しておくと、ワンタップで始められます。",
+                        title: String(localized: "ルーティンがありません"),
+                        message: String(localized: "よく使うトレーニングをルーティンとして保存しておくと、ワンタップで始められます。"),
                         systemImage: "list.bullet.clipboard",
                         tint: OikomiColor.brandPrimary
                     ) {
@@ -274,7 +274,7 @@ struct WorkoutTabView: View {
                     }
                 } message: { pending in
                     Text(
-                        "「\(pending.exercise.name)」とこのセッション内の \(pending.setCount) 件のセットを削除します。"
+                        "「\(pending.exercise.localizedName)」とこのセッション内の \(pending.setCount) 件のセットを削除します。"
                     )
                 }
         }
@@ -440,8 +440,9 @@ struct WorkoutTabView: View {
             // なぜ更新を勧めるのか: 上昇トレンドと、狙える推定 PR を根拠として明示する。
             let predictedText = WeightFormatter.oneRM(
                 kilograms: prediction.predictedOneRM, in: weightUnit)
-            let reason =
-                "直近\(prediction.sessionCount)セッションが上昇トレンド。推定 \(predictedText) の PR を狙える重さです。"
+            let reason = String(
+                localized:
+                    "直近\(prediction.sessionCount)セッションが上昇トレンド。推定 \(predictedText) の PR を狙える重さです。")
 
             result[prediction.exerciseId] = WeightUpdateSuggestion(
                 kilograms: recommendedKg, reason: reason)
@@ -460,7 +461,7 @@ struct WorkoutTabView: View {
                 try repo.updateSet(set, weight: newKg, reps: set.reps)
             }
         } catch {
-            errorMessage = "重さの更新に失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "重さの更新に失敗: \(error.localizedDescription)")
         }
     }
 
@@ -479,7 +480,7 @@ struct WorkoutTabView: View {
                 RestTimerNotifier.scheduleRestEnd(at: endAt)
             }
         } catch {
-            errorMessage = "完了に失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "完了に失敗: \(error.localizedDescription)")
         }
     }
 
@@ -494,7 +495,7 @@ struct WorkoutTabView: View {
                 RestTimerNotifier.cancel()
             }
         } catch {
-            errorMessage = "戻すのに失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "戻すのに失敗: \(error.localizedDescription)")
         }
     }
 
@@ -503,7 +504,7 @@ struct WorkoutTabView: View {
         do {
             try repo.deleteSet(set)
         } catch {
-            errorMessage = "削除に失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "削除に失敗: \(error.localizedDescription)")
         }
     }
 
@@ -512,7 +513,7 @@ struct WorkoutTabView: View {
         do {
             try repo.deleteExercise(exercise, from: session)
         } catch {
-            errorMessage = "削除に失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "削除に失敗: \(error.localizedDescription)")
         }
     }
 
@@ -521,7 +522,7 @@ struct WorkoutTabView: View {
         do {
             try sessionRepo.startSession(routine: routine)
         } catch {
-            errorMessage = "開始に失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "開始に失敗: \(error.localizedDescription)")
         }
     }
 
@@ -532,7 +533,7 @@ struct WorkoutTabView: View {
                 try await repo.finishSession(session)
                 restStore.cancel()
             } catch {
-                errorMessage = "終了に失敗: \(error.localizedDescription)"
+                errorMessage = String(localized: "終了に失敗: \(error.localizedDescription)")
             }
         }
     }
@@ -542,7 +543,7 @@ struct WorkoutTabView: View {
         do {
             try repo.deleteRoutine(routine)
         } catch {
-            errorMessage = "削除に失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "削除に失敗: \(error.localizedDescription)")
         }
     }
 }

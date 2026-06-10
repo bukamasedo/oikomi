@@ -204,11 +204,13 @@ struct RoutineEditorView: View {
         )
     }
 
-    /// 1=日, 2=月, ... 7=土
+    /// 1=日, 2=月, ... 7=土。ラベルはロケール対応の短縮曜日名を使う
+    /// （英語=Sun/Mon/…、日本語=日/月/…）。単独「月」「日」は Localizable 上で
+    /// 期間（Month/Day）と衝突するため、曜日はカタログを介さず Calendar から取る。
     private var weekdayOptions: [(weekday: Int, label: String)] {
-        [
-            (1, "日"), (2, "月"), (3, "火"), (4, "水"), (5, "木"), (6, "金"), (7, "土"),
-        ]
+        // shortWeekdaySymbols は index 0 = 日曜（firstWeekday に依らず固定）。
+        let symbols = Calendar.current.shortWeekdaySymbols
+        return (1...7).map { (weekday: $0, label: symbols[$0 - 1]) }
     }
 
     @ViewBuilder
@@ -298,7 +300,7 @@ struct RoutineEditorView: View {
             try repo.setScheduledWeekdays(Array(scheduledWeekdays), for: routine)
             dismiss()
         } catch {
-            errorMessage = "保存に失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "保存に失敗: \(error.localizedDescription)")
         }
     }
 }
@@ -336,7 +338,7 @@ private struct RoutineExerciseDraftCard: View {
 
             if showsWeight {
                 valueRow(
-                    label: "重量",
+                    label: String(localized: "重量"),
                     valueText: WeightFormatter.string(
                         kilograms: draft.plannedWeight ?? weightUnit.defaultInitialKilograms,
                         in: weightUnit)
@@ -345,19 +347,19 @@ private struct RoutineExerciseDraftCard: View {
             }
 
             valueRow(
-                label: "レップ",
-                valueText: "\(draft.plannedReps) 回"
+                label: String(localized: "レップ"),
+                valueText: String(localized: "\(draft.plannedReps) 回")
             ) { onEditField(.reps) }
             Divider().padding(.leading, OikomiSpacing.l * 2)
 
             valueRow(
-                label: "セット数",
-                valueText: "\(draft.plannedSets) セット"
+                label: String(localized: "セット数"),
+                valueText: String(localized: "\(draft.plannedSets) セット")
             ) { onEditField(.sets) }
             Divider().padding(.leading, OikomiSpacing.l * 2)
 
             valueRow(
-                label: "レスト",
+                label: String(localized: "レスト"),
                 valueText: restValueLabel()
             ) { onEditField(.rest) }
         }
@@ -391,7 +393,7 @@ private struct RoutineExerciseDraftCard: View {
     private var header: some View {
         HStack(spacing: OikomiSpacing.s) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(draft.exercise.name)
+                Text(draft.exercise.localizedName)
                     .font(.headline)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -424,7 +426,8 @@ private struct RoutineExerciseDraftCard: View {
         if let override = draft.plannedRestSeconds {
             return RestSecondsPickerSheet.formatLabel(override)
         }
-        return "デフォルト (\(RestSecondsPickerSheet.formatLabel(draft.exercise.defaultRestSeconds)))"
+        return String(
+            localized: "デフォルト (\(RestSecondsPickerSheet.formatLabel(draft.exercise.defaultRestSeconds)))")
     }
 
     @ViewBuilder
@@ -495,10 +498,10 @@ private enum ValueField {
     case weight, reps, sets, rest
     var title: String {
         switch self {
-        case .weight: "重量"
-        case .reps: "レップ"
-        case .sets: "セット"
-        case .rest: "レスト"
+        case .weight: String(localized: "重量")
+        case .reps: String(localized: "レップ")
+        case .sets: String(localized: "セット")
+        case .rest: String(localized: "レスト")
         }
     }
 }
@@ -530,7 +533,7 @@ private struct SingleValueSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: OikomiSpacing.l) {
-                Text(draft.exercise.name)
+                Text(draft.exercise.localizedName)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.top, OikomiSpacing.s)
@@ -556,7 +559,7 @@ private struct SingleValueSheet: View {
         switch field {
         case .weight:
             WeightStepperField(
-                title: "重量",
+                title: String(localized: "重量"),
                 kilograms: Binding(
                     get: { draft.plannedWeight ?? weightUnit.defaultInitialKilograms },
                     set: { draft.plannedWeight = $0 }
@@ -565,7 +568,7 @@ private struct SingleValueSheet: View {
             )
         case .reps:
             NumericStepperField(
-                title: "レップ",
+                title: String(localized: "レップ"),
                 value: Binding(
                     get: { Double(draft.plannedReps) },
                     set: { draft.plannedReps = Int($0) }
@@ -573,11 +576,11 @@ private struct SingleValueSheet: View {
                 range: 1...100,
                 step: 1,
                 formatter: { "\(Int($0))" },
-                unit: "回"
+                unit: String(localized: "回")
             )
         case .sets:
             NumericStepperField(
-                title: "セット",
+                title: String(localized: "セット"),
                 value: Binding(
                     get: { Double(draft.plannedSets) },
                     set: { draft.plannedSets = Int($0) }
@@ -585,7 +588,7 @@ private struct SingleValueSheet: View {
                 range: 1...20,
                 step: 1,
                 formatter: { "\(Int($0))" },
-                unit: "セット"
+                unit: String(localized: "セット")
             )
         case .rest:
             // 表示値: 上書きがあればそれを、無ければ種目デフォルトを採用。
@@ -593,15 +596,15 @@ private struct SingleValueSheet: View {
             let displayed = draft.plannedRestSeconds ?? draft.exercise.defaultRestSeconds
             VStack(alignment: .leading, spacing: OikomiSpacing.xs) {
                 NumericStepperField(
-                    title: "レスト",
+                    title: String(localized: "レスト"),
                     value: Binding(
                         get: { Double(displayed) },
                         set: { draft.plannedRestSeconds = max(0, Int($0)) }
                     ),
                     range: 0...600,
                     step: 15,
-                    formatter: { Int($0) == 0 ? "なし" : "\(Int($0))" },
-                    unit: Int(displayed) == 0 ? "" : "秒"
+                    formatter: { Int($0) == 0 ? String(localized: "なし") : "\(Int($0))" },
+                    unit: Int(displayed) == 0 ? "" : String(localized: "秒")
                 )
                 if draft.plannedRestSeconds != nil,
                     draft.plannedRestSeconds != draft.exercise.defaultRestSeconds

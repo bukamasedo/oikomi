@@ -18,6 +18,9 @@ settings:
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     SWIFT_STRICT_CONCURRENCY: complete
     GENERATE_INFOPLIST_FILE: NO
+    # ビルド時に Swift ソースから LocalizedStringKey / String(localized:) を
+    # 抽出して Localizable.xcstrings に同期できるようにする（多言語対応）。
+    SWIFT_EMIT_LOC_STRINGS: YES
 
 packages:
   OikomiKit:
@@ -43,6 +46,9 @@ targets:
       properties:
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "12"
+        CFBundleLocalizations:
+          - ja
+          - en
         ITSAppUsesNonExemptEncryption: false
         NSHealthShareUsageDescription: "トレーニング負荷とコンディションを可視化するため、HRV・安静時心拍数・睡眠時間・体重・体脂肪率・除脂肪体重を読み取ります。読み取ったデータはオンデバイスで処理され、iCloud 同期を有効にした場合のみご自身のプライベート iCloud に保存されます。第三者への送信は行いません。"
         NSHealthUpdateUsageDescription: "完了したワークアウトを「ヘルスケア」に保存し、Apple Watch のアクティビティリングに反映します。"
@@ -113,6 +119,9 @@ targets:
         CFBundleDisplayName: Oikomi Widgets
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "12"
+        CFBundleLocalizations:
+          - ja
+          - en
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
@@ -142,6 +151,9 @@ targets:
       properties:
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "12"
+        CFBundleLocalizations:
+          - ja
+          - en
         ITSAppUsesNonExemptEncryption: false
         WKApplication: true
         WKBackgroundModes:
@@ -181,6 +193,9 @@ targets:
         CFBundleDisplayName: Oikomi Watch Widgets
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "12"
+        CFBundleLocalizations:
+          - ja
+          - en
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:

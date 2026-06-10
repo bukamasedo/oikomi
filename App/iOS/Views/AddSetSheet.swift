@@ -45,8 +45,8 @@ struct AddSetSheet: View {
     }
 
     private var navTitle: String {
-        if isEditing { return "セット編集" }
-        return planMode ? "計画セット" : "セット追加"
+        if isEditing { return String(localized: "セット編集") }
+        return planMode ? String(localized: "計画セット") : String(localized: "セット追加")
     }
 
     var body: some View {
@@ -57,14 +57,14 @@ struct AddSetSheet: View {
                     if selectedExercise != nil {
                         if !useBodyweight {
                             WeightStepperField(
-                                title: "重量",
+                                title: String(localized: "重量"),
                                 kilograms: $weight,
                                 unit: weightUnit,
                                 deltaKilograms: previousWeight.map { weight - $0 }
                             )
                         }
                         NumericStepperField(
-                            title: "レップ",
+                            title: String(localized: "レップ"),
                             value: Binding(
                                 get: { Double(reps) },
                                 set: { reps = Int($0) }
@@ -72,7 +72,7 @@ struct AddSetSheet: View {
                             range: 1...100,
                             step: 1,
                             formatter: { "\(Int($0))" },
-                            unit: "回",
+                            unit: String(localized: "回"),
                             delta: previousReps.map { Double(reps - $0) }
                         )
                         restCard
@@ -132,7 +132,7 @@ struct AddSetSheet: View {
                     Text("種目")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
-                    Text(selectedExercise?.name ?? "選択してください")
+                    Text(selectedExercise?.localizedName ?? String(localized: "選択してください"))
                         .font(.headline)
                         .foregroundStyle(selectedExercise == nil ? .secondary : .primary)
                 }
@@ -164,12 +164,12 @@ struct AddSetSheet: View {
         )
         VStack(alignment: .leading, spacing: OikomiSpacing.xs) {
             NumericStepperField(
-                title: "レスト",
+                title: String(localized: "レスト"),
                 value: binding,
                 range: 0...600,
                 step: 15,
-                formatter: { Int($0) == 0 ? "なし" : "\(Int($0))" },
-                unit: Int(displayed) == 0 ? "" : "秒"
+                formatter: { Int($0) == 0 ? String(localized: "なし") : "\(Int($0))" },
+                unit: Int(displayed) == 0 ? "" : String(localized: "秒")
             )
             if restOverride != nil,
                 let def = selectedExercise?.defaultRestSeconds, def != restOverride
@@ -299,7 +299,7 @@ struct AddSetSheet: View {
             onSaved?(saved)
             dismiss()
         } catch {
-            errorMessage = "保存に失敗: \(error.localizedDescription)"
+            errorMessage = String(localized: "保存に失敗: \(error.localizedDescription)")
         }
     }
 }

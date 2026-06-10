@@ -82,10 +82,12 @@ struct ExercisePickerSheet: View {
                 Group {
                     if isEmpty {
                         OikomiEmptyState(
-                            title: "種目が見つかりません",
+                            title: String(localized: "種目が見つかりません"),
                             message: trimmedSearch.isEmpty
-                                ? "検索ワードやフィルタを調整してください"
-                                : "「\(trimmedSearch)」はライブラリにありません。カスタム種目として作成できます。",
+                                ? String(localized: "検索ワードやフィルタを調整してください")
+                                : String(
+                                    localized:
+                                        "「\(trimmedSearch)」はライブラリにありません。カスタム種目として作成できます。"),
                             systemImage: "magnifyingglass",
                             tint: OikomiColor.brandPrimary
                         ) {
@@ -108,7 +110,7 @@ struct ExercisePickerSheet: View {
                                     }
                                 }
                             }
-                            Section(result.favorites.isEmpty ? "" : "すべての種目") {
+                            Section(result.favorites.isEmpty ? "" : String(localized: "すべての種目")) {
                                 ForEach(result.others) { exercise in
                                     exerciseRowButton(exercise)
                                 }
@@ -158,11 +160,11 @@ struct ExercisePickerSheet: View {
     private var filterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                chip(label: "すべて", isSelected: selectedFilter == nil && !favoritesOnly) {
+                chip(label: String(localized: "すべて"), isSelected: selectedFilter == nil && !favoritesOnly) {
                     selectedFilter = nil
                     favoritesOnly = false
                 }
-                chip(label: "★ お気に入り", isSelected: favoritesOnly) {
+                chip(label: String(localized: "★ お気に入り"), isSelected: favoritesOnly) {
                     favoritesOnly.toggle()
                     if favoritesOnly { selectedFilter = nil }
                 }
@@ -224,7 +226,7 @@ struct ExercisePickerSheet: View {
     @ViewBuilder
     private func row(_ exercise: Exercise) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(exercise.name)
+            Text(exercise.localizedName)
                 .foregroundStyle(.primary)
                 .font(.body)
             HStack(spacing: 8) {
@@ -248,14 +250,14 @@ struct ExercisePickerSheet: View {
 
     private func equipmentLabel(_ equipment: Equipment) -> String {
         switch equipment {
-        case .barbell: return "バーベル"
-        case .dumbbell: return "ダンベル"
-        case .machine: return "マシン"
-        case .cable: return "ケーブル"
-        case .bodyweight: return "自重"
-        case .kettlebell: return "ケトルベル"
-        case .band: return "バンド"
-        case .other: return "その他"
+        case .barbell: return String(localized: "バーベル")
+        case .dumbbell: return String(localized: "ダンベル")
+        case .machine: return String(localized: "マシン")
+        case .cable: return String(localized: "ケーブル")
+        case .bodyweight: return String(localized: "自重")
+        case .kettlebell: return String(localized: "ケトルベル")
+        case .band: return String(localized: "バンド")
+        case .other: return String(localized: "その他")
         }
     }
 }

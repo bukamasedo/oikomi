@@ -7,7 +7,7 @@ struct ProLockTile: View {
     let title: String
     let message: String
     var systemImage: String = "lock.fill"
-    var ctaLabel: String = "Pro にアップグレード"
+    var ctaLabel: String = String(localized: "Pro にアップグレード")
     var onUpgrade: (() -> Void)? = nil
 
     var body: some View {

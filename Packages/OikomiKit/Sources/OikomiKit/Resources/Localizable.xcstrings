@@ -1,0 +1,1052 @@
+{
+  "sourceLanguage": "ja",
+  "strings": {
+    " など": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " and more"
+          }
+        }
+      }
+    },
+    "%@ が今週 MEV 未満です。来週は各 +1〜2 セット増やしましょう。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ are below MEV this week. Add 1–2 sets each next week."
+          }
+        }
+      }
+    },
+    "%@ が回復済みです。次のトレーニング候補です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ are recovered — good candidates for your next session."
+          }
+        }
+      }
+    },
+    "%@ は来週 +1〜2 セットで MAV に向けて漸進できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ can progress toward MAV with 1–2 more sets next week."
+          }
+        }
+      }
+    },
+    "%@ 狙い": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Targeting %@"
+          }
+        }
+      }
+    },
+    "%@はここ%lldセッションほぼ横ばいです。レップ域・頻度・種目の変更を検討してください。": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@はここ%2$lldセッションほぼ横ばいです。レップ域・頻度・種目の変更を検討してください。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ has been flat for about %2$lld sessions. Consider changing your rep range, frequency, or exercise."
+          }
+        }
+      }
+    },
+    "%@は直近2回とも余裕（RPE %lld 以下）でした。次回は %@ → %@ を目安に。": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@は直近2回とも余裕（RPE %2$lld 以下）でした。次回は %3$@ → %4$@ を目安に。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ felt easy (RPE %2$lld or below) the last two times. Next time aim for %3$@ → %4$@."
+          }
+        }
+      }
+    },
+    "%@は直近2回とも高強度（RPE %lld 以上）でした。次回は %@ → %@ を目安に。": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@は直近2回とも高強度（RPE %2$lld 以上）でした。次回は %3$@ → %4$@ を目安に。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ was high-intensity (RPE %2$lld+) the last two times. Next time aim for %3$@ → %4$@."
+          }
+        }
+      }
+    },
+    "%@を今週から再開しました。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've resumed %@ this week."
+          }
+        }
+      }
+    },
+    "%lld 日連続でトレーニングしています。回復のために 1 日空けることも検討してください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've trained %lld days in a row. Consider taking a day off to recover."
+          }
+        }
+      }
+    },
+    "AI コーチングは Pro 限定機能です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI coaching is a Pro-only feature."
+          }
+        }
+      }
+    },
+    "CSV エクスポート": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CSV Export"
+          }
+        }
+      }
+    },
+    "Free は 5 / 5 まで。Pro は数の上限なし": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free is limited to 5 / 5. Pro has no limit."
+          }
+        }
+      }
+    },
+    "Free プランで作成できるカスタム種目は %lld 個までです。Pro にアップグレードすると無制限になります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Free plan allows up to %lld custom exercises. Upgrade to Pro for unlimited custom exercises."
+          }
+        }
+      }
+    },
+    "Free プランで作成できるルーティンは %lld 個までです。Pro にアップグレードすると無制限になります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Free plan allows up to %lld routines. Upgrade to Pro for unlimited routines."
+          }
+        }
+      }
+    },
+    "HRV 低下を検知したら強度を落とすよう促します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prompts you to ease off when a drop in HRV is detected."
+          }
+        }
+      }
+    },
+    "HRV 低下を検知して自動ディロード推奨、ボリューム過多警告も自動表示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detects HRV drops to auto-suggest deloads and flags excessive volume automatically."
+          }
+        }
+      }
+    },
+    "HRV 連動 AI コーチング": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRV-Based AI Coaching"
+          }
+        }
+      }
+    },
+    "HRV 連動ディロード推奨": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRV-Based Deload Suggestion"
+          }
+        }
+      }
+    },
+    "HRV・睡眠データの読み取りは Pro 限定機能です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading HRV and sleep data is a Pro-only feature."
+          }
+        }
+      }
+    },
+    "HRV・睡眠・安静時心拍数で日々のトレーニング負荷を自動調整": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto-adjusts daily training load using HRV, sleep, and resting heart rate."
+          }
+        }
+      }
+    },
+    "HealthKit 詳細読み取り": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detailed HealthKit Access"
+          }
+        }
+      }
+    },
+    "Live Activity は Pro 限定機能です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live Activity is a Pro-only feature."
+          }
+        }
+      }
+    },
+    "MEV未達": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Below MEV"
+          }
+        }
+      }
+    },
+    "PR 予測": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PR Prediction"
+          }
+        }
+      }
+    },
+    "PR 更新の可能性": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Possible PR"
+          }
+        }
+      }
+    },
+    "iCloud 同期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Sync"
+          }
+        }
+      }
+    },
+    "iCloud 同期は Pro 限定機能です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud sync is a Pro-only feature."
+          }
+        }
+      }
+    },
+    "iPhone・Apple Watch・Mac・iPad の全デバイスでデータを共有": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share your data across iPhone, Apple Watch, Mac, and iPad."
+          }
+        }
+      }
+    },
+    "ふくらはぎ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calves"
+          }
+        }
+      }
+    },
+    "オーバーワーク注意": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overwork warning"
+          }
+        }
+      }
+    },
+    "キログラム": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kilograms"
+          }
+        }
+      }
+    },
+    "コンディションスコアが %lld と低めです。前回比 80%% 程度の重量で軽めに組むことを検討してください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your condition score is %lld, which is on the low side. Consider going lighter at about 80%% of last time."
+          }
+        }
+      }
+    },
+    "コンディションスコアが %lld と好調です。PR を狙える日です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your condition score is %lld — you're in great shape. A good day to go for a PR."
+          }
+        }
+      }
+    },
+    "コンディション良好": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Great condition"
+          }
+        }
+      }
+    },
+    "スポーツドリンク 1 本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A sports drink"
+          }
+        }
+      }
+    },
+    "セッションが 90 分以上アイドルだとリマインドします。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminds you when a session has been idle for over 90 minutes."
+          }
+        }
+      }
+    },
+    "セット間レストが終わったら知らせます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifies you when your rest between sets is over."
+          }
+        }
+      }
+    },
+    "ディロード推奨": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deload recommended"
+          }
+        }
+      }
+    },
+    "データエクスポートは Pro 限定機能です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data export is a Pro-only feature."
+          }
+        }
+      }
+    },
+    "トライアル残日数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trial Days Remaining"
+          }
+        }
+      }
+    },
+    "トライアル終了 3 日前と当日に確認を送ります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sends a reminder 3 days before and on the day your trial ends."
+          }
+        }
+      }
+    },
+    "ハムストリング": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hamstrings"
+          }
+        }
+      }
+    },
+    "プロテイン 1 杯": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A protein shake"
+          }
+        }
+      }
+    },
+    "ボリューム不足": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume too low"
+          }
+        }
+      }
+    },
+    "ポンド": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pounds"
+          }
+        }
+      }
+    },
+    "ルーティン・カスタム種目 無制限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlimited Routines & Custom Exercises"
+          }
+        }
+      }
+    },
+    "レストタイマー終了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest Timer Finished"
+          }
+        }
+      }
+    },
+    "ワークアウト終了忘れ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forgotten Workout"
+          }
+        }
+      }
+    },
+    "・": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", "
+          }
+        }
+      }
+    },
+    "上級者": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced"
+          }
+        }
+      }
+    },
+    "上腕三頭筋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triceps"
+          }
+        }
+      }
+    },
+    "上腕二頭筋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biceps"
+          }
+        }
+      }
+    },
+    "中級者": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intermediate"
+          }
+        }
+      }
+    },
+    "今日は回復優先": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prioritize recovery today"
+          }
+        }
+      }
+    },
+    "今週から再開": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resumed this week"
+          }
+        }
+      }
+    },
+    "今週の%@は先週とほぼ同じボリュームを維持できています。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're keeping %@ at about the same volume as last week."
+          }
+        }
+      }
+    },
+    "今週の%@トレが先週比%lld%%です。回復を意識しましょう。": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "今週の%1$@トレが先週比%2$lld%%です。回復を意識しましょう。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your %1$@ volume is %2$lld%% of last week. Keep recovery in mind."
+          }
+        }
+      }
+    },
+    "今週の%@トレは先週比%lld%%です。追加できる余地があります。": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "今週の%1$@トレは先週比%2$lld%%です。追加できる余地があります。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your %1$@ volume is %2$lld%% of last week. There's room to add more."
+          }
+        }
+      }
+    },
+    "今週の総ボリュームが過去3週平均の %lld%% です。来週は強度を 80%% 程度に落とすことを検討してください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week's total volume is %lld%% of your 3-week average. Consider dropping intensity to about 80%% next week."
+          }
+        }
+      }
+    },
+    "休息日を入れましょう": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take a rest day"
+          }
+        }
+      }
+    },
+    "体重が +%@ kg/月 で増加中。PR を伸ばしやすい時期です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your weight is rising at +%@ kg/month — a good time to push PRs."
+          }
+        }
+      }
+    },
+    "体重が -%@ kg/月 で減少中。筋力を維持できていれば成功です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your weight is dropping at -%@ kg/month — maintaining strength means you're succeeding."
+          }
+        }
+      }
+    },
+    "停滞ぎみ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plateauing"
+          }
+        }
+      }
+    },
+    "先週比 %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% of last week"
+          }
+        }
+      }
+    },
+    "全履歴を CSV ファイルに書き出して他アプリと共有": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export your full history to a CSV file to share with other apps."
+          }
+        }
+      }
+    },
+    "全身": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full Body"
+          }
+        }
+      }
+    },
+    "初心者": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginner"
+          }
+        }
+      }
+    },
+    "前腕": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forearms"
+          }
+        }
+      }
+    },
+    "回復済みの部位": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recovered muscle groups"
+          }
+        }
+      }
+    },
+    "増量期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulk"
+          }
+        }
+      }
+    },
+    "夜 (19:00)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Evening (19:00)"
+          }
+        }
+      }
+    },
+    "大腿四頭筋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quads"
+          }
+        }
+      }
+    },
+    "安定したペース": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steady pace"
+          }
+        }
+      }
+    },
+    "新しい部位": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New muscle group"
+          }
+        }
+      }
+    },
+    "日曜の指定時刻に今週の総ボリュームを送ります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sends this week's total volume at the set time on Sunday."
+          }
+        }
+      }
+    },
+    "昼 (12:00)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noon (12:00)"
+          }
+        }
+      }
+    },
+    "朝 (7:00)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morning (7:00)"
+          }
+        }
+      }
+    },
+    "横ばい %lld 回": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flat ×%lld"
+          }
+        }
+      }
+    },
+    "次回%@で推定 %@（±%lldkg）の PR を狙えます（直近%lldセッションの上昇トレンドより）。": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "次回%1$@で推定 %2$@（±%3$lldkg）の PR を狙えます（直近%4$lldセッションの上昇トレンドより）。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next time on %1$@ you could hit an estimated %2$@ (±%3$lldkg) PR, based on your upward trend over the last %4$lld sessions."
+          }
+        }
+      }
+    },
+    "減量期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cut"
+          }
+        }
+      }
+    },
+    "漸進的に増やす": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progress gradually"
+          }
+        }
+      }
+    },
+    "焼肉チートデイ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A BBQ cheat day"
+          }
+        }
+      }
+    },
+    "直近セッションのトレンドから次回 PR を予測、推定 1RM の推移も可視化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predicts your next PR from recent session trends and visualizes estimated 1RM over time."
+          }
+        }
+      }
+    },
+    "筋力": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strength"
+          }
+        }
+      }
+    },
+    "筋肥大": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hypertrophy"
+          }
+        }
+      }
+    },
+    "維持": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintenance"
+          }
+        }
+      }
+    },
+    "維持期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintenance"
+          }
+        }
+      }
+    },
+    "線形回帰 PR 予測": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Linear-Regression PR Prediction"
+          }
+        }
+      }
+    },
+    "翌日のルーティンで PR 圏内の種目があると朝に通知します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifies you in the morning when tomorrow's routine has an exercise within PR range."
+          }
+        }
+      }
+    },
+    "肩": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoulders"
+          }
+        }
+      }
+    },
+    "背中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "胸": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chest"
+          }
+        }
+      }
+    },
+    "腹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abs"
+          }
+        }
+      }
+    },
+    "腹斜筋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obliques"
+          }
+        }
+      }
+    },
+    "臀部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glutes"
+          }
+        }
+      }
+    },
+    "週次サマリ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly Summary"
+          }
+        }
+      }
+    },
+    "重量を上げてみましょう": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try adding weight"
+          }
+        }
+      }
+    },
+    "重量を少し下げましょう": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ease off the weight a little"
+          }
+        }
+      }
+    },
+    "高度な分析は Pro 限定機能です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced analytics is a Pro-only feature."
+          }
+        }
+      }
+    },
+    "鶏胸肉 200g": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "200g chicken breast"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

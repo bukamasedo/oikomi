@@ -16,7 +16,10 @@ let package = Package(
     targets: [
         .target(
             name: "OikomiKit",
-            path: "Sources/OikomiKit"
+            path: "Sources/OikomiKit",
+            resources: [
+                .process("Resources/Localizable.xcstrings")
+            ]
         ),
         .testTarget(
             name: "OikomiKitTests",

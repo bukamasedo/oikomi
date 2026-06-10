@@ -12,24 +12,24 @@ public enum NotificationKind: String, CaseIterable, Sendable {
     /// 設定タブで表示するラベル。
     public var displayName: String {
         switch self {
-        case .rest: return "レストタイマー終了"
-        case .weekly: return "週次サマリ"
-        case .prPrediction: return "PR 予測"
-        case .hrvDeload: return "HRV 連動ディロード推奨"
-        case .forgottenSession: return "ワークアウト終了忘れ"
-        case .trial: return "トライアル残日数"
+        case .rest: return loc("レストタイマー終了")
+        case .weekly: return loc("週次サマリ")
+        case .prPrediction: return loc("PR 予測")
+        case .hrvDeload: return loc("HRV 連動ディロード推奨")
+        case .forgottenSession: return loc("ワークアウト終了忘れ")
+        case .trial: return loc("トライアル残日数")
         }
     }
 
     /// 設定タブで表示する補足説明。
     public var description: String {
         switch self {
-        case .rest: return "セット間レストが終わったら知らせます。"
-        case .weekly: return "日曜の指定時刻に今週の総ボリュームを送ります。"
-        case .prPrediction: return "翌日のルーティンで PR 圏内の種目があると朝に通知します。"
-        case .hrvDeload: return "HRV 低下を検知したら強度を落とすよう促します。"
-        case .forgottenSession: return "セッションが 90 分以上アイドルだとリマインドします。"
-        case .trial: return "トライアル終了 3 日前と当日に確認を送ります。"
+        case .rest: return loc("セット間レストが終わったら知らせます。")
+        case .weekly: return loc("日曜の指定時刻に今週の総ボリュームを送ります。")
+        case .prPrediction: return loc("翌日のルーティンで PR 圏内の種目があると朝に通知します。")
+        case .hrvDeload: return loc("HRV 低下を検知したら強度を落とすよう促します。")
+        case .forgottenSession: return loc("セッションが 90 分以上アイドルだとリマインドします。")
+        case .trial: return loc("トライアル終了 3 日前と当日に確認を送ります。")
         }
     }
 
@@ -59,9 +59,9 @@ public enum NotificationTimePreset: Int, CaseIterable, Sendable, Identifiable {
 
     public var displayName: String {
         switch self {
-        case .morning: return "朝 (7:00)"
-        case .noon: return "昼 (12:00)"
-        case .evening: return "夜 (19:00)"
+        case .morning: return loc("朝 (7:00)")
+        case .noon: return loc("昼 (12:00)")
+        case .evening: return loc("夜 (19:00)")
         }
     }
 }

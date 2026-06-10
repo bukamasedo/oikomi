@@ -114,7 +114,7 @@ struct CustomExerciseFormSheet: View {
                         set: { pendingRestSeconds = $0 }
                     ),
                     allowsDefault: false,
-                    title: "デフォルトレスト"
+                    title: String(localized: "デフォルトレスト")
                 )
                 .presentationDetents([.height(360)])
                 .presentationDragIndicator(.visible)
@@ -160,22 +160,24 @@ struct CustomExerciseFormSheet: View {
             onCreated(exercise)
             dismiss()
         } catch let error as ProGateError {
-            alertMessage = (error.errorDescription ?? "") + "\n\n設定 > Pro にアップグレードから加入できます。"
+            alertMessage =
+                (error.errorDescription ?? "")
+                + String(localized: "\n\n設定 > Pro にアップグレードから加入できます。")
         } catch {
-            alertMessage = "保存に失敗しました: \(error.localizedDescription)"
+            alertMessage = String(localized: "保存に失敗しました: \(error.localizedDescription)")
         }
     }
 
     private func equipmentLabel(_ equipment: Equipment) -> String {
         switch equipment {
-        case .barbell: return "バーベル"
-        case .dumbbell: return "ダンベル"
-        case .machine: return "マシン"
-        case .cable: return "ケーブル"
-        case .bodyweight: return "自重"
-        case .kettlebell: return "ケトルベル"
-        case .band: return "バンド"
-        case .other: return "その他"
+        case .barbell: return String(localized: "バーベル")
+        case .dumbbell: return String(localized: "ダンベル")
+        case .machine: return String(localized: "マシン")
+        case .cable: return String(localized: "ケーブル")
+        case .bodyweight: return String(localized: "自重")
+        case .kettlebell: return String(localized: "ケトルベル")
+        case .band: return String(localized: "バンド")
+        case .other: return String(localized: "その他")
         }
     }
 }

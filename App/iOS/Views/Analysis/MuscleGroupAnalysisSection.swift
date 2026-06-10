@@ -117,9 +117,9 @@ struct MuscleGroupAnalysisSection: View {
 
     private func statusText(for status: MuscleSetCountRow.Status) -> String {
         switch status {
-        case .insufficient: return "不足"
-        case .optimal: return "適正"
-        case .excessive: return "過多"
+        case .insufficient: return String(localized: "不足")
+        case .optimal: return String(localized: "適正")
+        case .excessive: return String(localized: "過多")
         }
     }
 
@@ -195,15 +195,15 @@ struct MuscleGroupAnalysisSection: View {
 
     private func lastTrainedText(for row: MuscleRecoveryRow) -> String {
         guard let days = row.daysSinceLastTrained else { return "—" }
-        return days == 0 ? "今日" : "\(days)日前"
+        return days == 0 ? String(localized: "今日") : String(localized: "\(days)日前")
     }
 
     private func recoveryLabel(for state: RecoveryState) -> String {
         switch state {
-        case .recovered: return "回復済"
-        case .recovering: return "回復中"
-        case .fatigued: return "疲労"
-        case .untrained: return "未実施"
+        case .recovered: return String(localized: "回復済")
+        case .recovering: return String(localized: "回復中")
+        case .fatigued: return String(localized: "疲労")
+        case .untrained: return String(localized: "未実施")
         }
     }
 

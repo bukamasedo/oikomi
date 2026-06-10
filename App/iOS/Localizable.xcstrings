@@ -1,0 +1,5694 @@
+{
+  "sourceLanguage": "ja",
+  "strings": {
+    "": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ""
+          }
+        }
+      }
+    },
+    "\n\n設定 > Pro にアップグレードから加入できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\n\nYou can subscribe from Settings > Upgrade to Pro."
+          }
+        }
+      }
+    },
+    " のセッション": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " session"
+          }
+        }
+      }
+    },
+    "—": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "—"
+          }
+        }
+      }
+    },
+    "（種目不明）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(Unknown exercise)"
+          }
+        }
+      }
+    },
+    "「%@」とこのセッション内の %lld 件のセットを削除します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deletes \"%@\" and %lld sets in this session."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "「%1$@」とこのセッション内の %2$lld 件のセットを削除します。"
+          }
+        }
+      }
+    },
+    "「%@」はライブラリにありません。カスタム種目として作成できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\" is not in the library. You can create it as a custom exercise."
+          }
+        }
+      }
+    },
+    "「%@」を新規作成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create \"%@\""
+          }
+        }
+      }
+    },
+    "「1 回だけ挙げ切れる最大重量」のこと。直接測定は怪我のリスクが高いため、Oikomi は実際のセットから推定 1RM を計算します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The maximum weight you can lift for a single rep. Because directly testing it carries a high injury risk, Oikomi calculates an Estimated 1RM from your actual sets."
+          }
+        }
+      }
+    },
+    "「Hey Siri、ベンチプレスを記録」のように音声・ショートカット・スマートスタックから入力できる仕組みです。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A mechanism that lets you log via voice, Shortcuts, or Smart Stack, such as \"Hey Siri, log a bench press.\""
+          }
+        }
+      }
+    },
+    "「ヘルスケア」アプリで%@を記録すると、ここに推移が表示されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record %@ in the Health app to see the trend here."
+          }
+        }
+      }
+    },
+    "「最低限有効ボリューム」。これを下回ると筋量維持が難しくなる目安の週セット数で、部位別に設定されています。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimum Effective Volume (MEV). The approximate weekly set count below which maintaining muscle mass becomes difficult, set per muscle group."
+          }
+        }
+      }
+    },
+    "「最大適応ボリューム」。これを超えると回復が追いつかず適応がむしろ減ってしまう目安の上限値です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximum Adaptive Volume (MAV). The approximate upper limit above which recovery can't keep up and adaptation actually declines."
+          }
+        }
+      }
+    },
+    "「分析」タブと AI コーチングカードで使われる指標です。コーチング判定はオンデバイスで計算され、外部に送信されません。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A metric used in the Analytics tab and AI coaching cards. Coaching assessments are computed on-device and are never sent externally."
+          }
+        }
+      }
+    },
+    "「胸+三頭筋」「PPL: Push 日」など、複数種目をまとめたテンプレート。ホームから 1 タップで開始でき、種目順や前回重量がプリフィルされます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A template that groups multiple exercises, such as \"Chest + Triceps\" or \"PPL: Push day.\" You can start it with one tap from Home, with exercise order and previous weights prefilled."
+          }
+        }
+      }
+    },
+    "/ %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/ %lld"
+          }
+        }
+      }
+    },
+    "/ 100": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/ 100"
+          }
+        }
+      }
+    },
+    "%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
+    "%@ (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (%@)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "%@ %@ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$@ %3$@"
+          }
+        }
+      }
+    },
+    "%@ %@ kg × %lld レップを記録しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logged %@ %@ kg × %lld reps"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$@ kg × %3$lld レップを記録しました"
+          }
+        }
+      }
+    },
+    "%@ %lld レップを記録しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logged %@ %lld reps"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$lld レップを記録しました"
+          }
+        }
+      }
+    },
+    "%@ × %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ × %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ × %2$lld"
+          }
+        }
+      }
+    },
+    "%@ の応援、しっかり受け取りました。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got your support, %@. Thank you."
+          }
+        }
+      }
+    },
+    "%@ を開始": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start %@"
+          }
+        }
+      }
+    },
+    "%@/年 ・ いつでも解約可": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@/yr · cancel anytime"
+          }
+        }
+      }
+    },
+    "%@年": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
+    "%1RM": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1RM"
+          }
+        }
+      }
+    },
+    "%1RM = weight / estimated1RM × 100": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1RM = weight / estimated1RM × 100"
+          }
+        }
+      }
+    },
+    "%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
+          }
+        }
+      }
+    },
+    "%lld / %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld / %2$lld"
+          }
+        }
+      }
+    },
+    "%lld セット": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sets"
+          }
+        }
+      }
+    },
+    "%lld セットを複製して新しいワークアウトを開始します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copies %lld sets to start a new workout."
+          }
+        }
+      }
+    },
+    "%lld レップ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld reps"
+          }
+        }
+      }
+    },
+    "%lld レップ（自重）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld reps (bodyweight)"
+          }
+        }
+      }
+    },
+    "%lld 分": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
+    "%lld 回": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld reps"
+          }
+        }
+      }
+    },
+    "%lld 秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sec"
+          }
+        }
+      }
+    },
+    "%lld 種目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld exercises"
+          }
+        }
+      }
+    },
+    "%lld 種目 · %lld セット": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld exercises · %lld sets"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld 種目 · %2$lld セット"
+          }
+        }
+      }
+    },
+    "%lld 週連続": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld-week streak"
+          }
+        }
+      }
+    },
+    "%lld 週連続トレーニング": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld-week training streak"
+          }
+        }
+      }
+    },
+    "%lld日前": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days ago"
+          }
+        }
+      }
+    },
+    "%lld時間%lld分": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld h %lld min"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld時間%2$lld分"
+          }
+        }
+      }
+    },
+    "%lld月": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
+          }
+        }
+      }
+    },
+    "%lld秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld s"
+          }
+        }
+      }
+    },
+    "×": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "×"
+          }
+        }
+      }
+    },
+    "★ お気に入り": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "★ Favorites"
+          }
+        }
+      }
+    },
+    "1 セットで扱う負荷。バーベル種目ではシャフトと付属プレートを合算した総重量を入力します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The load handled in one set. For barbell exercises, enter the total weight combining the bar and the plates loaded on it."
+          }
+        }
+      }
+    },
+    "1 回のトレーニング全体を表す単位。開始時刻・終了時刻・含まれる全セットを保持し、終了時に HealthKit へ HKWorkout として書き込まれます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A unit representing an entire workout. It holds the start time, end time, and all included sets, and is written to HealthKit as an HKWorkout when finished."
+          }
+        }
+      }
+    },
+    "1 回の挙上動作のこと。8 レップとは同じ重量で 8 回連続して挙げ切ったことを意味します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A single lifting motion. 8 reps means lifting the same weight 8 times in a row to completion."
+          }
+        }
+      }
+    },
+    "1 種目に主働筋を 1 つ以上設定し、ボリューム集計時にはそれぞれフルカウントで加算します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each exercise can have one or more primary movers, each of which is fully counted when tallying volume."
+          }
+        }
+      }
+    },
+    "1 週間ほど強度を 80% 程度に意図的に落とす計画的な回復期間。連続トレーニング日数の長期化、または週ボリュームの急増を検知した時にコーチングカードで提案します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A planned recovery period of about a week where intensity is intentionally dropped to around 80%. It is suggested via a coaching card when a long streak of consecutive training days or a sudden spike in weekly volume is detected."
+          }
+        }
+      }
+    },
+    "1〜10 レップ程度の中レップで精度が高い 1RM 推定式。業界で広く使われる標準式です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A 1RM estimation formula that is accurate in the mid-rep range of about 1–10 reps. It is a standard formula widely used in the industry."
+          }
+        }
+      }
+    },
+    "1RM": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1RM"
+          }
+        }
+      }
+    },
+    "1RM %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1RM %@"
+          }
+        }
+      }
+    },
+    "1RM ÷ 体重": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1RM ÷ body weight"
+          }
+        }
+      }
+    },
+    "1RM = weight × (1 + reps / 30)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1RM = weight × (1 + reps / 30)"
+          }
+        }
+      }
+    },
+    "1RM = weight × 36 / (37 - reps)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1RM = weight × 36 / (37 - reps)"
+          }
+        }
+      }
+    },
+    "14 日間無料でお試し": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try 14 days free"
+          }
+        }
+      }
+    },
+    "14 日間無料で試す": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try free for 14 days"
+          }
+        }
+      }
+    },
+    "14日間無料、その後 %@/%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free for 14 days, then %@/%@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "14日間無料、その後 %1$@/%2$@"
+          }
+        }
+      }
+    },
+    "14日間無料、その後 %@/年 ・ いつでも解約可": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "14 days free, then %@/yr · cancel anytime"
+          }
+        }
+      }
+    },
+    "14日間無料で始める": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start your 14-day free trial"
+          }
+        }
+      }
+    },
+    "90 日変化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "90-day change"
+          }
+        }
+      }
+    },
+    "Abs": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abs"
+          }
+        }
+      }
+    },
+    "App Intents": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Intents"
+          }
+        }
+      }
+    },
+    "Apple Watch スタンドアロン。Digital Crown で 1〜3 タップで記録": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch standalone. Log with 1–3 taps using the Digital Crown"
+          }
+        }
+      }
+    },
+    "Apple Watch で完結する筋トレ記録": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strength training tracking, all on Apple Watch"
+          }
+        }
+      }
+    },
+    "Apple Watch ワークアウトアプリ連携": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch Workout app integration"
+          }
+        }
+      }
+    },
+    "Apple Watch 標準ワークアウトと同じセッション (HKWorkoutSession) を共有します。Oikomi で記録を開始すると、Buddy 側にも自動でワークアウト中表示が出ます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shares the same session (HKWorkoutSession) as the standard Apple Watch workout. When you start logging in Oikomi, the Buddy side automatically shows a workout-in-progress display as well."
+          }
+        }
+      }
+    },
+    "Apple のヘルスケアフレームワーク。Oikomi はワークアウト完了時に HKWorkout を書き込み (Free)、HRV / 安静時心拍 / 睡眠 / 体組成を読み取り (Pro) します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's health framework. Oikomi writes an HKWorkout when a workout finishes (Free), and reads HRV / resting heart rate / sleep / body composition (Pro)."
+          }
+        }
+      }
+    },
+    "Back": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "Biceps": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biceps"
+          }
+        }
+      }
+    },
+    "Body Composition": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Body Composition"
+          }
+        }
+      }
+    },
+    "Brzycki 式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brzycki formula"
+          }
+        }
+      }
+    },
+    "Calves": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calves"
+          }
+        }
+      }
+    },
+    "Chest": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chest"
+          }
+        }
+      }
+    },
+    "CloudKit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CloudKit"
+          }
+        }
+      }
+    },
+    "CSV としてエクスポート": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export as CSV"
+          }
+        }
+      }
+    },
+    "Custom Exercise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom Exercise"
+          }
+        }
+      }
+    },
+    "DEBUG ビルド限定。月・水・金 を Push / Pull / Legs にローテーションした 6 週間分のリアルな履歴を生成し、HealthKit にも HRV / 安静時心拍数 / 睡眠 / 体重 / HKWorkout を書き込みます（権限ダイアログが出ます）。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DEBUG builds only. Generates 6 weeks of realistic history rotating Mon/Wed/Fri through Push / Pull / Legs, and also writes HRV / resting heart rate / sleep / body weight / HKWorkout to HealthKit (a permission dialog will appear)."
+          }
+        }
+      }
+    },
+    "Deload": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deload"
+          }
+        }
+      }
+    },
+    "Dynamic Island": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dynamic Island"
+          }
+        }
+      }
+    },
+    "Epley 式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Epley formula"
+          }
+        }
+      }
+    },
+    "Estimated 1RM": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated 1RM"
+          }
+        }
+      }
+    },
+    "Exercise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exercise"
+          }
+        }
+      }
+    },
+    "Forearms": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forearms"
+          }
+        }
+      }
+    },
+    "Free プラン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free plan"
+          }
+        }
+      }
+    },
+    "Free プランは 3 件まで、Pro プランは無制限。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to 3 on the Free plan, unlimited on the Pro plan."
+          }
+        }
+      }
+    },
+    "Full Body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full Body"
+          }
+        }
+      }
+    },
+    "Glutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glutes"
+          }
+        }
+      }
+    },
+    "Hamstrings": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hamstrings"
+          }
+        }
+      }
+    },
+    "HealthKit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthKit"
+          }
+        }
+      }
+    },
+    "HealthKit サンプル: %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthKit samples: %lld"
+          }
+        }
+      }
+    },
+    "HealthKit のデータ読み取りは Pro 機能で、HRV や睡眠スコアからトレーニング負荷を最適化します。書き込みは Free でも有効です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading HealthKit data is a Pro feature that optimizes training load from HRV and sleep scores. Writing is available on Free too."
+          }
+        }
+      }
+    },
+    "HealthKit 読み取りは Pro 機能です。Oikomi はオンデバイスで参照し、外部送信は行いません。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthKit reading is a Pro feature. Oikomi reads on-device and never sends data externally."
+          }
+        }
+      }
+    },
+    "HealthKit 連携": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthKit Integration"
+          }
+        }
+      }
+    },
+    "HealthKit: 権限なし / スキップ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HealthKit: no permission / skipped"
+          }
+        }
+      }
+    },
+    "Heart Rate Variability (心拍変動)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heart Rate Variability"
+          }
+        }
+      }
+    },
+    "HRV": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRV"
+          }
+        }
+      }
+    },
+    "HRV と AI で、追い込みをもっと賢く": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Push harder, smarter, with HRV and AI"
+          }
+        }
+      }
+    },
+    "HRV 連動ディロード推奨は Pro 限定です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRV-based deload recommendations are Pro only."
+          }
+        }
+      }
+    },
+    "HRV・安静時心拍・睡眠時間の推移は Pro プランで閲覧できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trends for HRV, resting heart rate, and sleep duration are available on the Pro plan."
+          }
+        }
+      }
+    },
+    "HRV・安静時心拍・睡眠時間は Pro プランで表示できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRV, resting heart rate, and sleep duration are available on the Pro plan."
+          }
+        }
+      }
+    },
+    "HRV（心拍変動）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HRV (heart rate variability)"
+          }
+        }
+      }
+    },
+    "iCloud 同期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Sync"
+          }
+        }
+      }
+    },
+    "iCloud 同期の設定変更を反映するには、アプリを完全に終了して再度開いてください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To apply the iCloud Sync setting change, fully quit the app and reopen it."
+          }
+        }
+      }
+    },
+    "iOS シミュレータの不具合により、シミュレータではアイコン切替が動作しません。実機ではご利用いただけます。\n(OS error: %@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Due to an iOS Simulator bug, icon switching does not work in the Simulator. It works on physical devices.\n(OS error: %@)"
+          }
+        }
+      }
+    },
+    "iOS のロック画面とアイランドにワークアウト進行状況 (経過時間・現在の種目・次インターバル) を常時表示する機能。Free / Pro 共通。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A feature that continuously displays workout progress (elapsed time, current exercise, next interval) on the iOS Lock Screen and Dynamic Island. Available to both Free and Pro."
+          }
+        }
+      }
+    },
+    "iPhone・Apple Watch・iPad・Mac 間で記録を自動同期。データは Apple の iCloud プライベートデータベースに格納され、Oikomi 開発者からも参照できません。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatically syncs records across iPhone, Apple Watch, iPad, and Mac. Data is stored in Apple's iCloud private database and cannot be accessed even by the Oikomi developer."
+          }
+        }
+      }
+    },
+    "Live Activity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live Activity"
+          }
+        }
+      }
+    },
+    "MAV": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAV"
+          }
+        }
+      }
+    },
+    "Maximum Adaptive Volume": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximum Adaptive Volume"
+          }
+        }
+      }
+    },
+    "MEV": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MEV"
+          }
+        }
+      }
+    },
+    "Minimum Effective Volume": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimum Effective Volume"
+          }
+        }
+      }
+    },
+    "MockDataGenerator が生成したセッション・ルーティン・HealthKit データを削除します。実データは保持されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deletes sessions, routines, and HealthKit data generated by MockDataGenerator. Your real data is kept."
+          }
+        }
+      }
+    },
+    "Obliques": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obliques"
+          }
+        }
+      }
+    },
+    "Oikomi Pro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oikomi Pro"
+          }
+        }
+      }
+    },
+    "Oikomi の「記録」「ホーム」「履歴」画面はすべてこの語彙で構成されています。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oikomi's Log, Home, and History screens are all built on this vocabulary."
+          }
+        }
+      }
+    },
+    "Oikomi の開発を応援": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Support Oikomi's development"
+          }
+        }
+      }
+    },
+    "Oikomi へようこそ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to Oikomi"
+          }
+        }
+      }
+    },
+    "OikomiKit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OikomiKit"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "One Repetition Maximum": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One Repetition Maximum"
+          }
+        }
+      }
+    },
+    "Personal Record (自己ベスト)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personal Record (Personal Best)"
+          }
+        }
+      }
+    },
+    "PR": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PR"
+          }
+        }
+      }
+    },
+    "PR Prediction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PR Prediction"
+          }
+        }
+      }
+    },
+    "PR 予測": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PR Prediction"
+          }
+        }
+      }
+    },
+    "PR 予測通知の対象になります。未選択でも保存できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eligible for PR prediction notifications. You can save without selecting."
+          }
+        }
+      }
+    },
+    "Pro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro"
+          }
+        }
+      }
+    },
+    "Pro が有効になりました。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro is now active."
+          }
+        }
+      }
+    },
+    "Pro にアップグレード": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upgrade to Pro"
+          }
+        }
+      }
+    },
+    "Pro プランの詳細は「設定 → Pro にアップグレード」から確認できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can view Pro plan details under Settings → Upgrade to Pro."
+          }
+        }
+      }
+    },
+    "Pro を購入する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buy Pro"
+          }
+        }
+      }
+    },
+    "Pro 機能。v0.1 は連続日数 + ボリューム比の簡易判定。v1.1 で HRV ベースの判定を追加予定です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro feature. v0.1 uses a simple assessment based on streak days plus volume ratio. HRV-based assessment is planned for v1.1."
+          }
+        }
+      }
+    },
+    "Pro 限定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro only"
+          }
+        }
+      }
+    },
+    "Pro 限定。設定変更後はアプリの再起動が必要です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro only. The app must be restarted after changing this setting."
+          }
+        }
+      }
+    },
+    "Quads": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quads"
+          }
+        }
+      }
+    },
+    "Rep / Repetition": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rep / Repetition"
+          }
+        }
+      }
+    },
+    "Rest Interval": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest Interval"
+          }
+        }
+      }
+    },
+    "Resting Heart Rate / RHR": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resting Heart Rate / RHR"
+          }
+        }
+      }
+    },
+    "Routine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routine"
+          }
+        }
+      }
+    },
+    "Schoenfeld らの 2017 メタアナリシスを下敷きにした中央値ベースの初期値。個人差は大きく、v1.1 以降でユーザーカスタマイズを予定。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A median-based default derived from Schoenfeld et al.'s 2017 meta-analysis. Individual variation is large, so user customization is planned for v1.1 and later."
+          }
+        }
+      }
+    },
+    "Set": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set"
+          }
+        }
+      }
+    },
+    "Sets per Muscle / week": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sets per Muscle / week"
+          }
+        }
+      }
+    },
+    "Shoulders": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoulders"
+          }
+        }
+      }
+    },
+    "Siri ショートカット": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siri Shortcut"
+          }
+        }
+      }
+    },
+    "Sleep Hours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep Hours"
+          }
+        }
+      }
+    },
+    "Triceps": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triceps"
+          }
+        }
+      }
+    },
+    "UI・種目名・コーチング文言すべて自然な日本語": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Natural Japanese throughout the UI, exercise names, and coaching copy"
+          }
+        }
+      }
+    },
+    "Volume": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume"
+          }
+        }
+      }
+    },
+    "volume = Σ(weight × reps)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "volume = Σ(weight × reps)"
+          }
+        }
+      }
+    },
+    "Volume Alert": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume Alert"
+          }
+        }
+      }
+    },
+    "Warm-up": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm-up"
+          }
+        }
+      }
+    },
+    "Weekly Volume": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly Volume"
+          }
+        }
+      }
+    },
+    "Weight (kg)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight (kg)"
+          }
+        }
+      }
+    },
+    "Working Set": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Working Set"
+          }
+        }
+      }
+    },
+    "Workout Buddy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workout Buddy"
+          }
+        }
+      }
+    },
+    "Workout Session": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workout Session"
+          }
+        }
+      }
+    },
+    "アイコン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icon"
+          }
+        }
+      }
+    },
+    "アイコンを変更しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icon changed"
+          }
+        }
+      }
+    },
+    "あなたについて": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About You"
+          }
+        }
+      }
+    },
+    "アプリアイコン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App icon"
+          }
+        }
+      }
+    },
+    "ありがとうございます！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thank you!"
+          }
+        }
+      }
+    },
+    "いつもありがとうございます。お気持ちで支援いただけると、開発の励みになります。Pro とは別の任意のチップです。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thank you for your continued support. A tip of any amount keeps development going. This is an optional tip, separate from Pro."
+          }
+        }
+      }
+    },
+    "インターバル": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interval"
+          }
+        }
+      }
+    },
+    "ウォームアップ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm-up"
+          }
+        }
+      }
+    },
+    "ウォームアップを除いた本番セット。週次ボリュームや MEV / MAV の集計対象になります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The real sets excluding Warm-ups. These are what count toward weekly Volume and MEV / MAV totals."
+          }
+        }
+      }
+    },
+    "エクスポートに失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export failed: %@"
+          }
+        }
+      }
+    },
+    "エラー": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error"
+          }
+        }
+      }
+    },
+    "オンボーディングを再表示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show onboarding again"
+          }
+        }
+      }
+    },
+    "お気に入り": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorites"
+          }
+        }
+      }
+    },
+    "カスタム種目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom Exercise"
+          }
+        }
+      }
+    },
+    "ガッツリ応援": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full Support"
+          }
+        }
+      }
+    },
+    "カテゴリ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Category"
+          }
+        }
+      }
+    },
+    "カレンダーで別の日付を選んでください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please pick a different date on the calendar."
+          }
+        }
+      }
+    },
+    "キャンセル": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "クイック開始": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick start"
+          }
+        }
+      }
+    },
+    "クリーン、スナッチ、バーピーなど複数部位を横断的に動員する種目。部位別集計の対象外として扱います。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exercises that recruit multiple muscle groups at once, such as cleans, snatches, and burpees. Excluded from per-muscle-group totals."
+          }
+        }
+      }
+    },
+    "ケーブル": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cable"
+          }
+        }
+      }
+    },
+    "ケトルベル": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kettlebell"
+          }
+        }
+      }
+    },
+    "コーチング": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coaching"
+          }
+        }
+      }
+    },
+    "コーチング・分析": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coaching & Analysis"
+          }
+        }
+      }
+    },
+    "コーチングの精度を高めます。あとで設定でいつでも変更できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Improves coaching accuracy. You can change this anytime later in Settings."
+          }
+        }
+      }
+    },
+    "このセッションをコピーして開始しますか？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy this session and start?"
+          }
+        }
+      }
+    },
+    "このセッションを削除しますか？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this session?"
+          }
+        }
+      }
+    },
+    "この期間の記録はありません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No records for this period"
+          }
+        }
+      }
+    },
+    "この種目の記録がまだありません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No records for this exercise yet"
+          }
+        }
+      }
+    },
+    "コピーして開始": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy & start"
+          }
+        }
+      }
+    },
+    "コピーに失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to copy: %@"
+          }
+        }
+      }
+    },
+    "コンディション": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condition"
+          }
+        }
+      }
+    },
+    "コンディション (HealthKit)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condition (HealthKit)"
+          }
+        }
+      }
+    },
+    "コンディションスコア %lld / 100、%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condition score %lld / 100, %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "コンディションスコア %1$lld / 100、%2$@"
+          }
+        }
+      }
+    },
+    "コンディション分析": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condition Analysis"
+          }
+        }
+      }
+    },
+    "サブスクリプションは期間終了の 24 時間前までに解約しない限り自動更新され、Apple ID に課金されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your subscription renews automatically and is charged to your Apple ID unless canceled at least 24 hours before the end of the current period."
+          }
+        }
+      }
+    },
+    "ジム": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gym"
+          }
+        }
+      }
+    },
+    "スキップ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        }
+      }
+    },
+    "すべて": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        }
+      }
+    },
+    "すべてのデータを削除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete all data"
+          }
+        }
+      }
+    },
+    "すべての種目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All exercises"
+          }
+        }
+      }
+    },
+    "すべて見る": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See all"
+          }
+        }
+      }
+    },
+    "セッション": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session"
+          }
+        }
+      }
+    },
+    "セッション・PR・ルーティン・カスタム種目をすべて削除します。シード種目は再投入されます。Apple Watch のローカルデータも削除されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deletes all sessions, PRs, routines, and custom exercises. Seed exercises will be restored. Local data on Apple Watch is also deleted."
+          }
+        }
+      }
+    },
+    "セッション: %lld / セット: %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions: %lld / Sets: %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "セッション: %1$lld / セット: %2$lld"
+          }
+        }
+      }
+    },
+    "セット": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set"
+          }
+        }
+      }
+    },
+    "セット %lld。タップで完了切り替え": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set %lld. Tap to toggle complete"
+          }
+        }
+      }
+    },
+    "セットを削除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete set"
+          }
+        }
+      }
+    },
+    "セットを記録": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log set"
+          }
+        }
+      }
+    },
+    "セットを追加": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add set"
+          }
+        }
+      }
+    },
+    "セット数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sets"
+          }
+        }
+      }
+    },
+    "セット数と %@ の違い": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The difference between sets and %@"
+          }
+        }
+      }
+    },
+    "セット数は「刺激の頻度」、%@ は「強度の総量」を表します。両方を合わせて見ると、追い込めているか・効率的かを判断できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set count represents \"frequency of stimulus,\" while %@ represents \"total intensity.\" Looking at both together lets you judge whether you're pushing hard and training efficiently."
+          }
+        }
+      }
+    },
+    "セット編集": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Set"
+          }
+        }
+      }
+    },
+    "セット記録もすべて削除されます。この操作は取り消せません。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All set records will also be deleted. This action cannot be undone."
+          }
+        }
+      }
+    },
+    "セット追加": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Set"
+          }
+        }
+      }
+    },
+    "セット間の休息時間。種目ごとの推奨秒数 (例: スクワット 180 秒、二頭筋カール 60 秒) があらかじめ設定されており、レストタイマーが自動起動します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest time between sets. Recommended durations are preset per exercise (e.g., squats 180 sec, biceps curls 60 sec), and the rest timer starts automatically."
+          }
+        }
+      }
+    },
+    "その他": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other"
+          }
+        }
+      }
+    },
+    "ダンベル": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dumbbell"
+          }
+        }
+      }
+    },
+    "チップは消耗型 IAP です。復元はできません。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tips are consumable IAPs. They cannot be restored."
+          }
+        }
+      }
+    },
+    "ちょっと多めの応援": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A bit more encouragement"
+          }
+        }
+      }
+    },
+    "データ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data"
+          }
+        }
+      }
+    },
+    "ディロード": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deload"
+          }
+        }
+      }
+    },
+    "テストデータ (6週間) を生成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate test data (6 weeks)"
+          }
+        }
+      }
+    },
+    "テストデータを削除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete test data"
+          }
+        }
+      }
+    },
+    "テストデータを削除しますか？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete test data?"
+          }
+        }
+      }
+    },
+    "テストデータ削除失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to delete test data: %@"
+          }
+        }
+      }
+    },
+    "テストデータ生成失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to generate test data: %@"
+          }
+        }
+      }
+    },
+    "デバイス対応": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Device support"
+          }
+        }
+      }
+    },
+    "デフォルト (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default (%@)"
+          }
+        }
+      }
+    },
+    "デフォルト (%lld 秒) に戻す": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to default (%lld sec)"
+          }
+        }
+      }
+    },
+    "デフォルト・万人向け筋トレ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default · Strength Training for Everyone"
+          }
+        }
+      }
+    },
+    "デフォルトレスト": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default rest"
+          }
+        }
+      }
+    },
+    "トレーニング": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training"
+          }
+        }
+      }
+    },
+    "トレーニング基礎": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training Basics"
+          }
+        }
+      }
+    },
+    "トレーニング場所": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training location"
+          }
+        }
+      }
+    },
+    "トレーニング目標": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training goal"
+          }
+        }
+      }
+    },
+    "トレーニング総量を示す指標で、Oikomi では 重量 × レップ の合算で算出します。週次・部位別に集計し、過不足の判断材料にします。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A metric for total training volume, calculated in Oikomi as the sum of weight × reps. It is aggregated weekly and by muscle group to help judge whether you're doing too much or too little."
+          }
+        }
+      }
+    },
+    "なし": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
+    "バージョン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
+    "バーベル": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barbell"
+          }
+        }
+      }
+    },
+    "はじめる": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get Started"
+          }
+        }
+      }
+    },
+    "ハムストリング": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hamstrings"
+          }
+        }
+      }
+    },
+    "バンド": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Band"
+          }
+        }
+      }
+    },
+    "ふくらはぎ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calves"
+          }
+        }
+      }
+    },
+    "ふつう": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Normal"
+          }
+        }
+      }
+    },
+    "プライバシーポリシー": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy Policy"
+          }
+        }
+      }
+    },
+    "プラットフォーム・Pro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Platform · Pro"
+          }
+        }
+      }
+    },
+    "プロテイン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protein"
+          }
+        }
+      }
+    },
+    "ベース": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base"
+          }
+        }
+      }
+    },
+    "ヘルスケアで値を編集": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit values in Health"
+          }
+        }
+      }
+    },
+    "ヘルスケアと通知を有効にすると、記録の保存とトレーニングのサポートが受けられます。どちらも後から設定で変更できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabling Health and notifications lets you save records and get training support. You can change both later in Settings."
+          }
+        }
+      }
+    },
+    "ヘルスケア連携": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Health Integration"
+          }
+        }
+      }
+    },
+    "ホーム": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home"
+          }
+        }
+      }
+    },
+    "ホーム画面のアイコンが切り替わります。Apple Watch / Mac のアイコンは OS の制約により変更できません。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Home Screen icon will change. Apple Watch / Mac icons cannot be changed due to OS restrictions."
+          }
+        }
+      }
+    },
+    "ほか %lld 件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld more"
+          }
+        }
+      }
+    },
+    "ボディ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Body"
+          }
+        }
+      }
+    },
+    "ボディ分析": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Body Analysis"
+          }
+        }
+      }
+    },
+    "ボリューム": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume"
+          }
+        }
+      }
+    },
+    "ボリューム推移と PR を可視化。HRV 連動の自動アドバイスは Pro で解放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualize volume trends and PRs. HRV-linked automatic advice is unlocked with Pro"
+          }
+        }
+      }
+    },
+    "ボリューム警告": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume Warning"
+          }
+        }
+      }
+    },
+    "マシン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Machine"
+          }
+        }
+      }
+    },
+    "まだ PR がありません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No PRs yet"
+          }
+        }
+      }
+    },
+    "まだ記録がありません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No records yet"
+          }
+        }
+      }
+    },
+    "もう一度お試しください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please try again."
+          }
+        }
+      }
+    },
+    "もう一度実行（コピー）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run again (copy)"
+          }
+        }
+      }
+    },
+    "もう一度応援する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cheer again"
+          }
+        }
+      }
+    },
+    "ユーザーが自作した種目。Free プランは 5 件まで、Pro プランは無制限に作成できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exercises you create yourself. The Free plan allows up to 5, while the Pro plan allows unlimited."
+          }
+        }
+      }
+    },
+    "よく使うトレーニングをルーティンとして保存しておくと、ワンタップで始められます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save your frequently used workouts as Routines so you can start them with one tap."
+          }
+        }
+      }
+    },
+    "ライトな応援": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light Support"
+          }
+        }
+      }
+    },
+    "リクエストを送信しました。詳細はヘルスケアアプリ→プロフィール→Apple Health 接続中のApp→Oikomi で確認できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your request has been sent. You can check the details in the Health app → Profile → Apps connected to Apple Health → Oikomi."
+          }
+        }
+      }
+    },
+    "リセット失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to reset: %@"
+          }
+        }
+      }
+    },
+    "ルーティン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routine"
+          }
+        }
+      }
+    },
+    "ルーティン: %lld / PR 更新: %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routines: %lld / PRs set: %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "ルーティン: %1$lld / PR 更新: %2$lld"
+          }
+        }
+      }
+    },
+    "ルーティンがありません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No routines"
+          }
+        }
+      }
+    },
+    "ルーティンなし": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No routine"
+          }
+        }
+      }
+    },
+    "ルーティンなしで今すぐスタート": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start now without a routine"
+          }
+        }
+      }
+    },
+    "ルーティンを作成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create routine"
+          }
+        }
+      }
+    },
+    "ルーティンを選んで始める": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a routine to start"
+          }
+        }
+      }
+    },
+    "ルーティン名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routine name"
+          }
+        }
+      }
+    },
+    "ルーティン編集": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit routine"
+          }
+        }
+      }
+    },
+    "レスト": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest"
+          }
+        }
+      }
+    },
+    "レスト %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest %@"
+          }
+        }
+      }
+    },
+    "レスト %@（上書き）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest %@ (override)"
+          }
+        }
+      }
+    },
+    "レスト中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resting"
+          }
+        }
+      }
+    },
+    "レスト時間": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest Time"
+          }
+        }
+      }
+    },
+    "レスト終了・PR 予測・終了し忘れをお知らせ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifies you of rest completion, PR predictions, and forgotten session endings"
+          }
+        }
+      }
+    },
+    "レップ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "reps"
+          }
+        }
+      }
+    },
+    "レップ数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reps"
+          }
+        }
+      }
+    },
+    "レンジは MEV（最低有効ボリューム）〜 MAV（適応上限）の目安です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The range is a guide from MEV (minimum effective volume) to MAV (maximum adaptive volume)."
+          }
+        }
+      }
+    },
+    "ワーキングセット": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Working set"
+          }
+        }
+      }
+    },
+    "ワーキングセットの最大値": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximum working sets"
+          }
+        }
+      }
+    },
+    "ワークアウトを保存。HRV・睡眠の活用は Pro で解放（計算はオンデバイス完結）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save workouts. Using HRV and sleep data is unlocked with Pro (all calculations stay on-device)"
+          }
+        }
+      }
+    },
+    "ワークアウトを完了すると、ここに推移が表示されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Once you complete a workout, trends will appear here."
+          }
+        }
+      }
+    },
+    "ワークアウトを終了しますか？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End workout?"
+          }
+        }
+      }
+    },
+    "ワークアウトを開始": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Workout"
+          }
+        }
+      }
+    },
+    "三角筋 (前部・中部・後部)。ショルダープレス・サイドレイズなどで個別に刺激します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deltoids (anterior, lateral, and posterior). Targeted individually with exercises like the shoulder press and lateral raise."
+          }
+        }
+      }
+    },
+    "上腕三頭筋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triceps"
+          }
+        }
+      }
+    },
+    "上腕二頭筋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biceps"
+          }
+        }
+      }
+    },
+    "下の「種目を追加」から種目を選んで構成しましょう": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build your workout by choosing exercises from \"Add Exercise\" below."
+          }
+        }
+      }
+    },
+    "下腿三頭筋 (腓腹筋・ヒラメ筋)。スタンディング/シーテッドカーフレイズで刺激します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calves (gastrocnemius and soleus). Targeted with standing/seated calf raises."
+          }
+        }
+      }
+    },
+    "不足": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Insufficient"
+          }
+        }
+      }
+    },
+    "主働筋ごとの週次ワーキングセット数。1 セットが複数の主働筋を持つ場合はそれぞれにフルカウントで加算されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly working sets per primary muscle. When a single set involves multiple primary muscles, it is counted in full toward each of them."
+          }
+        }
+      }
+    },
+    "今はアドバイスがありません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No advice right now"
+          }
+        }
+      }
+    },
+    "今はしない": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        }
+      }
+    },
+    "今日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
+    "今日のコンディション": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Condition"
+          }
+        }
+      }
+    },
+    "今日のルーティン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Routine"
+          }
+        }
+      }
+    },
+    "今日のルーティンは未設定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No routine set for today"
+          }
+        }
+      }
+    },
+    "今月へ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To this month"
+          }
+        }
+      }
+    },
+    "今週のセッション (%lld)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions This Week (%lld)"
+          }
+        }
+      }
+    },
+    "今週のセット数（部位別）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sets this week (by muscle group)"
+          }
+        }
+      }
+    },
+    "今週のトレーニング日数 %lld / 目標 %lld 日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training days this week %lld / goal %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "今週のトレーニング日数 %1$lld / 目標 %2$lld 日"
+          }
+        }
+      }
+    },
+    "今週のボリューム %@（部位別）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume this week %@ (by muscle group)"
+          }
+        }
+      }
+    },
+    "今週の日数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Days this week"
+          }
+        }
+      }
+    },
+    "今週はまだボリューム記録がありません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No volume recorded yet this week"
+          }
+        }
+      }
+    },
+    "低〜中レップで Epley と並んで使われる 1RM 推定式。10 レップを超えると精度が下がります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A 1RM estimation formula used alongside Epley for low-to-medium reps. Accuracy drops beyond 10 reps."
+          }
+        }
+      }
+    },
+    "低め": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Low"
+          }
+        }
+      }
+    },
+    "体側を覆う回旋・側屈の主働筋。サイドベンド、ロシアンツイストなど。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The primary muscles for rotation and lateral flexion covering the sides of the torso. E.g., side bends and Russian twists."
+          }
+        }
+      }
+    },
+    "体組成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Body Composition"
+          }
+        }
+      }
+    },
+    "体脂肪率": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Body Fat %"
+          }
+        }
+      }
+    },
+    "体重": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Body Weight"
+          }
+        }
+      }
+    },
+    "体重・体脂肪率・LBM は HealthKit が一次データです。体組成計や手入力の値はヘルスケアアプリで管理してください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Body weight, body fat, and LBM use HealthKit as the primary source. Manage scale or manually entered values in the Health app."
+          }
+        }
+      }
+    },
+    "体重・体脂肪率・除脂肪体重 (LBM) などの総称。「分析 → ボディ」で長期推移を確認できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An umbrella term for body weight, body fat %, lean body mass (LBM), and similar metrics. View long-term trends under Analysis → Body."
+          }
+        }
+      }
+    },
+    "体重・体脂肪率・除脂肪体重の推移は Pro プランで閲覧できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trends for body weight, body fat %, and lean body mass are available on the Pro plan."
+          }
+        }
+      }
+    },
+    "体重と種目の自己ベストを記録すると、体重比が表示されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record your body weight and exercise PRs to see your strength-to-weight ratio."
+          }
+        }
+      }
+    },
+    "作成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        }
+      }
+    },
+    "作成できません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't create"
+          }
+        }
+      }
+    },
+    "例: プッシュデー": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. Push Day"
+          }
+        }
+      }
+    },
+    "例: ブルガリアンスクワット": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. Bulgarian Split Squat"
+          }
+        }
+      }
+    },
+    "例: ベンチプレス": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. Bench Press"
+          }
+        }
+      }
+    },
+    "価格を取得中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading price…"
+          }
+        }
+      }
+    },
+    "価格情報が見つかりませんでした": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Price information not found"
+          }
+        }
+      }
+    },
+    "価格情報を取得できませんでした": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't retrieve price information"
+          }
+        }
+      }
+    },
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "保存に失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save failed: %@"
+          }
+        }
+      }
+    },
+    "保存に失敗しました: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save failed: %@"
+          }
+        }
+      }
+    },
+    "個別の運動 (ベンチプレス、スクワット 等)。Oikomi にはバーベル・ダンベル・マシン・自重などを含む約 100 種を初期搭載しています。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An individual exercise (Bench Press, Squat, etc.). Oikomi ships with around 100 built-in exercises spanning Barbell, Dumbbell, Machine, Bodyweight, and more."
+          }
+        }
+      }
+    },
+    "先に進行中のワークアウトを終了してください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please end the workout in progress first."
+          }
+        }
+      }
+    },
+    "先週比でボリュームが大幅に変動した時の注意喚起。+50% 超で「過負荷の可能性」、−50% 未満で「不足」を通知します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An alert for large week-over-week changes in volume. Over +50% triggers a \"possible overload\" warning, while under −50% triggers an \"insufficient\" notice."
+          }
+        }
+      }
+    },
+    "全て": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        }
+      }
+    },
+    "全データを削除しますか？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete all data?"
+          }
+        }
+      }
+    },
+    "全て削除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete All"
+          }
+        }
+      }
+    },
+    "全機能を利用できます": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access to all features"
+          }
+        }
+      }
+    },
+    "全身": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full Body"
+          }
+        }
+      }
+    },
+    "再試行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        }
+      }
+    },
+    "再起動が必要です": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart required"
+          }
+        }
+      }
+    },
+    "最大級の応援": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximum encouragement"
+          }
+        }
+      }
+    },
+    "最大重量の推移": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Max weight trend"
+          }
+        }
+      }
+    },
+    "最新値": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latest"
+          }
+        }
+      }
+    },
+    "分析": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analysis"
+          }
+        }
+      }
+    },
+    "分析データがありません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No analysis data"
+          }
+        }
+      }
+    },
+    "初回 14 日間は無料トライアル。App Store の購入履歴から自動更新を停止できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The first 14 days are a free trial. You can turn off auto-renewal from your App Store purchase history."
+          }
+        }
+      }
+    },
+    "利用可能": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Available"
+          }
+        }
+      }
+    },
+    "利用規約": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terms of Use"
+          }
+        }
+      }
+    },
+    "削除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "削除する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "削除に失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete failed: %@"
+          }
+        }
+      }
+    },
+    "前回 ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last time "
+          }
+        }
+      }
+    },
+    "前夜の総睡眠時間。筋トレからの回復・タンパク合成・神経系リフレッシュに直結する最大の入力です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total sleep from the previous night. It's the single biggest input directly tied to recovery from training, protein synthesis, and nervous-system refresh."
+          }
+        }
+      }
+    },
+    "前腕": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forearms"
+          }
+        }
+      }
+    },
+    "単位: bpm (拍/分)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unit: bpm (beats per minute)."
+          }
+        }
+      }
+    },
+    "単位: ミリ秒 (ms)。Apple Watch では夜間の SDNN として測定されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unit: milliseconds (ms). On Apple Watch this is measured as overnight SDNN."
+          }
+        }
+      }
+    },
+    "同期中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syncing"
+          }
+        }
+      }
+    },
+    "名前": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        }
+      }
+    },
+    "商品情報の取得に失敗しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to load product information"
+          }
+        }
+      }
+    },
+    "器具": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equipment"
+          }
+        }
+      }
+    },
+    "回": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "reps"
+          }
+        }
+      }
+    },
+    "回復中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recovering"
+          }
+        }
+      }
+    },
+    "回復済": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recovered"
+          }
+        }
+      }
+    },
+    "土": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sat"
+          }
+        }
+      }
+    },
+    "基準回復時間にトレ量・強度を加味した目安です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An estimate based on baseline recovery time, adjusted for training volume and intensity."
+          }
+        }
+      }
+    },
+    "場所": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location"
+          }
+        }
+      }
+    },
+    "増やす": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Increase"
+          }
+        }
+      }
+    },
+    "変更に失敗しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change failed"
+          }
+        }
+      }
+    },
+    "大殿筋・中殿筋。ヒップスラスト・ブルガリアンスクワット・スモウデッドリフトなど。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gluteus maximus and gluteus medius. Trained with Hip Thrusts, Bulgarian Split Squats, Sumo Deadlifts, and more."
+          }
+        }
+      }
+    },
+    "大胸筋。ベンチプレス・ダンベルフライ・腕立て伏せなどが代表的種目です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pectorals. Representative exercises include Bench Press, Dumbbell Flyes, and Push-ups."
+          }
+        }
+      }
+    },
+    "大腿四頭筋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quadriceps"
+          }
+        }
+      }
+    },
+    "太もも前面。スクワット・レッグプレス・レッグエクステンションが代表種目です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Front of the thighs. Representative exercises are Squats, Leg Press, and Leg Extensions."
+          }
+        }
+      }
+    },
+    "太もも後面。ルーマニアンデッドリフト・レッグカール・グッドモーニングなど。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back of the thighs. Romanian Deadlifts, Leg Curls, Good Mornings, and more."
+          }
+        }
+      }
+    },
+    "失敗・ローカル動作": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed · running locally"
+          }
+        }
+      }
+    },
+    "好調": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Great"
+          }
+        }
+      }
+    },
+    "安静時心拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resting HR"
+          }
+        }
+      }
+    },
+    "安静時心拍数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resting Heart Rate"
+          }
+        }
+      }
+    },
+    "完了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "完了 / 計画": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed / Planned"
+          }
+        }
+      }
+    },
+    "完了に失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completion failed: %@"
+          }
+        }
+      }
+    },
+    "完了済み。タップで未完了に戻す": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed. Tap to mark incomplete"
+          }
+        }
+      }
+    },
+    "実セットの重量とレップ数から計算式で予測した 1RM。種目ごとに最大値が PR として保存され、強度設定や PR 予測の基準になります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An estimated 1RM calculated from the weight and reps of your actual sets. The highest value per exercise is saved as a PR and serves as the basis for intensity settings and PR predictions."
+          }
+        }
+      }
+    },
+    "実施曜日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training days"
+          }
+        }
+      }
+    },
+    "実質 %@/月": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effectively %@/month"
+          }
+        }
+      }
+    },
+    "実質 %@/月（月額比 %lld%% オフ）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effectively %@/month (%lld%% off vs. monthly)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "実質 %1$@/月（月額比 %2$lld%% オフ）"
+          }
+        }
+      }
+    },
+    "履歴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        }
+      }
+    },
+    "年": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Year"
+          }
+        }
+      }
+    },
+    "年月を選択": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select month"
+          }
+        }
+      }
+    },
+    "年額プラン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annual Plan"
+          }
+        }
+      }
+    },
+    "広背筋・僧帽筋中下部・脊柱起立筋を含む広い領域。デッドリフト・懸垂・ロウ系が中心です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A broad region including the lats, mid-to-lower traps, and erector spinae. Centered on Deadlifts, Pull-ups, and rowing movements."
+          }
+        }
+      }
+    },
+    "復元可能な購入が見つかりませんでした。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No restorable purchases were found."
+          }
+        }
+      }
+    },
+    "心拍の拍動間隔のばらつき。副交感神経の活性度合いを反映し、自分の平常値より低下していると疲労蓄積のサインとされます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The variation in intervals between heartbeats. It reflects parasympathetic activity, and a drop below your normal baseline is considered a sign of accumulated fatigue."
+          }
+        }
+      }
+    },
+    "情報": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Info"
+          }
+        }
+      }
+    },
+    "戻す": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo"
+          }
+        }
+      }
+    },
+    "戻すのに失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo failed: %@"
+          }
+        }
+      }
+    },
+    "所要時間": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duration"
+          }
+        }
+      }
+    },
+    "手首だけで完結": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All from your wrist"
+          }
+        }
+      }
+    },
+    "扱っている重量が推定 1RM の何 % にあたるかを示す値。筋力 ≥ 85%、筋肥大 65–85%、筋持久 < 65% がおおまかな目安です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A value showing what % of your estimated 1RM the weight you're lifting represents. Rough guidelines: strength ≥ 85%, hypertrophy 65–85%, muscular endurance < 65%."
+          }
+        }
+      }
+    },
+    "推定 1RM": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated 1RM"
+          }
+        }
+      }
+    },
+    "推定1RM": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated 1RM"
+          }
+        }
+      }
+    },
+    "推定1RM %@・%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated 1RM %@ · %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "推定1RM %1$@・%2$@"
+          }
+        }
+      }
+    },
+    "推定1RM の推移グラフ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated 1RM trend chart"
+          }
+        }
+      }
+    },
+    "推移": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trend"
+          }
+        }
+      }
+    },
+    "推移を表示するには 2 回以上の記録が必要です": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At least 2 records are needed to show a trend"
+          }
+        }
+      }
+    },
+    "握力と手首屈伸を司る筋群。リストカール・ファーマーズキャリーで補強します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The muscles governing grip and wrist flexion/extension. Strengthened with Wrist Curls and Farmer's Carries."
+          }
+        }
+      }
+    },
+    "数値で見える進捗": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progress you can measure"
+          }
+        }
+      }
+    },
+    "新規ルーティン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Routine"
+          }
+        }
+      }
+    },
+    "新規作成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New"
+          }
+        }
+      }
+    },
+    "日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day"
+          }
+        }
+      }
+    },
+    "日々の変動に一喜一憂しないでください。1〜2 週間の傾向で判断するのがおすすめです。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't get caught up in day-to-day fluctuations. We recommend judging by the trend over 1–2 weeks."
+          }
+        }
+      }
+    },
+    "日付": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        }
+      }
+    },
+    "日本語ネイティブ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Native Japanese"
+          }
+        }
+      }
+    },
+    "月": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Month"
+          }
+        }
+      }
+    },
+    "月額 ¥780 / 年額 ¥5,800 のサブスクリプション。HRV 連動 AI コーチング・HealthKit 読み取り・iCloud 同期・無制限ルーティン/カスタム種目・CSV エクスポートが解放されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A subscription at ¥780/month or ¥5,800/year. It unlocks HRV-linked AI coaching, HealthKit reading, iCloud sync, unlimited routines/custom exercises, and CSV export."
+          }
+        }
+      }
+    },
+    "月額プラン": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monthly Plan"
+          }
+        }
+      }
+    },
+    "期間": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Period"
+          }
+        }
+      }
+    },
+    "木": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thu"
+          }
+        }
+      }
+    },
+    "未完了。タップで完了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incomplete. Tap to complete"
+          }
+        }
+      }
+    },
+    "未実施": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not done"
+          }
+        }
+      }
+    },
+    "未対応": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not supported"
+          }
+        }
+      }
+    },
+    "本格派・追い込み感": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serious, all-out intensity"
+          }
+        }
+      }
+    },
+    "本番セットの前段で関節・神経系を準備する軽いセット。記録時に「ウォームアップ」フラグを立てると、ボリューム集計と PR 判定から除外されます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A light set before your working sets that primes the joints and nervous system. When you flag a set as \"Warm-up\" while logging, it's excluded from volume totals and PR detection."
+          }
+        }
+      }
+    },
+    "栄養・回復寄り": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nutrition & recovery focus"
+          }
+        }
+      }
+    },
+    "検索ワードやフィルタを調整してください": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try adjusting your search terms or filters"
+          }
+        }
+      }
+    },
+    "権限を再リクエスト": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Request permission again"
+          }
+        }
+      }
+    },
+    "次へ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
+          }
+        }
+      }
+    },
+    "気が向いたらお気持ちで応援を": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Support us with a tip if you feel like it"
+          }
+        }
+      }
+    },
+    "水": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wed"
+          }
+        }
+      }
+    },
+    "注意": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caution"
+          }
+        }
+      }
+    },
+    "減らす": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decrease"
+          }
+        }
+      }
+    },
+    "火": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tue"
+          }
+        }
+      }
+    },
+    "無効": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disabled"
+          }
+        }
+      }
+    },
+    "無料トライアル中に解約した場合は課金されません。購入後は App Store の「サブスクリプション」からいつでも管理・解約できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You won't be charged if you cancel during the free trial. After purchase, you can manage or cancel anytime under \"Subscriptions\" in the App Store."
+          }
+        }
+      }
+    },
+    "無料プラン。基本記録・履歴無制限・Watch スタンドアロン記録・HealthKit 書き込みが利用可能。ルーティン 3 件 / カスタム種目 5 件まで。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free plan. Includes basic logging, unlimited history, Watch standalone recording, and HealthKit writing. Up to 3 routines / 5 custom exercises."
+          }
+        }
+      }
+    },
+    "現在チップ商品をご利用いただけません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tips are currently unavailable"
+          }
+        }
+      }
+    },
+    "現在のセッションを完了します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete the current session."
+          }
+        }
+      }
+    },
+    "現在の状態": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current status"
+          }
+        }
+      }
+    },
+    "環境": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Environment"
+          }
+        }
+      }
+    },
+    "生成完了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generation complete"
+          }
+        }
+      }
+    },
+    "用語・読みで検索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search by term or reading"
+          }
+        }
+      }
+    },
+    "用語解説": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glossary"
+          }
+        }
+      }
+    },
+    "疲労": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fatigue"
+          }
+        }
+      }
+    },
+    "目標": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goal"
+          }
+        }
+      }
+    },
+    "直近 8 週": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last 8 weeks"
+          }
+        }
+      }
+    },
+    "直近 8 週ぶんの週合計ボリュームを棒グラフで表示。長期トレンドの確認とディロード判定の入力になります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Displays weekly total volume for the last 8 weeks as a bar chart. Used to track long-term trends and inform deload decisions."
+          }
+        }
+      }
+    },
+    "直近 14 日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last 14 days"
+          }
+        }
+      }
+    },
+    "直近 30 日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last 30 days"
+          }
+        }
+      }
+    },
+    "直近 90 日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last 90 days"
+          }
+        }
+      }
+    },
+    "直近%lldセッションが上昇トレンド。推定 %@ の PR を狙える重さです。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The last %lld sessions are trending upward. You're at a weight to aim for an estimated %@ PR."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "new",
+            "value": "直近%1$lldセッションが上昇トレンド。推定 %2$@ の PR を狙える重さです。"
+          }
+        }
+      }
+    },
+    "直近セッションの最高 1RM が現 PR の 95% 以上に達した時、次回更新の可能性と狙うべき重量を提示します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When the highest 1RM in your recent sessions reaches 95% or more of your current PR, it suggests the likelihood of a new record and the weight to target."
+          }
+        }
+      }
+    },
+    "直近の自己ベスト": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent personal bests"
+          }
+        }
+      }
+    },
+    "直近の記録": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent records"
+          }
+        }
+      }
+    },
+    "相対強度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relative intensity"
+          }
+        }
+      }
+    },
+    "相対筋力": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relative strength"
+          }
+        }
+      }
+    },
+    "睡眠": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep"
+          }
+        }
+      }
+    },
+    "睡眠時間": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep duration"
+          }
+        }
+      }
+    },
+    "秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sec"
+          }
+        }
+      }
+    },
+    "種目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exercise"
+          }
+        }
+      }
+    },
+    "種目「%@」が見つかりませんでした": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't find exercise “%@”."
+          }
+        }
+      }
+    },
+    "種目がまだありません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No exercises yet"
+          }
+        }
+      }
+    },
+    "種目が見つかりません": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No exercises found"
+          }
+        }
+      }
+    },
+    "種目ごとの自己ベスト記録。重量 × レップと、その時点の推定 1RM が保存されます。「分析」タブの自己ベスト一覧で確認できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personal Best (PR) records for each exercise. Weight × reps and the estimated 1RM at that time are saved. You can review them in the Personal Best list on the Analysis tab."
+          }
+        }
+      }
+    },
+    "種目を作成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create exercise"
+          }
+        }
+      }
+    },
+    "種目を削除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete exercise"
+          }
+        }
+      }
+    },
+    "種目を削除しますか？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this exercise?"
+          }
+        }
+      }
+    },
+    "種目を追加": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add exercise"
+          }
+        }
+      }
+    },
+    "種目を選ぶ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose an exercise"
+          }
+        }
+      }
+    },
+    "種目を選択": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select exercise"
+          }
+        }
+      }
+    },
+    "種目別の最大重量推移": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Max weight trend by exercise"
+          }
+        }
+      }
+    },
+    "種目名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exercise name"
+          }
+        }
+      }
+    },
+    "種目名で検索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search by exercise name"
+          }
+        }
+      }
+    },
+    "筋トレのセットを記録します。種目名・重量・レップ数を指定。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log a strength-training set. Specify the exercise name, weight, and reps."
+          }
+        }
+      }
+    },
+    "累計": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cumulative"
+          }
+        }
+      }
+    },
+    "終了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End"
+          }
+        }
+      }
+    },
+    "終了する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End"
+          }
+        }
+      }
+    },
+    "終了に失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to end: %@"
+          }
+        }
+      }
+    },
+    "経過時間": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elapsed time"
+          }
+        }
+      }
+    },
+    "経験レベル": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Experience level"
+          }
+        }
+      }
+    },
+    "総セット": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total sets"
+          }
+        }
+      }
+    },
+    "総ボリューム": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total volume"
+          }
+        }
+      }
+    },
+    "総ボリューム (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total volume (%@)"
+          }
+        }
+      }
+    },
+    "編集": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        }
+      }
+    },
+    "肩": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shoulders"
+          }
+        }
+      }
+    },
+    "背中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "胸": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chest"
+          }
+        }
+      }
+    },
+    "腕の前面、肘屈曲の主働筋。バーベル/ダンベルカール、ハンマーカールなど。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Front of the arm, the prime mover for elbow flexion. Includes barbell/dumbbell curls, hammer curls, and more."
+          }
+        }
+      }
+    },
+    "腕の後面、肘伸展の主働筋。トライセプスエクステンション、ディップス、ナローベンチプレスなど。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back of the arm, the prime mover for elbow extension. Includes triceps extensions, dips, narrow bench press, and more."
+          }
+        }
+      }
+    },
+    "腹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abs"
+          }
+        }
+      }
+    },
+    "腹斜筋": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obliques"
+          }
+        }
+      }
+    },
+    "腹直筋。クランチ・レッグレイズ・プランクなどの体幹種目で刺激します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rectus abdominis. Targeted by core exercises such as crunches, leg raises, and planks."
+          }
+        }
+      }
+    },
+    "臀部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glutes"
+          }
+        }
+      }
+    },
+    "自宅": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home"
+          }
+        }
+      }
+    },
+    "自己ベスト": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personal best (PR)"
+          }
+        }
+      }
+    },
+    "自己ベスト一覧": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personal Best list"
+          }
+        }
+      }
+    },
+    "自重": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bodyweight"
+          }
+        }
+      }
+    },
+    "自重種目では 0 を指定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter 0 for bodyweight exercises"
+          }
+        }
+      }
+    },
+    "計画セット": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planned sets"
+          }
+        }
+      }
+    },
+    "設定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "許可": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow"
+          }
+        }
+      }
+    },
+    "許可は後から「設定 → 連携・同期 / 通知」で変更できます": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can change permissions later in Settings → Integrations & Sync / Notifications."
+          }
+        }
+      }
+    },
+    "詳細な推移グラフ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detailed trend charts"
+          }
+        }
+      }
+    },
+    "購入する": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchase"
+          }
+        }
+      }
+    },
+    "購入できませんでした": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchase failed"
+          }
+        }
+      }
+    },
+    "購入によって Pro 機能が解放されることはありません。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchases do not unlock any Pro features."
+          }
+        }
+      }
+    },
+    "購入を復元": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore purchases"
+          }
+        }
+      }
+    },
+    "購入を復元しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchases restored"
+          }
+        }
+      }
+    },
+    "起床直後など安静時の心拍数。トレーニング適応で長期的に漸減することが多く、急上昇は体調不良やオーバートレーニングの目安になります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resting heart rate, such as right after waking. It often gradually decreases over the long term with training adaptation, while a sharp rise can be a sign of poor condition or overtraining."
+          }
+        }
+      }
+    },
+    "追い込みの日々を続けます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep up your daily grind."
+          }
+        }
+      }
+    },
+    "通知": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        }
+      }
+    },
+    "通知時刻": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notification time"
+          }
+        }
+      }
+    },
+    "通算 %lld回・": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld times total · "
+          }
+        }
+      }
+    },
+    "連携": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrations"
+          }
+        }
+      }
+    },
+    "連携・同期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integrations & Sync"
+          }
+        }
+      }
+    },
+    "連続して行う一連のレップのまとまり。例: ベンチプレス 80kg × 8 レップ を 1 セットとして記録します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A group of reps performed consecutively. Example: bench press 80 kg × 8 reps is recorded as 1 set."
+          }
+        }
+      }
+    },
+    "週": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Week"
+          }
+        }
+      }
+    },
+    "週 %lld 日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days/week"
+          }
+        }
+      }
+    },
+    "週セット数と週ボリューム %@ を部位別に可視化します。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualizes weekly set count and weekly volume %@ by muscle group."
+          }
+        }
+      }
+    },
+    "週のトレーニング日数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Training days per week"
+          }
+        }
+      }
+    },
+    "週次トレーニング目標": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly training goal"
+          }
+        }
+      }
+    },
+    "週次総ボリューム": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly total volume"
+          }
+        }
+      }
+    },
+    "週次総ボリュームと種目別の最大重量推移は Pro プランで閲覧できます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly total volume and per-exercise max weight trends are available on the Pro plan."
+          }
+        }
+      }
+    },
+    "進行中のセッションがあります": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have a session in progress"
+          }
+        }
+      }
+    },
+    "進行中のワークアウト": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workout in progress"
+          }
+        }
+      }
+    },
+    "進行中のワークアウトを開く": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open workout in progress"
+          }
+        }
+      }
+    },
+    "過多": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excessive"
+          }
+        }
+      }
+    },
+    "適正": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimal"
+          }
+        }
+      }
+    },
+    "選択した部位で種目を絞り込めるようになります。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You'll be able to filter exercises by the selected muscle group."
+          }
+        }
+      }
+    },
+    "選択してください": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please select"
+          }
+        }
+      }
+    },
+    "部位": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muscle group"
+          }
+        }
+      }
+    },
+    "部位（複数選択可）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muscle groups (multiple allowed)"
+          }
+        }
+      }
+    },
+    "部位の回復状態": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muscle recovery"
+          }
+        }
+      }
+    },
+    "部位別": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By muscle group"
+          }
+        }
+      }
+    },
+    "部位別セット数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sets by muscle group"
+          }
+        }
+      }
+    },
+    "部位別分析": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muscle group analysis"
+          }
+        }
+      }
+    },
+    "重さの更新に失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to update weight: %@"
+          }
+        }
+      }
+    },
+    "重さを更新 → %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update weight → %@"
+          }
+        }
+      }
+    },
+    "重量": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight"
+          }
+        }
+      }
+    },
+    "重量 (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight (%@)"
+          }
+        }
+      }
+    },
+    "重量 (kg)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight (kg)"
+          }
+        }
+      }
+    },
+    "重量の単位": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight unit"
+          }
+        }
+      }
+    },
+    "重量単位": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight unit"
+          }
+        }
+      }
+    },
+    "金": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fri"
+          }
+        }
+      }
+    },
+    "閉じる": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "開始": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        }
+      }
+    },
+    "開始に失敗: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to start: %@"
+          }
+        }
+      }
+    },
+    "開始に失敗しました": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to start"
+          }
+        }
+      }
+    },
+    "開発者ツール": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Developer Tools"
+          }
+        }
+      }
+    },
+    "開発者を支援": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Support the Developer"
+          }
+        }
+      }
+    },
+    "除脂肪体重 (LBM)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lean body mass (LBM)"
+          }
+        }
+      }
+    },
+    "除脂肪体重 = 体重 × (1 − 体脂肪率)。筋量変化の近似指標として使えます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lean body mass = body weight × (1 − body fat percentage). Can be used as an approximate indicator of changes in muscle mass."
+          }
+        }
+      }
+    },
+    "言語": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
