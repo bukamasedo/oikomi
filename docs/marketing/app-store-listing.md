@@ -199,6 +199,59 @@ workout,gym,strength,training,log,tracker,HRV,sleep,recovery,1RM,fitness,powerli
 
 ## What's New (4000 字 / バージョンごと)
 
+App Store Connect の「このバージョンの最新情報 / What's New in This Version」に貼る本文。
+**ロケールごとに別フィールド**なので、日本語ロケールには日本語、英語ロケールには英語を貼る。
+
+### フォーマット規約（毎回この型に揃える）
+
+1. **冒頭1行**: そのバージョンの目玉を一文で（見出し的に）
+2. **セクション順**: `▼ 新機能` → `▼ 改善` → `▼ 不具合修正`（該当なしのセクションは丸ごと省略）
+3. 各項目は `・`（日本語）/ `•`（英語）始まりの箇条書き。ユーザー視点の効能で書く（内部用語・コミット名・リファクタは載せない）
+4. **末尾1行**: 感謝＋フィードバック誘導
+5. ja と en は**同じ構成・同じ項目数**で対応させる（機械翻訳でなく自然な表現に）
+6. 内部向け変更（レビュー依頼ゲート、リリース運用、docs/SPEC 更新、テスト等）は**載せない**
+7. 出典は「前回リリースタグ `vX.Y.Z+N` 以降のコミット」。`feat:` = 新機能/改善、`fix:` = 不具合修正に振り分ける
+
+新バージョンを出すたびに、この規約に沿った ja/en 対の `### vX.Y.Z` ブロックを下に追記する。
+
+### v0.2.0
+
+日本語ロケール:
+
+```
+英語に対応しました。設定からいつでも日本語／英語を切り替えられます。
+
+▼ 新機能
+・英語ローカライズに対応（日本語・英語の2言語）。種目名・コーチング文言・ウィジェット・Apple Watch まで全画面を翻訳
+・設定画面に言語切り替えを追加
+
+▼ 改善
+・iPhone と Apple Watch を横断して表示文言を統一・最適化
+
+▼ 不具合修正
+・Apple Watch へルーティンを同期した際、受信側に未登録の種目が脱落することがある問題を修正
+
+いつもオイコミをご利用いただきありがとうございます。ご意見・ご要望はぜひお寄せください。
+```
+
+英語ロケール:
+
+```
+Oikomi now speaks English. Switch between English and Japanese anytime from Settings.
+
+New
+• Full English localization — exercise names, coaching messages, widgets, and Apple Watch are all translated (Japanese & English)
+• Language switcher added to Settings
+
+Improvements
+• Unified and refined wording across iPhone and Apple Watch
+
+Bug Fixes
+• Fixed an issue where exercises missing on the receiving device could be dropped when syncing a routine to Apple Watch
+
+Thank you for using Oikomi. We'd love to hear your feedback!
+```
+
 ### v1.0 初回リリース用
 
 ```

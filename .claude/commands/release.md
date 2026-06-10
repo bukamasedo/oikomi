@@ -55,3 +55,6 @@ gh release create "vX.Y.Z+N" --title "vX.Y.Z (build N)" --notes "..."
 ### 完了後
 - 次に Xcode で Archive → App Store Connect へアップロードする旨を案内する
 - このコマンドは**バージョン確定とタグ付けまで**。実際のビルド/アップロードは手動作業
+
+### App Store「最新情報」(What's New)
+リリースのたびに ASC へ貼る「このバージョンの最新情報」は、**必ず [`docs/marketing/app-store-listing.md`](../../docs/marketing/app-store-listing.md) の「What's New」フォーマット規約**に従って ja/en 対で作成する。前回タグ以降のコミットを `feat:`=新機能/改善 / `fix:`=不具合修正 に振り分け、内部向け変更は載せない。生成したら同ファイルに `### vX.Y.Z` ブロックとして追記する。
