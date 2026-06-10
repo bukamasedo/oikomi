@@ -88,8 +88,12 @@ extension Exercise {
     /// 対象外。シード 873 種は `nameEn` を備えるためそれを使い、英名を持たない
     /// カスタム種目（`nameEn` 空）は日本語 `name` にフォールバックする。
     /// 検索・ソートは `name` を使い続け、表示のみここで切り替える。
+    ///
+    /// 言語判定はアプリが実際に解決しているローカライズ（`Bundle.main.preferredLocalizations`）
+    /// に揃える。`String(localized:)` の解決基準と一致し、端末の優先言語を返す
+    /// `Locale.current` を使うと UI 言語と種目名だけ食い違う恐れがあるため使わない。
     public var localizedName: String {
-        let isEnglish = Locale.current.language.languageCode?.identifier == "en"
+        let isEnglish = Bundle.main.preferredLocalizations.first?.hasPrefix("en") ?? false
         return isEnglish && !nameEn.isEmpty ? nameEn : name
     }
 

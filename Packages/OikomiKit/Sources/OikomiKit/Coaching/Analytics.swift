@@ -374,7 +374,7 @@ public enum Analytics {
             predictions.append(
                 PRPrediction(
                     exerciseId: exercise.id,
-                    exerciseName: exercise.name,
+                    exerciseName: exercise.localizedName,
                     predictedOneRM: predicted,
                     margin: margin,
                     sessionCount: points.count,
@@ -411,10 +411,10 @@ public enum Analytics {
                 CoachingAdvice(
                     title: loc("停滞ぎみ"),
                     message:
-                        loc("\(exercise.name)はここ\(points.count)セッションほぼ横ばいです。レップ域・頻度・種目の変更を検討してください。"),
+                        loc("\(exercise.localizedName)はここ\(points.count)セッションほぼ横ばいです。レップ域・頻度・種目の変更を検討してください。"),
                     severity: .info,
                     impact: Double(points.count),
-                    subject: exercise.name,
+                    subject: exercise.localizedName,
                     detail: loc("横ばい \(points.count) 回"),
                     trend: maxes
                 )
@@ -671,11 +671,11 @@ public enum Analytics {
                         title: loc("重量を少し下げましょう"),
                         message:
                             loc(
-                                "\(exercise.name)は直近2回とも高強度（RPE \(Int(highThreshold)) 以上）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。"
+                                "\(exercise.localizedName)は直近2回とも高強度（RPE \(Int(highThreshold)) 以上）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。"
                             ),
                         severity: .warning,
                         impact: (lastWeight - suggested) + 50,
-                        subject: exercise.name,
+                        subject: exercise.localizedName,
                         detail:
                             "\(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit))"
                     )
@@ -688,11 +688,11 @@ public enum Analytics {
                         title: loc("重量を上げてみましょう"),
                         message:
                             loc(
-                                "\(exercise.name)は直近2回とも余裕（RPE \(Int(lowThreshold)) 以下）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。"
+                                "\(exercise.localizedName)は直近2回とも余裕（RPE \(Int(lowThreshold)) 以下）でした。次回は \(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit)) を目安に。"
                             ),
                         severity: .info,
                         impact: (suggested - lastWeight) + 50,
-                        subject: exercise.name,
+                        subject: exercise.localizedName,
                         detail:
                             "\(WeightFormatter.oneRM(kilograms: lastWeight, in: weightUnit)) → \(WeightFormatter.oneRM(kilograms: suggested, in: weightUnit))"
                     )

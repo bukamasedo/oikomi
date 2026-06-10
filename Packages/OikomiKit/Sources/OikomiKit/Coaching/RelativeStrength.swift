@@ -27,7 +27,7 @@ public enum RelativeStrength {
             guard let exercise = record.exercise, record.estimated1RM > 0 else { return nil }
             return RelativeStrengthRow(
                 id: record.id,
-                exerciseName: exercise.name,
+                exerciseName: exercise.localizedName,
                 estimated1RM: record.estimated1RM,
                 ratio: record.estimated1RM / bodyweightKg
             )

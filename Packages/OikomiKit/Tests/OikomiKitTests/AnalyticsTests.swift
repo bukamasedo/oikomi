@@ -636,7 +636,8 @@ struct AnalyticsTests {
 
         let first = try #require(details.first)
         #expect(first.exerciseId == bench.id)
-        #expect(first.exerciseName == "ベンチプレス")
+        // 表示名は localizedName 由来（テスト環境の言語に依存しないよう実値と比較）
+        #expect(first.exerciseName == bench.localizedName)
         #expect(first.predictedOneRM > 0)
         #expect(first.sessionCount == 5)
     }
