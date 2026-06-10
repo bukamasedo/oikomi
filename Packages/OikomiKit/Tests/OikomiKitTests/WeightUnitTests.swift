@@ -32,9 +32,9 @@ struct WeightUnitTests {
         }
     }
 
-    @Test("displayStep は kg=2.5, lb=5.0")
+    @Test("displayStep は kg=0.5, lb=5.0")
     func displaySteps() {
-        #expect(WeightUnit.kg.displayStep == 2.5)
+        #expect(WeightUnit.kg.displayStep == 0.5)
         #expect(WeightUnit.lb.displayStep == 5.0)
     }
 
@@ -52,10 +52,10 @@ struct WeightUnitTests {
         #expect(WeightUnit.lb.defaultRange == 0...1100)
     }
 
-    @Test("snappedKilograms: kg は 2.5kg 刻みに丸める")
+    @Test("snappedKilograms: kg は 0.5kg 刻みに丸める")
     func snapKg() {
-        #expect(WeightUnit.kg.snappedKilograms(78.9) == 80.0)
-        #expect(WeightUnit.kg.snappedKilograms(81.2) == 80.0)
+        #expect(WeightUnit.kg.snappedKilograms(78.9) == 79.0)
+        #expect(WeightUnit.kg.snappedKilograms(81.2) == 81.0)
         #expect(WeightUnit.kg.snappedKilograms(82.5) == 82.5)
     }
 

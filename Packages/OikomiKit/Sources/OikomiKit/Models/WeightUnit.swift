@@ -23,10 +23,11 @@ public enum WeightUnit: String, Codable, CaseIterable, Sendable {
     }
 
     /// 入力ステッパーの最小増減単位。
-    /// kg = 1.25kg プレート両側分、lb = 2.5lb プレート両側分（米国式）。
+    /// kg はダンベルの微調整（マイクロロード）に合わせて 0.5kg 刻み、
+    /// lb = 2.5lb プレート両側分（米国式）。
     public var displayStep: Double {
         switch self {
-        case .kg: return 2.5
+        case .kg: return 0.5
         case .lb: return 5.0
         }
     }
@@ -48,8 +49,8 @@ public enum WeightUnit: String, Codable, CaseIterable, Sendable {
 
     public var localizedName: String {
         switch self {
-        case .kg: return "キログラム"
-        case .lb: return "ポンド"
+        case .kg: return loc("キログラム")
+        case .lb: return loc("ポンド")
         }
     }
 

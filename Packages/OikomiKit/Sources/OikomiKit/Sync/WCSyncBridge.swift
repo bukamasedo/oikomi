@@ -823,10 +823,36 @@ public final class WCSyncBridge {
         }
         for entry in entries {
             let exerciseName = entry.exerciseName
-            let exercise = try? context.fetch(
+            let found = try? context.fetch(
                 FetchDescriptor<Exercise>(predicate: #Predicate { $0.name == exerciseName })
             ).first
-            guard let exercise else { continue }
+            let exercise: Exercise
+            if let found {
+                exercise = found
+            } else if let def = entry.definition {
+                // 受信側に同名種目が無い（多くはカスタム種目）→ 定義から復元して脱落を防ぐ。
+                let recreated = Exercise(
+                    name: def.name,
+                    nameEn: def.nameEn,
+                    muscleGroups: def.muscleGroupRawValues.compactMap(MuscleGroup.init(rawValue:)),
+                    equipment: Equipment(rawValue: def.equipmentRawValue) ?? .barbell,
+                    locations: def.locationRawValues.compactMap(Location.init(rawValue:)),
+                    measurementType: MeasurementType(rawValue: def.measurementTypeRawValue) ?? .weightReps,
+                    defaultRestSeconds: def.defaultRestSeconds,
+                    isCustom: def.isCustom
+                )
+                context.insert(recreated)
+                exercise = recreated
+                print(
+                    "[Oikomi.sync] recreated missing exercise from routine DTO name=\(def.name) isCustom=\(def.isCustom)"
+                )
+            } else {
+                // 旧バイナリ（definition 無し）かつ受信側に同名種目が無い → スキップ。証跡を残す。
+                print(
+                    "[Oikomi.sync] routine entry dropped: exercise not found and no definition name=\(exerciseName)"
+                )
+                continue
+            }
             let routineExercise = RoutineExercise(
                 routine: routine,
                 exercise: exercise,

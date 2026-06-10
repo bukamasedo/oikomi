@@ -349,6 +349,91 @@ struct WCSyncBridgeReceiveTests {
         #expect(entries[1].plannedWeight == 100)
     }
 
+    @Test("routineUpsert: 受信側に無い種目は definition から復元され脱落しない")
+    func upsertRoutine_recreatesMissingExercise_fromDefinition() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()  // 「ベンチプレス」はシード済み・カスタムは未存在
+        WCSyncBridge.shared.activate(contextProvider: { context })
+
+        let routineId = UUID()
+        let customDefinition = ExerciseDefinitionDTO(
+            name: "オリジナルカール",
+            nameEn: "",
+            muscleGroupRawValues: [MuscleGroup.biceps.rawValue],
+            equipmentRawValue: Equipment.dumbbell.rawValue,
+            locationRawValues: [Location.home.rawValue],
+            measurementTypeRawValue: MeasurementType.weightReps.rawValue,
+            defaultRestSeconds: 60,
+            isCustom: true
+        )
+        let dto = RoutineDTO(
+            id: routineId,
+            name: "腕の日",
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+            exerciseNames: ["ベンチプレス", "オリジナルカール"],
+            exercises: [
+                RoutineExerciseDTO(
+                    exerciseName: "ベンチプレス", order: 0, plannedSets: 3, plannedReps: 8),
+                RoutineExerciseDTO(
+                    exerciseName: "オリジナルカール",
+                    order: 1,
+                    plannedSets: 3,
+                    plannedReps: 12,
+                    plannedWeight: 10,
+                    definition: customDefinition
+                ),
+            ]
+        )
+        WCSyncBridge.shared.handleEnvelope(
+            SyncEnvelope(kind: .routineUpsert, routines: [dto])
+        )
+
+        let stored = try context.fetch(
+            FetchDescriptor<Routine>(predicate: #Predicate { $0.id == routineId })
+        ).first
+        let entries = stored?.orderedExercises ?? []
+        #expect(entries.count == 2)  // 旧実装ではここが 1 に脱落していた
+        #expect(entries[1].exercise?.name == "オリジナルカール")
+        #expect(entries[1].exercise?.isCustom == true)
+        #expect(entries[1].exercise?.equipment == .dumbbell)
+
+        // 種目マスタにも復元され、以後の照合で見つかる
+        let recreated = try context.fetch(
+            FetchDescriptor<Exercise>(
+                predicate: #Predicate { $0.name == "オリジナルカール" })
+        ).first
+        #expect(recreated != nil)
+    }
+
+    @Test("routineUpsert: definition も同名種目も無い旧形式エントリはスキップ（既存挙動維持）")
+    func upsertRoutine_skipsEntry_whenNoExerciseAndNoDefinition() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        WCSyncBridge.shared.activate(contextProvider: { context })
+
+        let routineId = UUID()
+        let dto = RoutineDTO(
+            id: routineId,
+            name: "壊れた同期",
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+            exerciseNames: ["ベンチプレス", "存在しない種目"],
+            exercises: [
+                RoutineExerciseDTO(
+                    exerciseName: "ベンチプレス", order: 0, plannedSets: 3, plannedReps: 8),
+                RoutineExerciseDTO(
+                    exerciseName: "存在しない種目", order: 1, plannedSets: 3, plannedReps: 8),
+            ]
+        )
+        WCSyncBridge.shared.handleEnvelope(
+            SyncEnvelope(kind: .routineUpsert, routines: [dto])
+        )
+
+        let stored = try context.fetch(
+            FetchDescriptor<Routine>(predicate: #Predicate { $0.id == routineId })
+        ).first
+        #expect((stored?.orderedExercises ?? []).count == 1)
+    }
+
     @Test("routineUpsert で exercises が nil の旧形式は exerciseNames + デフォルト値で再構築")
     func upsertRoutine_fallsBackToExerciseNames_whenExercisesNil() throws {
         let context = try Self.makeContext()

@@ -78,6 +78,43 @@ public struct ExerciseFavoriteDTO: Codable, Sendable, Hashable {
     }
 }
 
+/// 種目マスタを端末間で複製するための定義 DTO。
+///
+/// ルーティン同期は種目を **name** で参照するが、カスタム種目（`isCustom == true`）は
+/// 受信側に存在しない。これを `RoutineExerciseDTO` に同梱して送ることで、受信側が
+/// 不足している種目を復元でき、ルーティンの種目が黙って脱落するのを防ぐ。
+/// 旧バイナリは送らない（受信側では nil で decode され、従来どおり name 照合のみ）。
+public struct ExerciseDefinitionDTO: Codable, Sendable, Hashable {
+    public let name: String
+    public let nameEn: String
+    public let muscleGroupRawValues: [String]
+    public let equipmentRawValue: String
+    public let locationRawValues: [String]
+    public let measurementTypeRawValue: String
+    public let defaultRestSeconds: Int
+    public let isCustom: Bool
+
+    public init(
+        name: String,
+        nameEn: String,
+        muscleGroupRawValues: [String],
+        equipmentRawValue: String,
+        locationRawValues: [String],
+        measurementTypeRawValue: String,
+        defaultRestSeconds: Int,
+        isCustom: Bool
+    ) {
+        self.name = name
+        self.nameEn = nameEn
+        self.muscleGroupRawValues = muscleGroupRawValues
+        self.equipmentRawValue = equipmentRawValue
+        self.locationRawValues = locationRawValues
+        self.measurementTypeRawValue = measurementTypeRawValue
+        self.defaultRestSeconds = defaultRestSeconds
+        self.isCustom = isCustom
+    }
+}
+
 /// ルーティン内の種目エントリを表す DTO。`RoutineDTO.exercises` で送られる。
 ///
 /// `RoutineExercise.id` は端末ごとに異なるため持たない（受信側は order でマッチング）。
@@ -89,6 +126,9 @@ public struct RoutineExerciseDTO: Codable, Sendable, Hashable {
     public let plannedWeight: Double?
     /// レスト秒数の上書き。旧バイナリの JSON にはキー欠落 → nil で decode され「種目デフォルトを使う」挙動になる。
     public let plannedRestSeconds: Int?
+    /// 種目の完全な定義。受信側に同名種目が無い場合の復元に使う。
+    /// 旧バイナリの JSON にはキー欠落 → nil で decode される。
+    public let definition: ExerciseDefinitionDTO?
 
     public init(
         exerciseName: String,
@@ -96,7 +136,8 @@ public struct RoutineExerciseDTO: Codable, Sendable, Hashable {
         plannedSets: Int,
         plannedReps: Int,
         plannedWeight: Double? = nil,
-        plannedRestSeconds: Int? = nil
+        plannedRestSeconds: Int? = nil,
+        definition: ExerciseDefinitionDTO? = nil
     ) {
         self.exerciseName = exerciseName
         self.order = order
@@ -104,6 +145,7 @@ public struct RoutineExerciseDTO: Codable, Sendable, Hashable {
         self.plannedReps = plannedReps
         self.plannedWeight = plannedWeight
         self.plannedRestSeconds = plannedRestSeconds
+        self.definition = definition
     }
 }
 
@@ -242,14 +284,27 @@ extension SetRecord {
 extension Routine {
     public func makeDTO() -> RoutineDTO {
         let entries: [RoutineExerciseDTO] = orderedExercises.compactMap { routineEx in
-            guard let name = routineEx.exercise?.name else { return nil }
+            guard let exercise = routineEx.exercise else { return nil }
+            // 種目定義を同梱し、受信側に同名種目が無くても復元できるようにする
+            // （カスタム種目は受信側に存在しないため、これが無いと脱落する）。
+            let definition = ExerciseDefinitionDTO(
+                name: exercise.name,
+                nameEn: exercise.nameEn,
+                muscleGroupRawValues: exercise.muscleGroupRawValues,
+                equipmentRawValue: exercise.equipmentRawValue,
+                locationRawValues: exercise.locationRawValues,
+                measurementTypeRawValue: exercise.measurementTypeRawValue,
+                defaultRestSeconds: exercise.defaultRestSeconds,
+                isCustom: exercise.isCustom
+            )
             return RoutineExerciseDTO(
-                exerciseName: name,
+                exerciseName: exercise.name,
                 order: routineEx.order,
                 plannedSets: routineEx.plannedSets,
                 plannedReps: routineEx.plannedReps,
                 plannedWeight: routineEx.plannedWeight,
-                plannedRestSeconds: routineEx.plannedRestSeconds
+                plannedRestSeconds: routineEx.plannedRestSeconds,
+                definition: definition
             )
         }
         return RoutineDTO(
