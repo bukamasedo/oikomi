@@ -44,8 +44,8 @@ targets:
     info:
       path: App/iOS/Info.plist
       properties:
-        CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "12"
+        CFBundleShortVersionString: "0.2.0"
+        CFBundleVersion: "13"
         CFBundleLocalizations:
           - ja
           - en
@@ -117,8 +117,8 @@ targets:
       path: App/Widgets/Info.plist
       properties:
         CFBundleDisplayName: Oikomi Widgets
-        CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "12"
+        CFBundleShortVersionString: "0.2.0"
+        CFBundleVersion: "13"
         CFBundleLocalizations:
           - ja
           - en
@@ -149,8 +149,8 @@ targets:
     info:
       path: App/Watch/Info.plist
       properties:
-        CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "12"
+        CFBundleShortVersionString: "0.2.0"
+        CFBundleVersion: "13"
         CFBundleLocalizations:
           - ja
           - en
@@ -191,8 +191,8 @@ targets:
       path: App/WatchWidgets/Info.plist
       properties:
         CFBundleDisplayName: Oikomi Watch Widgets
-        CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "12"
+        CFBundleShortVersionString: "0.2.0"
+        CFBundleVersion: "13"
         CFBundleLocalizations:
           - ja
           - en
