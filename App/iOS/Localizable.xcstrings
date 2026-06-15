@@ -5688,6 +5688,26 @@
           }
         }
       }
+    },
+    "月額 ¥780 / 年額 ¥4,500 のサブスクリプション。高度な AI コーチング（PR 予測・ボリューム警告）・コンディションの長期トレンド・iCloud 同期・無制限ルーティン/カスタム種目・CSV エクスポートが解放されます。HRV 連動ディロード推奨と HealthKit 読み取りは Free です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A subscription at ¥780/month or ¥4,500/year. It unlocks advanced AI coaching (PR prediction and volume warnings), long-term condition trends, iCloud sync, unlimited routines/custom exercises, and CSV export. HRV-based deload recommendations and HealthKit reading are free."
+          }
+        }
+      }
+    },
+    "PR 予測通知は Pro 限定です。HRV 連動ディロード推奨は Free で使えます。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PR prediction notifications are Pro only. HRV-based deload recommendations are available for free."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

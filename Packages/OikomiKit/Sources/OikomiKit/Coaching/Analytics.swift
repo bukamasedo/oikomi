@@ -713,6 +713,9 @@ public enum Analytics {
     /// **severity（warning を最優先）→ impact 降順**で並べ替えて上位 `limit` 件を返す。
     /// UI 側で連結順に依存して警告が好調メッセージに埋もれるのを防ぐため、選択ロジックを OikomiKit に集約する。
     /// PR 予測と停滞検出は共有閾値で排他なので、同一種目で矛盾するアドバイスは出ない。
+    /// - Parameter includePremium: 深さ系（PR 予測・停滞・ボリューム警告・漸進・体組成フェーズ）を含めるか。
+    ///   課金境界 split（SPEC §10）に従い、Free は楔（ディロード/レディネス・RPE 自動調整・部位回復）のみ、
+    ///   Pro（`true`）は深さ系も合成する。純粋関数を保つため、呼び出し側が `ProGate.canUseAdvancedCoaching` を渡す。
     public static func combinedCoachingAdvice(
         sessions: [WorkoutSession],
         sets: [SetRecord],
@@ -723,22 +726,29 @@ public enum Analytics {
         calendar: Calendar = .current,
         weightUnit: WeightUnit = .kg,
         profile: TrainingProfile = .default,
-        bodyPhase: BodyPhaseResult? = nil
+        bodyPhase: BodyPhaseResult? = nil,
+        includePremium: Bool = true
     ) -> [CoachingAdvice] {
-        let all =
+        // Free（楔）: 「今日の判断」に直結する助言。
+        var all =
             deloadAdvice(
                 sessions: sessions, sets: sets, readiness: readiness,
                 referenceDate: referenceDate, calendar: calendar)
             + autoregulationAdvice(sets: sets, calendar: calendar, weightUnit: weightUnit)
-            + prPredictions(
-                sets: sets, records: records, calendar: calendar, weightUnit: weightUnit)
-            + plateauAdvice(sets: sets, records: records, calendar: calendar)
-            + volumeAdvice(from: sets, referenceDate: referenceDate, calendar: calendar)
             + MuscleRecovery.recoveryAdvice(
                 sets: sets, referenceDate: referenceDate, calendar: calendar)
-            + ProgressiveOverload.progressiveOverloadAdvice(
-                sets: sets, profile: profile, referenceDate: referenceDate, calendar: calendar)
-            + BodyPhase.phaseAdvice(bodyPhase)
+
+        // Pro（深さ）: トレンド/予測/長期最適化。
+        if includePremium {
+            all +=
+                prPredictions(
+                    sets: sets, records: records, calendar: calendar, weightUnit: weightUnit)
+                + plateauAdvice(sets: sets, records: records, calendar: calendar)
+                + volumeAdvice(from: sets, referenceDate: referenceDate, calendar: calendar)
+                + ProgressiveOverload.progressiveOverloadAdvice(
+                    sets: sets, profile: profile, referenceDate: referenceDate, calendar: calendar)
+                + BodyPhase.phaseAdvice(bodyPhase)
+        }
 
         // 警告（要対応）を最優先。同 rank 内は impact 降順。
         let rank: (CoachingAdvice.Severity) -> Int = { $0 == .warning ? 1 : 0 }

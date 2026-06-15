@@ -410,7 +410,8 @@ struct WorkoutTabView: View {
     /// 条件: Pro かつルーティン由来セッション。`Analytics.prPredictionDetails` の予測がある種目のうち、
     /// 当セッションに未完了（計画）セットを持ち、ウェイト種目で、推奨値が現在の予定重量を上回るものだけ。
     private func weightUpdateSuggestions(for session: WorkoutSession) -> [UUID: WeightUpdateSuggestion] {
-        guard ProGate.canUseAICoaching, session.routine != nil else { return [:] }
+        // 「重さを更新」は PR 予測（深さ）由来＝Pro 限定（SPEC §10 split）。
+        guard ProGate.canUseAdvancedCoaching, session.routine != nil else { return [:] }
 
         // 当セッションの種目別・未完了セット
         let plannedBySExercise = Dictionary(

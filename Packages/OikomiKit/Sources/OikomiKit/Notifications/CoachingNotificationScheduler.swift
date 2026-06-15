@@ -67,6 +67,8 @@ public enum CoachingNotificationScheduler {
         weightUnit: WeightUnit = .kg
     ) {
         cancelPRPrediction()
+        // PR 予測通知は深さ＝Pro 限定（SPEC §10 split）。
+        guard ProGate.canUseAdvancedCoaching else { return }
 
         guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: referenceDate) else { return }
         let advices = evaluatePRPrediction(
@@ -135,7 +137,8 @@ public enum CoachingNotificationScheduler {
         calendar: Calendar = .current
     ) async {
         cancelHRVDeload()
-        guard ProGate.canUseAICoaching else { return }
+        // HRV 連動ディロード推奨は楔＝Free（SPEC §10 split）。
+        guard ProGate.canUseReadinessCoaching else { return }
 
         let today = await healthStore.todayValue(for: .hrv)
         let average = await healthStore.hrvAverage(days: 7, endingAt: referenceDate)

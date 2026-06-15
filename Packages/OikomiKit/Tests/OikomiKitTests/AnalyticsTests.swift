@@ -546,6 +546,40 @@ struct AnalyticsTests {
         #expect(predictions.first?.title.contains("PR") == true)
     }
 
+    @Test("combinedCoachingAdvice: includePremium=false は深さ系(PR予測)を除外し楔のみ返す")
+    func combinedCoachingPremiumGate() throws {
+        let context = try Self.makeContext()
+        try ExerciseRepository(context: context).seedIfNeeded()
+        let bench = try context.fetch(FetchDescriptor<Exercise>()).first { $0.name == "ベンチプレス" }!
+        let repo = WorkoutSessionRepository(context: context)
+
+        // PR 予測（深さ＝Pro）が発火する明確な上昇トレンドを作る。
+        let cal = Self.calendar
+        let now = Date()
+        for offset in 0..<5 {
+            let weight = Double(80 + offset)
+            let date = cal.date(byAdding: .day, value: -(4 - offset) * 2, to: now)!
+            let session = try repo.startSession(at: date)
+            try repo.addSet(to: session, exercise: bench, weight: weight, reps: 8, completedAt: date)
+            session.endedAt = date
+        }
+
+        let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+        let records = try context.fetch(FetchDescriptor<PersonalRecord>())
+        let allSets = try context.fetch(FetchDescriptor<SetRecord>())
+
+        let pro = Analytics.combinedCoachingAdvice(
+            sessions: sessions, sets: allSets, records: records, readiness: nil,
+            limit: .max, referenceDate: now, calendar: cal, includePremium: true)
+        let free = Analytics.combinedCoachingAdvice(
+            sessions: sessions, sets: allSets, records: records, readiness: nil,
+            limit: .max, referenceDate: now, calendar: cal, includePremium: false)
+
+        // Pro は PR 予測（深さ）を含む。Free（楔のみ）は含まない。
+        #expect(pro.contains { $0.title.contains("PR") })
+        #expect(!free.contains { $0.title.contains("PR") })
+    }
+
     @Test("prPredictions: 横ばいトレンドでは予測を出さない")
     func prPredictionFlatTrend() throws {
         let context = try Self.makeContext()

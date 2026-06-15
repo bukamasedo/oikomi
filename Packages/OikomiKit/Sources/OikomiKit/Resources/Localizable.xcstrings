@@ -219,6 +219,16 @@
         }
       }
     },
+    "HRV・睡眠・安静時心拍・体組成の推移を長期で可視化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualizes long-term trends in HRV, sleep, resting heart rate, and body composition."
+          }
+        }
+      }
+    },
     "HRV・睡眠・安静時心拍数で日々のトレーニング負荷を自動調整": {
       "localizations": {
         "en": {
@@ -335,6 +345,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kilograms"
+          }
+        }
+      }
+    },
+    "コンディションの長期トレンド": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long-Term Condition Trends"
+          }
+        }
+      }
+    },
+    "コンディションの長期トレンドは Pro 限定機能です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long-term condition trends are a Pro-only feature."
           }
         }
       }
@@ -927,6 +957,16 @@
         }
       }
     },
+    "線形回帰 PR 予測・停滞検出・部位別ボリューム警告で次の一手を最適化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optimize your next move with linear-regression PR prediction, plateau detection, and per-muscle volume warnings."
+          }
+        }
+      }
+    },
     "翌日のルーティンで PR 圏内の種目があると朝に通知します。": {
       "localizations": {
         "en": {
@@ -1027,12 +1067,32 @@
         }
       }
     },
+    "高度な AI コーチング": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced AI Coaching"
+          }
+        }
+      }
+    },
     "高度な分析は Pro 限定機能です。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Advanced analytics is a Pro-only feature."
+          }
+        }
+      }
+    },
+    "高度コーチング（PR 予測・ボリューム警告など）は Pro 限定機能です。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced coaching (PR prediction, volume warnings, and more) is a Pro-only feature."
           }
         }
       }

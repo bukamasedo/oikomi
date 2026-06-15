@@ -62,19 +62,22 @@ struct SubscriptionManagerTests {
         #expect(ProGate.freeCustomExerciseLimit == 5)
     }
 
-    @Test("ProGate: 未購入時でも Live Activity は Free 開放されている")
+    @Test("ProGate: 未購入時は楔(読み取り/レディネス/Live Activity)が Free・深さは Pro")
     @MainActor
     func proGateOffByDefault() {
         // テスト環境では Transaction.currentEntitlements は空のため isProActive == false
         #expect(ProGate.isProActive == false)
         #expect(ProGate.canCreateUnlimitedRoutines == false)
         #expect(ProGate.canCreateUnlimitedCustomExercises == false)
-        #expect(ProGate.canReadHealthData == false)
-        #expect(ProGate.canUseAICoaching == false)
-        // Live Activity は v0.x で Free 開放済み（Pro 訴求は HRV コーチング側に集約）
+        // split（SPEC §10）: 楔（読み取り＋今日のレディネス）は Free 開放
+        #expect(ProGate.canReadHealthData == true)
+        #expect(ProGate.canUseReadinessCoaching == true)
         #expect(ProGate.canUseLiveActivity == true)
+        // 深さ（高度コーチング・トレンド・分析・同期・エクスポート）は Pro
+        #expect(ProGate.canUseAdvancedCoaching == false)
         #expect(ProGate.canUseICloudSync == false)
         #expect(ProGate.canSeeAdvancedAnalytics == false)
+        #expect(ProGate.canSeeHealthTrends == false)
         #expect(ProGate.canExportData == false)
     }
 
@@ -83,10 +86,12 @@ struct SubscriptionManagerTests {
         let errors: [ProGateError] = [
             .routineLimitReached(current: 5, limit: 5),
             .customExerciseLimitReached(current: 5, limit: 5),
-            .healthDataReadRequiresPro,
-            .aiCoachingRequiresPro,
+            .advancedCoachingRequiresPro,
             .liveActivityRequiresPro,
             .iCloudSyncRequiresPro,
+            .advancedAnalyticsRequiresPro,
+            .healthTrendsRequiresPro,
+            .dataExportRequiresPro,
         ]
         for error in errors {
             let desc = error.errorDescription ?? ""

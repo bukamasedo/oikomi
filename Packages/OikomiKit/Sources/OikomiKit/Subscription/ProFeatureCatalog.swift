@@ -35,25 +35,18 @@ public enum ProFeatureCatalog {
     /// Family Sharing は v1.1 実装予定のため、v1.0 では掲載しない（CLAUDE.md §実装状況）。
     public static let allFeatures: [Feature] = [
         Feature(
-            id: "ai-coaching",
+            id: "advanced-coaching",
             icon: "waveform.path.ecg",
-            title: loc("HRV 連動 AI コーチング"),
-            description: loc("HRV 低下を検知して自動ディロード推奨、ボリューム過多警告も自動表示"),
+            title: loc("高度な AI コーチング"),
+            description: loc("線形回帰 PR 予測・停滞検出・部位別ボリューム警告で次の一手を最適化"),
             isHighlight: true
         ),
         Feature(
-            id: "pr-prediction",
+            id: "health-trends",
             icon: "chart.line.uptrend.xyaxis",
-            title: loc("線形回帰 PR 予測"),
-            description: loc("直近セッションのトレンドから次回 PR を予測、推定 1RM の推移も可視化"),
+            title: loc("コンディションの長期トレンド"),
+            description: loc("HRV・睡眠・安静時心拍・体組成の推移を長期で可視化"),
             isHighlight: true
-        ),
-        Feature(
-            id: "healthkit-read",
-            icon: "heart.text.square.fill",
-            title: loc("HealthKit 詳細読み取り"),
-            description: loc("HRV・睡眠・安静時心拍数で日々のトレーニング負荷を自動調整"),
-            isHighlight: false
         ),
         Feature(
             id: "icloud-sync",

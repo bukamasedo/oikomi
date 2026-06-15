@@ -16,16 +16,11 @@ struct TodayConditionCard: View {
     var rhr: Int? = nil
     var sleepHours: Double? = nil
 
-    private var isPro: Bool { ProGate.canReadHealthData }
-
     var body: some View {
         VStack(alignment: .leading, spacing: OikomiSpacing.s) {
-            if isPro {
-                proContent
-            } else {
-                header
-                lockedContent
-            }
+            // v0.x split（SPEC §10）: 今日のレディネス＝楔は全ユーザーに開放。
+            // 権限拒否・データなしの場合は各値が "—" 表示になる（HealthStore が nil を返すため）。
+            proContent
         }
         .padding(OikomiSpacing.l)
         .background(
@@ -174,24 +169,6 @@ struct TodayConditionCard: View {
             .fill(OikomiColor.separator)
             .frame(width: 1)
             .padding(.vertical, OikomiSpacing.xs)
-    }
-
-    @ViewBuilder
-    private var lockedContent: some View {
-        HStack(alignment: .top, spacing: OikomiSpacing.m) {
-            Image(systemName: "lock.fill")
-                .font(.title3)
-                .foregroundStyle(OikomiColor.proAccent)
-                .frame(width: 28)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Pro 限定")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(OikomiColor.proAccent)
-                Text("HRV・安静時心拍・睡眠時間は Pro プランで表示できます。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
     }
 }
 

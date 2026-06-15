@@ -345,13 +345,13 @@ struct SettingsTabView: View {
             }
             Divider()
             Toggle(isOn: $notifPRPredictionEnabled) {
-                notificationRow(kind: .prPrediction)
+                notificationRow(kind: .prPrediction, proGated: !ProGate.canUseAdvancedCoaching)
             }
+            .disabled(!ProGate.canUseAdvancedCoaching)
             Divider()
             Toggle(isOn: $notifHRVDeloadEnabled) {
-                notificationRow(kind: .hrvDeload, proGated: !ProGate.canUseAICoaching)
+                notificationRow(kind: .hrvDeload)
             }
-            .disabled(!ProGate.canUseAICoaching)
             Divider()
             Toggle(isOn: $notifForgottenEnabled) {
                 notificationRow(kind: .forgottenSession)
@@ -367,9 +367,9 @@ struct SettingsTabView: View {
                 }
             }
 
-            if !ProGate.canUseAICoaching {
+            if !ProGate.canUseAdvancedCoaching {
                 Divider()
-                Text("HRV 連動ディロード推奨は Pro 限定です。")
+                Text("PR 予測通知は Pro 限定です。HRV 連動ディロード推奨は Free で使えます。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)

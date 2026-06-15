@@ -109,10 +109,11 @@ public final class HealthStore {
     ///
     /// 仕様書 §6.5「セッション開始時に HealthKit から HRV / 睡眠スコア / 安静時心拍数を取得しキャッシュ」。
     /// 権限拒否 / データなしの場合は対応フィールドが nil の Snapshot を返す。
-    /// **Pro 限定機能**: Free プランでは空の Snapshot を返す（仕様書 §10）。
+    /// v0.x split（仕様書 §10）で **Free 開放**（`ProGate.canReadHealthData` = true）。
+    /// 楔（今日のレディネス）に読み取りが必須のため。再ゲート時は同フラグを `isProActive` に戻す。
     public func fetchSnapshot(referenceDate: Date = Date()) async -> HealthSnapshot {
         let snapshot = HealthSnapshot(date: referenceDate)
-        // Pro 機能ゲート: Free プランは HRV / 睡眠 / 安静時心拍数の読み取り不可
+        // 読み取りゲート（現状 Free）。`canReadHealthData` を戻すと全読み取りが一括で Pro 限定に戻る。
         guard await MainActor.run(body: { ProGate.canReadHealthData }) else {
             return snapshot
         }
@@ -204,7 +205,7 @@ public final class HealthStore {
         }
     #endif
 
-    // MARK: - 今日の最新値 / 推移取得 (Pro 限定)
+    // MARK: - 今日の最新値 / 推移取得（読み取りは Free・深さは UI/フィーチャ層で Pro ゲート）
 
     /// HealthKit 読み取り対応の指標。HealthKit 型を UI 層に漏らさないための薄い enum。
     public enum HealthMetric: String, Sendable, CaseIterable {

@@ -139,7 +139,7 @@
         {
           "adHocOffers" : [],
           "codeOffers" : [],
-          "displayPrice" : "5800",
+          "displayPrice" : "4500",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "A0000002",
@@ -150,7 +150,7 @@
           },
           "localizations" : [
             {
-              "description" : "Pro 機能をすべて使えます（年額・実質 ¥483/月）",
+              "description" : "Pro 機能をすべて使えます（年額・実質 ¥375/月）",
               "displayName" : "Oikomi Pro 年額",
               "locale" : "ja_JP"
             },

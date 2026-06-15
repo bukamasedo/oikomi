@@ -77,8 +77,8 @@ struct HomeView: View {
     /// コーチング助言の全件（severity → impact 順）。ホームは先頭3件のみ表示し、
     /// 残りは見出しの「すべて見る」から `CoachingListView` で確認する。
     private var allCoaching: [CoachingAdvice] {
-        guard ProGate.canUseAICoaching else { return [] }
         let allSets = completedSessions.flatMap { $0.sets ?? [] }
+        // 楔（ディロード/レディネス・自動調整・回復）は全ユーザー、深さは Pro のみ（SPEC §10 split）。
         return Analytics.combinedCoachingAdvice(
             sessions: completedSessions,
             sets: allSets,
@@ -87,7 +87,8 @@ struct HomeView: View {
             limit: .max,
             weightUnit: weightUnit,
             profile: trainingProfile,
-            bodyPhase: bodyPhase
+            bodyPhase: bodyPhase,
+            includePremium: ProGate.canUseAdvancedCoaching
         )
     }
 

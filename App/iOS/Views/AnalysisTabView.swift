@@ -135,7 +135,7 @@ struct AnalysisTabView: View {
 
     @ViewBuilder
     private var conditionContent: some View {
-        if ProGate.canReadHealthData {
+        if ProGate.canSeeHealthTrends {
             ConditionAnalysisSection()
         } else {
             ProLockTile(
@@ -150,7 +150,7 @@ struct AnalysisTabView: View {
 
     @ViewBuilder
     private var bodyContent: some View {
-        if ProGate.canReadHealthData {
+        if ProGate.canSeeHealthTrends {
             BodyAnalysisSection(records: personalRecords)
         } else {
             ProLockTile(

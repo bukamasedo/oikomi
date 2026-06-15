@@ -518,7 +518,7 @@ extension GlossarySection {
                 description:
                     String(
                         localized:
-                            "月額 ¥780 / 年額 ¥5,800 のサブスクリプション。HRV 連動 AI コーチング・HealthKit 読み取り・iCloud 同期・無制限ルーティン/カスタム種目・CSV エクスポートが解放されます。"
+                            "月額 ¥780 / 年額 ¥4,500 のサブスクリプション。高度な AI コーチング（PR 予測・ボリューム警告）・コンディションの長期トレンド・iCloud 同期・無制限ルーティン/カスタム種目・CSV エクスポートが解放されます。HRV 連動ディロード推奨と HealthKit 読み取りは Free です。"
                     ),
                 note: String(localized: "初回 14 日間は無料トライアル。App Store の購入履歴から自動更新を停止できます。")
             ),
