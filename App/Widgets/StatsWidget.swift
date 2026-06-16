@@ -48,8 +48,6 @@ struct StatsEntry: TimelineEntry {
     let latestPRExerciseName: String?
     /// 直近 PR の重量（kg）。表示時に `weightUnit` で変換する。
     let latestPRWeight: Double?
-    /// Pro 機能 (HealthKit 読み取り) が有効か。Free ユーザーにはコンディションの Pro 訴求を出す。
-    let isProActive: Bool
     /// ユーザー設定の表示単位。`UnitPreference.current()` から取得。
     let weightUnit: WeightUnit
 
@@ -94,7 +92,6 @@ struct StatsProvider: TimelineProvider {
             weekVolume: 12500,
             latestPRExerciseName: "ベンチプレス",
             latestPRWeight: 100,
-            isProActive: true,
             weightUnit: UnitPreference.current(),
             conditionValue: 72,
             conditionBand: .high,
@@ -146,10 +143,6 @@ struct StatsProvider: TimelineProvider {
             prDescriptor.fetchLimit = 1
             let latestPR = try context.fetch(prDescriptor).first
 
-            let isProActive = UserDefaults.standard.bool(
-                forKey: SubscriptionManager.lastKnownProActiveKey
-            )
-
             // 横長ウィジェット用の「今日のコンディション」。当日分のみ採用。
             let condition = ConditionSnapshotStore.todaySnapshot()
 
@@ -177,7 +170,6 @@ struct StatsProvider: TimelineProvider {
                 weekVolume: weekVolume,
                 latestPRExerciseName: latestPR?.exercise?.localizedName,
                 latestPRWeight: latestPR?.weight,
-                isProActive: isProActive,
                 weightUnit: UnitPreference.current(),
                 conditionValue: condition?.value,
                 conditionBand: condition.flatMap { ReadinessScore.Band(rawValue: $0.band) },
@@ -352,10 +344,10 @@ struct StatsWidgetView: View {
                 Spacer(minLength: 0)
                 if let value = entry.conditionValue {
                     conditionContent(value: value)
-                } else if entry.isProActive {
-                    conditionPending
                 } else {
-                    conditionLocked
+                    // 今日のコンディション（楔）は Free。スナップショット未生成時は
+                    // アプリ起動を促す pending 表示（旧 Pro ロックは廃止）。
+                    conditionPending
                 }
                 Spacer(minLength: 0)
             }
@@ -434,26 +426,6 @@ struct StatsWidgetView: View {
                 }
                 conditionMetrics
             }
-        }
-
-        /// Free ユーザー向け Pro 訴求ロック表示。
-        @ViewBuilder
-        private var conditionLocked: some View {
-            HStack(alignment: .top, spacing: WidgetSpacing.m) {
-                Image(systemName: "lock.fill")
-                    .font(.title3)
-                    .foregroundStyle(WidgetColor.proAccent)
-                VStack(alignment: .leading, spacing: WidgetSpacing.xs) {
-                    Label("コンディション Pro", systemImage: "star.fill")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(WidgetColor.proAccent)
-                    Text("HRV・安静時心拍・睡眠から今日の調子を Pro で表示します。")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         }
 
         /// HRV / 安静時心拍 / 睡眠の 3 セル。divider 区切り。値が無ければ "—"。

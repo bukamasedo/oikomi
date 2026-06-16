@@ -5711,6 +5711,66 @@
           }
         }
       }
+    },
+    "今日のレディネス判定は無料。ボリューム推移や PR 予測の深掘りは Pro で解放" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today's readiness check is free. Deeper insights like volume trends and PR prediction unlock with Pro."
+          }
+        }
+      }
+    },
+    "ワークアウトを保存し、HRV・睡眠から今日のコンディションを無料表示。長期トレンドの分析は Pro（計算はオンデバイス完結）" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saves workouts and shows today's condition from HRV and sleep for free. Long-term trend analysis unlocks with Pro (all on-device)."
+          }
+        }
+      }
+    },
+    "Free 機能。連続トレ日数・週ボリューム比に加え、HRV 低下検知（翌朝通知）でも強度緩和を提案します。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free feature. Suggests easing intensity based on consecutive training days and weekly volume ratio, plus an HRV-drop check (next-morning notification)."
+          }
+        }
+      }
+    },
+    "HealthKit 読み取りと今日のコンディション表示は Free です（長期トレンドの分析は Pro）。Oikomi はオンデバイスで参照し、外部送信は行いません。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HealthKit reading and today's condition are free (long-term trend analysis is Pro). Oikomi reads on-device only and never sends data externally."
+          }
+        }
+      }
+    },
+    "Apple のヘルスケアフレームワーク。Oikomi はワークアウト完了時に HKWorkout を書き込み (Free)、HRV / 安静時心拍 / 睡眠 / 体組成を読み取り (Free) します（長期トレンドの可視化は Pro）。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple's health framework. Oikomi writes HKWorkout on completion (Free) and reads HRV / resting heart rate / sleep / body composition (Free); long-term trend visualization is Pro."
+          }
+        }
+      }
+    },
+    "HealthKit のデータ読み取りは Free で、HRV や睡眠から今日のコンディションとディロード提案を行います。長期トレンドの分析は Pro。書き込みも Free です。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HealthKit reading is free—HRV and sleep power today's condition and deload suggestions. Long-term trend analysis is Pro. Writing is free too."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

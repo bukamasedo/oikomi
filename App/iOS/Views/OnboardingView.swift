@@ -198,7 +198,7 @@ private struct WelcomeStep: View {
                 ValueRow(
                     icon: "chart.line.uptrend.xyaxis",
                     title: String(localized: "数値で見える進捗"),
-                    description: String(localized: "ボリューム推移と PR を可視化。HRV 連動の自動アドバイスは Pro で解放")
+                    description: String(localized: "今日のレディネス判定は無料。ボリューム推移や PR 予測の深掘りは Pro で解放")
                 )
                 ValueRow(
                     icon: "character.bubble",
@@ -389,7 +389,7 @@ private struct IntegrationsStep: View {
                     icon: "heart.text.square.fill",
                     tint: .pink,
                     title: String(localized: "ヘルスケア連携"),
-                    description: String(localized: "ワークアウトを保存。HRV・睡眠の活用は Pro で解放（計算はオンデバイス完結）"),
+                    description: String(localized: "ワークアウトを保存し、HRV・睡眠から今日のコンディションを無料表示。長期トレンドの分析は Pro（計算はオンデバイス完結）"),
                     isDone: healthDone,
                     action: onRequestHealth
                 )

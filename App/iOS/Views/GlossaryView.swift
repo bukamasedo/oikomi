@@ -346,7 +346,7 @@ extension GlossarySection {
                 tint: OikomiColor.statGreen,
                 description: String(
                     localized: "1 週間ほど強度を 80% 程度に意図的に落とす計画的な回復期間。連続トレーニング日数の長期化、または週ボリュームの急増を検知した時にコーチングカードで提案します。"),
-                note: String(localized: "Pro 機能。v0.1 は連続日数 + ボリューム比の簡易判定。v1.1 で HRV ベースの判定を追加予定です。")
+                note: String(localized: "Free 機能。連続トレ日数・週ボリューム比に加え、HRV 低下検知（翌朝通知）でも強度緩和を提案します。")
             ),
             GlossaryEntry(
                 term: String(localized: "ボリューム警告"),
@@ -369,7 +369,8 @@ extension GlossarySection {
 
     fileprivate static let condition = GlossarySection(
         title: String(localized: "コンディション (HealthKit)"),
-        footer: String(localized: "HealthKit 読み取りは Pro 機能です。Oikomi はオンデバイスで参照し、外部送信は行いません。"),
+        footer: String(
+            localized: "HealthKit 読み取りと今日のコンディション表示は Free です（長期トレンドの分析は Pro）。Oikomi はオンデバイスで参照し、外部送信は行いません。"),
         entries: [
             GlossaryEntry(
                 term: String(localized: "HRV"),
@@ -549,7 +550,7 @@ extension GlossarySection {
                 description:
                     String(
                         localized:
-                            "Apple のヘルスケアフレームワーク。Oikomi はワークアウト完了時に HKWorkout を書き込み (Free)、HRV / 安静時心拍 / 睡眠 / 体組成を読み取り (Pro) します。"
+                            "Apple のヘルスケアフレームワーク。Oikomi はワークアウト完了時に HKWorkout を書き込み (Free)、HRV / 安静時心拍 / 睡眠 / 体組成を読み取り (Free) します（長期トレンドの可視化は Pro）。"
                     )
             ),
             GlossaryEntry(

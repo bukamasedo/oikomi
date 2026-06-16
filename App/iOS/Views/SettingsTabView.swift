@@ -787,7 +787,7 @@ private struct HealthKitDetailView: View {
                         .foregroundStyle(isAvailable ? .green : .secondary)
                 }
             } footer: {
-                Text("HealthKit のデータ読み取りは Pro 機能で、HRV や睡眠スコアからトレーニング負荷を最適化します。書き込みは Free でも有効です。")
+                Text("HealthKit のデータ読み取りは Free で、HRV や睡眠から今日のコンディションとディロード提案を行います。長期トレンドの分析は Pro。書き込みも Free です。")
             }
 
             Section {
