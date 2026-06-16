@@ -252,6 +252,40 @@ Bug Fixes
 Thank you for using Oikomi. We'd love to hear your feedback!
 ```
 
+### v0.3.0
+
+日本語ロケール:
+
+```
+回復コーチングが無料になりました。HRV と睡眠から「今日どれだけ追い込むか」を無料で。
+
+▼ 新機能
+・今日のコンディション判定と HRV 連動ディロード提案を無料で利用可能に。HealthKit（HRV・睡眠・安静時心拍）の読み取りも無料化しました
+・ホーム画面とウィジェットに「今日のコンディション」を無料で表示
+
+▼ 改善
+・起動時にホーム画面を表示するようにしました
+・Pro 年額を ¥4,500（実質 ¥375/月）に改定。Pro は PR 予測・部位別ボリューム警告・長期トレンド・高度な分析に集約
+
+いつもオイコミをご利用いただきありがとうございます。ご意見・ご要望はぜひお寄せください。
+```
+
+英語ロケール:
+
+```
+Recovery coaching is now free. See how hard to train today from your HRV and sleep — at no cost.
+
+New
+• Today's condition and HRV-based deload suggestions are now free, and HealthKit reading (HRV, sleep, resting heart rate) is free too
+• Today's condition now appears for free on the Home tab and in widgets
+
+Improvements
+• The app now opens to the Home tab on launch
+• Pro annual is now ¥4,500 (about ¥375/mo); Pro focuses on depth — PR prediction, per-muscle volume warnings, long-term trends, and advanced analytics
+
+Thank you for using Oikomi. We'd love to hear your feedback!
+```
+
 ### v1.0 初回リリース用
 
 ```
