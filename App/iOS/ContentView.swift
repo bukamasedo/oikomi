@@ -16,7 +16,7 @@ struct ContentView: View {
     /// `WorkoutTabView` のローカル State ではなくここで観察する。
     @State private var restStore = RestTimerStore.shared
 
-    @State private var selectedTab: Tab = .history
+    @State private var selectedTab: Tab = .home
 
     enum Tab: Hashable {
         case home, workout, history, analysis, settings
